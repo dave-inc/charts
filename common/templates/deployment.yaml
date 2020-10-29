@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "common.fullname" . }}
+  name: {{ include "common.name" . }}
   labels:
     {{- include "common.labels" . | nindent 4 }}
 spec:
@@ -13,10 +13,7 @@ spec:
       {{- include "common.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-    {{- with .Values.podAnnotations }}
-      annotations:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
+      {{- include "common.podAnnotations" . | nindent 6 }}
       labels:
         {{- include "common.selectorLabels" . | nindent 8 }}
     spec:
@@ -27,6 +24,7 @@ spec:
       serviceAccountName: {{ include "common.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
@@ -35,18 +33,21 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: {{ .Values.serviceContainer.port  }}
+              containerPort: {{ .Values.deploymentContainer.port  }}
               protocol: TCP
           livenessProbe:
             httpGet:
-              path: {{ .Values.serviceContainer.livenessProbe.path }}
-              port: http
+              path: {{ .Values.deploymentContainer.livenessProbe.path }}
+              port: {{ .Values.deploymentContainer.livenessProbe.port }}
           readinessProbe:
             httpGet:
-              path:  {{ .Values.serviceContainer.readinessProbe.path }}
-              port: http
+              path:  {{ .Values.deploymentContainer.readinessProbe.path }}
+              port:  {{ .Values.deploymentContainer.readinessProbe.port }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "common.name" . }}-configmap
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
