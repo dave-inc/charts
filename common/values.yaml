@@ -4,12 +4,13 @@
 
 replicaCount: 1
 
-serviceContainer:
+deploymentContainer:
   port: 8080
   livenessProbe:
     path: /
   readinessProbe:
     path: /
+  terminationGracePeriodSeconds: 30
 
 image:
   repository: nginx
@@ -18,8 +19,6 @@ image:
   tag: ""
 
 imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -27,7 +26,7 @@ serviceAccount:
   # Annotations to add to the service account
   annotations: {}
   # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
+  # If not set and create is true, a name is generated using Release.Name
   name: ""
 
 podAnnotations: {}
