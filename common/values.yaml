@@ -4,6 +4,9 @@
 
 replicaCount: 1
 
+# Used for NODE_ENV and DD_ENV
+environment: staging
+
 deploymentContainer:
   port: 8080
   livenessProbe:
@@ -13,6 +16,7 @@ deploymentContainer:
     path: /
     port: 8080
   terminationGracePeriodSeconds: 30
+  command: []
 
 image:
   repository: nginx

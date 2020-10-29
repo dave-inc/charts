@@ -45,9 +45,30 @@ spec:
               port:  {{ .Values.deploymentContainer.readinessProbe.port }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.deploymentContainer.command }}
+          command:
+            {{- toYaml .Values.deploymentContainer.command | nindent 12 }}
+          {{- end }}
+          env:
+            {{/*
+            Environment variables used by the common logger
+            https://github.com/dave-inc/logger/blob/6c69fe2cba9bb954494fe9c6b5297633c1a19aeb/README.md#L69
+            */}}
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: NODE_ENV
+              value: {{ .Values.environment }}
+            - name: DEPLOYMENT_NAME
+              value: {{ include "common.name" . }}
           envFrom:
             - configMapRef:
-                name: {{ include "common.name" . }}-configmap
+                name: {{ include "common.name" . }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
