@@ -38,11 +38,11 @@ spec:
           livenessProbe:
             httpGet:
               path: {{ .Values.deploymentContainer.livenessProbe.path }}
-              port: http
+              port: {{ .Values.deploymentContainer.livenessProbe.port }}
           readinessProbe:
             httpGet:
               path:  {{ .Values.deploymentContainer.readinessProbe.path }}
-              port: http
+              port:  {{ .Values.deploymentContainer.readinessProbe.port }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           envFrom:

@@ -8,8 +8,10 @@ deploymentContainer:
   port: 8080
   livenessProbe:
     path: /
+    port: 8080
   readinessProbe:
     path: /
+    port: 8080
   terminationGracePeriodSeconds: 30
 
 image:
