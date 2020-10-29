@@ -84,3 +84,6 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+# Environment variables populated into the Deployment's ConfigMap
+env: {}
