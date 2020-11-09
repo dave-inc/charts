@@ -11,10 +11,10 @@ deploymentContainer:
   port: 8080
   livenessProbe:
     path: /
-    port: 8080
+    port: ""
   readinessProbe:
     path: /
-    port: 8080
+    port: ""
   terminationGracePeriodSeconds: 30
   command: []
 
