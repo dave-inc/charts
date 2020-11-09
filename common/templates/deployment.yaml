@@ -66,6 +66,10 @@ spec:
               value: {{ .Values.environment }}
             - name: DEPLOYMENT_NAME
               value: {{ include "common.name" . }}
+           {{- range $name, $value := .Values.env }}
+            - name: {{ $name }}
+              value: {{ $value | quote }}
+           {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ include "common.name" . }}
