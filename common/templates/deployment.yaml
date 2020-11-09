@@ -66,7 +66,6 @@ spec:
               value: {{ .Values.environment }}
             - name: DEPLOYMENT_NAME
               value: {{ include "common.name" . }}
-           {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ include "common.name" . }}
