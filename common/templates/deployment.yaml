@@ -35,14 +35,18 @@ spec:
             - name: http
               containerPort: {{ .Values.deploymentContainer.port  }}
               protocol: TCP
+          {{- if .Values.livenessProbe }}
           livenessProbe:
             httpGet:
               path: {{ .Values.deploymentContainer.livenessProbe.path }}
               port: {{ .Values.deploymentContainer.livenessProbe.port | default ".Values.deploymentContainer.port" }}
+          {{- end }}
+          {{- if .Values.readinessProbe }}
           readinessProbe:
             httpGet:
               path:  {{ .Values.deploymentContainer.readinessProbe.path }}
               port:  {{ .Values.deploymentContainer.readinessProbe.port | default ".Values.deploymentContainer.port" }}
+          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           {{- if .Values.deploymentContainer.command }}
@@ -66,9 +70,59 @@ spec:
               value: {{ .Values.environment }}
             - name: DEPLOYMENT_NAME
               value: {{ include "common.name" . }}
+          {{- if .Values.apm.enabled }}
+            - name: DD_TRACE_AGENT_HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+          {{- end }}
           envFrom:
             - configMapRef:
-                name: {{ include "common.name" . }}
+                name: {{ .Values.ConfigMapName | default (include "common.name" .) }}
+            {{- if .Values.existingConfigMap }}
+            - configMapRef:
+                name: {{ .Values.existingConfigMap }}
+            {{- end }}
+            {{- if .Values.existingSecret }}
+            - secretRef:
+                name: {{ .Values.existingSecret }}
+            {{- end }}
+          {{- if .Values.cloudsqlProxy.enabled }}
+          volumeMounts:
+            - name: {{ .Values.cloudsqlProxy.volume }}
+              mountPath: /{{ .Values.cloudsqlProxy.volume }}
+          {{- end }}
+
+          {{- if .Values.cloudsqlProxy.enabled }}
+        - name: {{ .Values.cloudsqlProxy.name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.cloudsqlProxy.image.repository }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.cloudsqlProxy.resources | nindent 12 }}
+          {{- if .Values.cloudsqlProxy.command }}
+          command:
+            {{- toYaml .Values.cloudsqlProxy.command | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: {{ .Values.cloudsqlProxy.volume }}
+              mountPath: /{{ .Values.cloudsqlProxy.volume }}
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /bin/sh
+                  - '-c'
+                  - /bin/sleep 30
+          {{- end }}
+
+      {{- if .Values.cloudsqlProxy.enabled }}
+      volumes:
+        - name: {{ .Values.cloudsqlProxy.volume }}
+          emptyDir: null
+      {{- end }}
+
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
