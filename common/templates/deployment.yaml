@@ -78,7 +78,7 @@ spec:
           {{- end }}
           envFrom:
             - configMapRef:
-                name: {{ .Values.ConfigMapName | default (include "common.name" .) }}
+                name: {{ .Values.configMapName | default (include "common.name" .) }}
             {{- if .Values.existingConfigMap }}
             - configMapRef:
                 name: {{ .Values.existingConfigMap }}
