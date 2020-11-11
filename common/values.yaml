@@ -98,6 +98,12 @@ affinity: {}
 # Environment variables populated into the Deployment's ConfigMap
 env: {}
 
+# Secrets
+createSecret: false
+createSecretName: ""
+# Mutually exclusive with the two above
+existingSecretName: ""
+
 # CloudSQL side container
 cloudsqlProxy:
   enabled: false

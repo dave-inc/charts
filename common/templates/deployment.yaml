@@ -79,9 +79,13 @@ spec:
             - configMapRef:
                 name: {{ .Values.existingConfigMap }}
             {{- end }}
-            {{- if .Values.existingSecret }}
+            {{- if not .Values.createSecret }}
+            {{- else if .Values.existingSecretName }}
             - secretRef:
-                name: {{ .Values.existingSecret }}
+                name: {{ .Values.existingSecretName }}
+            {{- else }}
+            - secretRef:
+                name: {{ include "common.name" . }}
             {{- end }}
           {{- if .Values.cloudsqlProxy.enabled }}
           volumeMounts:
