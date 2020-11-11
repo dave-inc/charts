@@ -35,18 +35,14 @@ spec:
             - name: http
               containerPort: {{ .Values.deploymentContainer.port  }}
               protocol: TCP
-          {{- if .Values.livenessProbe }}
           livenessProbe:
             httpGet:
               path: {{ .Values.deploymentContainer.livenessProbe.path }}
               port: {{ .Values.deploymentContainer.livenessProbe.port | default ".Values.deploymentContainer.port" }}
-          {{- end }}
-          {{- if .Values.readinessProbe }}
           readinessProbe:
             httpGet:
               path:  {{ .Values.deploymentContainer.readinessProbe.path }}
               port:  {{ .Values.deploymentContainer.readinessProbe.port | default ".Values.deploymentContainer.port" }}
-          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           {{- if .Values.deploymentContainer.command }}

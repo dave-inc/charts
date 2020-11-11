@@ -7,6 +7,10 @@ replicaCount: 1
 # Used for NODE_ENV and DD_ENV
 environment: staging
 
+# Used for DD_TRACE_AGENT_HOSTNAME for DD APM/nodeJS potentially can be used logger vars
+apm:
+  enabled: false
+
 deploymentContainer:
   port: 8080
   livenessProbe:
@@ -49,6 +53,7 @@ securityContext: {}
   # runAsUser: 1000
 
 service:
+  enabled: true
   type: ClusterIP
   port: 80
 
