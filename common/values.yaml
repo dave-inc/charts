@@ -7,7 +7,7 @@ replicaCount: 1
 # Used for NODE_ENV and DD_ENV
 environment: staging
 
-# Used for DD_TRACE_AGENT_HOSTNAME for DD APM/nodeJS potentially can be used logger vars
+# Used for DD_TRACE_AGENT_HOSTNAME on DD APM/nodeJS potentially can be used with logger vars too
 apm:
   enabled: false
 
