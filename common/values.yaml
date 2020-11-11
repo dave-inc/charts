@@ -97,3 +97,20 @@ affinity: {}
 
 # Environment variables populated into the Deployment's ConfigMap
 env: {}
+
+# CloudSQL side container
+cloudsqlProxy:
+  enabled: false
+  name: cloudsql-proxy
+  image:
+    repository: gcr.io/cloudsql-docker/gce-proxy:latest
+  # This line should be defined with custom values
+  # command: ['/cloud_sql_proxy','--dir=/cloudsql','-instances=project_name:region:instance_name']
+  resources:
+    requests:
+      cpu: '100m'
+  lifecycle:
+    preStop:
+      exec:
+        command: ['/bin/sh','-c','/bin/sleep 30']
+  volume: cloudsql
