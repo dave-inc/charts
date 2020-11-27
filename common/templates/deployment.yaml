@@ -11,6 +11,10 @@ spec:
   selector:
     matchLabels:
       {{- include "common.selectorLabels" . | nindent 6 }}
+  {{- if .Values.strategy }}
+  strategy:
+    {{- toYaml .Values.strategy | nindent 6 }}
+  {{- end }}
   template:
     metadata:
       {{- include "common.podAnnotations" . | nindent 6 }}
@@ -33,18 +37,34 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: {{ .Values.deploymentContainer.port  }}
+              containerPort: {{ .Values.deploymentContainer.port }}
               protocol: TCP
+          {{- if .Values.deploymentContainer.livenessProbe.port }}
           livenessProbe:
             httpGet:
               path: {{ .Values.deploymentContainer.livenessProbe.path }}
               port: {{ .Values.deploymentContainer.livenessProbe.port | default ".Values.deploymentContainer.port" }}
+            failureThreshold: {{ .Values.deploymentContainer.livenessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.deploymentContainer.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.deploymentContainer.livenessProbe.periodSeconds }}
+            successThreshold: {{ .Values.deploymentContainer.livenessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.deploymentContainer.livenessProbe.timeoutSeconds }}
+          {{- end }}
+          {{- if .Values.deploymentContainer.readinessProbe.port }}
           readinessProbe:
             httpGet:
-              path:  {{ .Values.deploymentContainer.readinessProbe.path }}
-              port:  {{ .Values.deploymentContainer.readinessProbe.port | default ".Values.deploymentContainer.port" }}
+              path: {{ .Values.deploymentContainer.readinessProbe.path }}
+              port: {{ .Values.deploymentContainer.readinessProbe.port | default ".Values.deploymentContainer.port" }}
+            failureThreshold: {{ .Values.deploymentContainer.readinessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.deploymentContainer.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.deploymentContainer.readinessProbe.periodSeconds }}
+            successThreshold: {{ .Values.deploymentContainer.readinessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.deploymentContainer.readinessProbe.timeoutSeconds }}
+          {{- end }}
+          {{- if .Values.resources }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          {{- end }}
           {{- if .Values.deploymentContainer.command }}
           command:
             {{- toYaml .Values.deploymentContainer.command | nindent 12 }}
@@ -54,30 +74,34 @@ spec:
             Environment variables used by the common logger
             https://github.com/dave-inc/logger/blob/6c69fe2cba9bb954494fe9c6b5297633c1a19aeb/README.md#L69
             */}}
-            - name: NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
+            - name: DEPLOYMENT_NAME
+              value: {{ include "common.name" . }}
             - name: NAMESPACE
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
             - name: NODE_ENV
               value: {{ .Values.environment }}
-            - name: DEPLOYMENT_NAME
-              value: {{ include "common.name" . }}
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
           {{- if .Values.apm.enabled }}
             - name: DD_TRACE_AGENT_HOSTNAME
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
+            - name: DD_SERVICE_NAME
+              value: {{ include "common.name" . }}
           {{- end }}
           envFrom:
+            {{- if .Values.env }}
             - configMapRef:
                 name: {{ .Values.configMapName | default (include "common.name" .) }}
-            {{- if .Values.existingConfigMap }}
+            {{- end}}
+            {{- if .Values.existingConfigMapName }}
             - configMapRef:
-                name: {{ .Values.existingConfigMap }}
+                name: {{ .Values.existingConfigMapName }}
             {{- end }}
             {{- if and (.Values.createSecret) (not .Values.createSecretName) }}
             - secretRef:

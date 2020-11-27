@@ -1,3 +1,4 @@
+{{- if .Values.env }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -6,3 +7,4 @@ metadata:
     {{- include "common.labels" . | nindent 4 }}
 data:
   {{- .Values.env | toYaml | nindent 2 }}
+{{- end }}
