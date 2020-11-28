@@ -90,11 +90,11 @@ resources: {}
   #   cpu: 100m
   #   memory: 128Mi
 
-strategy: {}
-  # rollingUpdate:
-  #   maxSurge: 3
-  #   maxUnavailable: 25%
-  # type: RollingUpdate
+strategy: 
+  rollingUpdate:
+    maxSurge: 25%
+    maxUnavailable: 25%
+  type: RollingUpdate
 
 autoscaling:
   enabled: false
