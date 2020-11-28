@@ -62,7 +62,7 @@ service:
   enabled: true
   type: ClusterIP
   port: 80
-  # The name of the service is optional. Default "common.name"
+  # The name of the service is optional, If not set, a name is generated using Release.Name
   # name: ""
 
 ingress:
@@ -117,7 +117,7 @@ apm:
 env: {}
 
 # ConfigMap
-# Default configmap name is "common.name" overwrite with configMapName
+# The configMapName is optional, If not set, a name is generated using Release.Name
 configMapName: ""
 existingConfigMapName: ""
 
