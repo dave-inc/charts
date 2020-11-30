@@ -8,6 +8,7 @@ replicaCount: 1
 environment: staging
 
 deploymentContainer:
+  command: []
   port: 8080
   livenessProbe:
     path: /
@@ -26,7 +27,6 @@ deploymentContainer:
     successThreshold: 1
     timeoutSeconds: 1
   terminationGracePeriodSeconds: 30
-  command: []
 
 image:
   repository: nginx
