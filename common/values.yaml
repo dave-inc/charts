@@ -113,7 +113,9 @@ affinity: {}
 apm:
   enabled: false
 
-# Environment variables populated into the Deployment's ConfigMap
+
+# Default Logger and DD variables are defined here: https://github.com/dave-inc/charts/blob/master/common/templates/deployment.yaml
+# Custom env variables are defined here and will be populated via Deployment's ConfigMap
 env: {}
 
 # ConfigMap
