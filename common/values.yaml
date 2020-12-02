@@ -109,7 +109,7 @@ tolerations: []
 
 affinity: {}
 
-# Used for DD_TRACE_AGENT_HOSTNAME on DD APM/nodeJS potentially can be used with logger vars too
+# Used for DD_TRACE_AGENT_HOSTNAME on DD APM/Node.js potentially can be used with logger vars too
 apm:
   enabled: false
 
