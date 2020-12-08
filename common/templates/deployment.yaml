@@ -74,6 +74,8 @@ spec:
             */}}
             - name: DEPLOYMENT_NAME
               value: {{ include "common.name" . }}
+            - name: DD_VERSION
+              value: {{ .Values.image.tag }}
             - name: NAMESPACE
               valueFrom:
                 fieldRef:
