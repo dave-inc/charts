@@ -3,6 +3,7 @@ kind: Deployment
 metadata:
   name: {{ include "common.name" . }}
   labels:
+    tags.datadoghq.com/version: {{ .Values.image.tag }}
     {{- include "common.labels" . | nindent 4 }}
 spec:
 {{- if not .Values.autoscaling.enabled }}
@@ -17,6 +18,7 @@ spec:
     metadata:
       {{- include "common.podAnnotations" . | nindent 6 }}
       labels:
+        tags.datadoghq.com/version: {{ .Values.image.tag }}
         {{- include "common.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
