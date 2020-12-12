@@ -97,14 +97,14 @@ spec:
               value: {{ include "common.name" . }}
           {{- end }}
           envFrom:
-            {{- if .Values.env }}
-            - configMapRef:
-                name: {{ .Values.configMapName | default (include "common.name" .) }}
-            {{- end}}
             {{- if .Values.existingConfigMapName }}
             - configMapRef:
                 name: {{ .Values.existingConfigMapName }}
             {{- end }}
+            {{- if .Values.env }}
+            - configMapRef:
+                name: {{ .Values.configMapName | default (include "common.name" .) }}
+            {{- end}}
             {{- if and (.Values.createSecret) (not .Values.createSecretName) }}
             - secretRef:
                 name: {{ include "common.name" . }}
