@@ -6,8 +6,8 @@ replicaCount: 1
 
 # Used for NODE_ENV and DD_ENV
 environment: staging
-# GCP Project where this Release will be deployed
-# project: project-name
+# Required: GCP Project where this Release will be deployed
+project: ""
 
 deploymentContainer:
   command: []
