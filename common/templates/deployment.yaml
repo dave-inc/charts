@@ -88,6 +88,11 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
           {{- if .Values.apm.enabled }}
             - name: DD_ENV
               value: {{ .Values.environment }}
