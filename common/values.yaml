@@ -9,6 +9,17 @@ environment: staging
 # Required: GCP Project where this Release will be deployed
 project: ""
 
+# Init container must have a name, image and command to run before
+# deployContainer initializes.  Both containers share a /tmp volume mount.
+initContainers:
+  enabled: false
+  name: "setup"
+  image: "alpine:latest"
+  command: ["sh", "-c", "touch /tmp/this"]
+  volumeMounts:
+    - name: tmp
+      mountPath: /tmp
+
 deploymentContainer:
   command: []
   port: 8080

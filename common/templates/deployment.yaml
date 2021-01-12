@@ -29,6 +29,15 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- if .Values.initContainer.enabled }}
+      initContainers:
+        - name: {{ .Values.initContainer.name }}
+          image: {{ .Values.initContainer.image }}
+          command: {{ toYaml .Values.initContainer.command | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      {{- end }}
       containers:
         - name: {{ include "common.name" . }}
           securityContext:
@@ -123,8 +132,10 @@ spec:
                 name: {{ .Values.existingSecretName }}
             {{- else }}
             {{- end }}
-          {{- if .Values.cloudsqlProxy.enabled }}
           volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          {{- if .Values.cloudsqlProxy.enabled }}
             - name: {{ .Values.cloudsqlProxy.volume }}
               mountPath: /{{ .Values.cloudsqlProxy.volume }}
           {{- end }}
@@ -152,9 +163,10 @@ spec:
                   - '-c'
                   - /bin/sleep 30
           {{- end }}
-
-      {{- if .Values.cloudsqlProxy.enabled }}
       volumes:
+        - name: tmp
+          emptyDir: {}
+      {{- if .Values.cloudsqlProxy.enabled }}
         - name: {{ .Values.cloudsqlProxy.volume }}
           emptyDir: null
       {{- end }}
