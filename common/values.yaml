@@ -11,7 +11,7 @@ project: ""
 
 # Init container must have a name, image and command to run before
 # deployContainer initializes.  Both containers share a /tmp volume mount.
-initContainers:
+initContainer:
   enabled: false
   name: "setup"
   image: "alpine:latest"
