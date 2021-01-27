@@ -26,12 +26,11 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
 {{- define "common.podAnnotations" -}}
-annotations:
-  {{- if .Values.podAnnotations -}}
-    {{- .Values.podAnnotations | toYaml . | nindent 2 }}
-  {{- end -}}
-  {{/* https://helm.sh/docs/howto/charts_tips_and_tricks/#automatically-roll-deployments */}}
-  checksum/config: {{ .Values.env | toString | sha256sum }}
+{{- if .Values.podAnnotations }}
+{{- toYaml .Values.podAnnotations }}
+{{- end }}
+{{/* https://helm.sh/docs/howto/charts_tips_and_tricks/#automatically-roll-deployments */}}
+checksum/config: {{ .Values.env | toString | sha256sum }}
 {{- end }}
 
 {{/*
