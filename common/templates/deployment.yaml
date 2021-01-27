@@ -111,7 +111,7 @@ spec:
                   fieldPath: metadata.name
           {{- if .Values.apm.enabled }}
             - name: DD_ENV
-              value: {{ .Values.environment }}
+              value: {{ .Values.apm.datadogEnvironment | default .Values.environment }}
             - name: DD_TRACE_AGENT_HOSTNAME
               valueFrom:
                 fieldRef:
