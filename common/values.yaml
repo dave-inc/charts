@@ -60,7 +60,7 @@ serviceAccount:
   # IAM workload idenitity binding name
   # If not set and create is true, a name is generated using Release.Name
   # if Release.Name is bigger than 30 characteres use this variable to overwrite it with something shorter to idenity this workload
-  iamName: ""
+  workloadIdentitySA: ""
 
 podAnnotations: {}
 
