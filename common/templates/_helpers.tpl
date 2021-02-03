@@ -37,8 +37,10 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 Create the name of the service account to use
 */}}
 {{- define "common.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
+{{- if and (.Values.serviceAccount.create) (not .Values.serviceAccount.existingNameSA) }}
 {{- default (include "common.name" .) .Values.serviceAccount.name }}
+{{- else if and (not .Values.serviceAccount.create) (.Values.serviceAccount.existingNameSA) }}
+{{- default (include "common.name" .) .Values.serviceAccount.existingNameSA }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
