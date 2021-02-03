@@ -58,9 +58,13 @@ serviceAccount:
   # If not set and create is true, a name is generated using Release.Name
   name: ""
   # IAM workload idenitity binding name
-  # If not set and create is true, a name is generated using Release.Name
-  # if Release.Name is bigger than 30 characteres use this variable to overwrite it with something shorter to idenity this workload
+  # If not set and serviceAccount.create:true, a name is generated using Release.Name
+  # If Release.Name is bigger than 30 characteres use this variable to overwrite it with something shorter to identify this workload
   workloadIdentitySA: ""
+  # Specifies whether an existing service account will be used
+  # Make sure you set serviceAccount.create:false when using this option
+  # Dynamic environments will use of this one
+  existingNameSA: ""
 
 podAnnotations: {}
 
