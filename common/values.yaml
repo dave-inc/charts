@@ -156,7 +156,7 @@ cloudsqlProxy:
   name: cloudsql-proxy
   image:
     repository: gcr.io/cloudsql-docker/gce-proxy:latest
-  # This line should be defined with custom values
+  # This line should be defined with custom values of you CloudSQL instance
   # command: ['/cloud_sql_proxy','--dir=/cloudsql','-instances=project_name:region:instance_name']
   resources:
     requests:
@@ -166,3 +166,12 @@ cloudsqlProxy:
       exec:
         command: ['/bin/sh','-c','/bin/sleep 30']
   volume: cloudsql
+  # This section creates a template in Argo Workflows that is used for sql migrations
+  migrationTemplate:
+    enabled: false
+    # This line should be defined with custom values of you CloudSQL instance
+    #instanceUrl: project_name:region:instance_name
+
+    # Knex migrations are used by default
+    command: /opt/app/node_modules/.bin/knex --knexfile knexfile.js migrate:latest
+    secretName: migration

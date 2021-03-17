@@ -1,0 +1,50 @@
+{{- if .Values.cloudsqlProxy.migrationTemplate.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: {{ include "common.name" . }}-migrate-up
+  generateName: {{ include "common.name" . }}-migrate-up-
+spec:
+  entrypoint: migrate-up
+  serviceAccountName: workflows
+  templates:
+  - name: migrate-up
+    steps:
+    - - name: cloudsql-proxy
+        template: database
+    - - name: app-migration
+        template: app
+        arguments:
+          parameters:
+          - name: cmd
+            value: export DB_HOST={{`{{ steps.cloudsql-proxy.ip }}`}} && {{ .Values.cloudsqlProxy.migrationTemplate.command }}
+
+  - name: database
+    daemon: true
+    retryStrategy:
+      limit: 10
+    container:
+      image: gcr.io/cloudsql-docker/gce-proxy:latest
+      command: ["/cloud_sql_proxy","-instances={{ required "A valid instanceUrl is required!" .Values.cloudsqlProxy.migrationTemplate.instanceUrl }}=tcp:0.0.0.0:3306"]
+      readinessProbe:
+        tcpSocket:
+          port: 3306
+  - name: app
+    inputs:
+      parameters:
+      - name: cmd
+    container:
+      image: "{{ .Values.image.repository }}:latest"
+      command: [sh, -c]
+      args: ["{{`{{ inputs.parameters.cmd }}`}}"]
+      envFrom:
+      - secretRef:
+          name: {{ .Values.cloudsqlProxy.migrationTemplate.secretName }}
+      env:
+      - name: NODE_ENV
+        value: {{ .Values.environment }}
+      - name: DB_NAME
+        value: {{ .Values.env.DB_NAME }}
+      - name: DB_PORT
+        value: '3306'
+{{- end }}
