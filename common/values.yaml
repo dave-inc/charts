@@ -169,9 +169,9 @@ cloudsqlProxy:
   # This section creates a template in Argo Workflows that is used for sql migrations
   migrationTemplate:
     enabled: false
-    # This line should be defined with custom values of you CloudSQL instance
-    #instanceUrl: project_name:region:instance_name
-
     # Knex migrations are used by default
     command: /opt/app/node_modules/.bin/knex --knexfile knexfile.js migrate:latest
+    # This line should be defined with custom values of you CloudSQL instance
+    #instanceUrl: project_name:region:instance_name
+    port: 3306
     secretName: migration

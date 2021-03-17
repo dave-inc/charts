@@ -25,10 +25,10 @@ spec:
       limit: 10
     container:
       image: gcr.io/cloudsql-docker/gce-proxy:latest
-      command: ["/cloud_sql_proxy","-instances={{ required "A valid instanceUrl is required!" .Values.cloudsqlProxy.migrationTemplate.instanceUrl }}=tcp:0.0.0.0:3306"]
+      command: ["/cloud_sql_proxy","-instances={{ required `"A valid instanceUrl is required!"` .Values.cloudsqlProxy.migrationTemplate.instanceUrl }}=tcp:0.0.0.0:{{ .Values.cloudsqlProxy.migrationTemplate.port }}"]
       readinessProbe:
         tcpSocket:
-          port: 3306
+          port: {{ .Values.cloudsqlProxy.migrationTemplate.port }}
   - name: app
     inputs:
       parameters:
@@ -44,7 +44,7 @@ spec:
       - name: NODE_ENV
         value: {{ .Values.environment }}
       - name: DB_NAME
-        value: {{ .Values.env.DB_NAME }}
+        value: {{ required "A valid env.DB_NAME is required!" .Values.env.DB_NAME }}
       - name: DB_PORT
-        value: '3306'
+        value: {{ .Values.cloudsqlProxy.migrationTemplate.port }}
 {{- end }}
