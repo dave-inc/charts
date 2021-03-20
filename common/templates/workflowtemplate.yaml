@@ -34,7 +34,7 @@ spec:
       parameters:
       - name: cmd
     container:
-      image: "{{ .Values.image.repository }}:{{ .Values.cloudsqlProxy.migrationTemplate.defaultTag }}"
+      image: "{{ .Values.image.repository }}:{{ .Values.cloudsqlProxy.migrationTemplate.tag }}"
       command: [sh, -c]
       args: ["{{`{{ inputs.parameters.cmd }}`}}"]
       envFrom:

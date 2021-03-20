@@ -172,7 +172,7 @@ cloudsqlProxy:
     # Knex migration command is used by default
     command: /opt/app/node_modules/.bin/knex --knexfile knexfile.js migrate:latest
     # Image tag used for migration template along with image.repository. This can always be replaced at runtime in Argo Workflows
-    defaultTag: latest
+    tag: latest
     # Instance connection name should be defined with custom values of your CloudSQL instance
     #instanceConnectionName: project_name:region:instance_name
     port: 3306
