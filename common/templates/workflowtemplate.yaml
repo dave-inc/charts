@@ -5,11 +5,19 @@ metadata:
   name: {{ include "common.name" . }}-migrate-up
   generateName: {{ include "common.name" . }}-migrate-up-
 spec:
+  arguments:
+    parameters:
+    - name: image
+      value: "{{ .Values.image.repository }}"
+    - name: tag
+      value: "{{ .Values.cloudsqlProxy.migrationTemplate.tag }}"
   entrypoint: migrate-up
   serviceAccountName: workflows
   templates:
   - name: migrate-up
     steps:
+    - - name: log-parameters
+        template: log-parameters
     - - name: cloudsql-proxy
         template: database
     - - name: app-migration
@@ -19,10 +27,15 @@ spec:
           - name: cmd
             value: export DB_HOST={{`{{ steps.cloudsql-proxy.ip }}`}} && {{ .Values.cloudsqlProxy.migrationTemplate.command }}
 
+  - name: log-parameters
+    container:
+      image: alpine:latest
+      command: [sh, -c]
+      args: ["echo Image:{{`{{workflow.parameters.image}}`}} Tag:{{`{{workflow.parameters.tag}}`}}"]
   - name: database
     daemon: true
     retryStrategy:
-      limit: 10
+      limit: 3
     container:
       image: gcr.io/cloudsql-docker/gce-proxy:latest
       command: ["/cloud_sql_proxy","-instances={{ required `"A valid instanceUrl is required!"` .Values.cloudsqlProxy.migrationTemplate.instanceConnectionName }}=tcp:0.0.0.0:{{ .Values.cloudsqlProxy.migrationTemplate.port }}"]
@@ -34,7 +47,7 @@ spec:
       parameters:
       - name: cmd
     container:
-      image: "{{ .Values.image.repository }}:{{ .Values.cloudsqlProxy.migrationTemplate.tag }}"
+      image: "{{`{{workflow.parameters.image}}`}}:{{`{{workflow.parameters.tag}}`}}"
       command: [sh, -c]
       args: ["{{`{{ inputs.parameters.cmd }}`}}"]
       envFrom:
