@@ -116,6 +116,13 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
+            {{/*
+            Used by hot-shots package as default StatsD host
+            */}}
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
             - name: DD_SERVICE_NAME
               value: {{ include "common.name" . }}
           {{- end }}
