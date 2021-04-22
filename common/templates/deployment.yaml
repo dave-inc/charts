@@ -85,6 +85,10 @@ spec:
           command:
             {{- toYaml .Values.deploymentContainer.command | nindent 12 }}
           {{- end }}
+          {{- if .Values.deploymentContainer.args }}
+          args:
+            {{- toYaml .Values.deploymentContainer.args | nindent 12 }}
+          {{- end }}
           env:
             {{/*
             Environment variables used by the common logger
@@ -113,6 +117,13 @@ spec:
             - name: DD_ENV
               value: {{ .Values.apm.datadogEnvironment | default ".Values.environment" }}
             - name: DD_TRACE_AGENT_HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            {{/*
+            Used by hot-shots package as default StatsD host
+            */}}
+            - name: DD_AGENT_HOST
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
