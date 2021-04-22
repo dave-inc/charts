@@ -85,6 +85,10 @@ spec:
           command:
             {{- toYaml .Values.deploymentContainer.command | nindent 12 }}
           {{- end }}
+          {{- if .Values.deploymentContainer.args }}
+          args:
+            {{- toYaml .Values.deploymentContainer.args | nindent 12 }}
+          {{- end }}
           env:
             {{/*
             Environment variables used by the common logger
