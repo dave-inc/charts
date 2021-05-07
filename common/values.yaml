@@ -22,6 +22,7 @@ initContainer:
 
 deploymentContainer:
   command: []
+  args: []
   port: 8080
   livenessProbe:
     path: /
