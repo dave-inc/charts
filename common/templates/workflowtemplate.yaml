@@ -2,8 +2,8 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: {{ include "common.name" . }}-migrate-up
-  generateName: {{ include "common.name" . }}-migrate-up-
+  name: {{ include "common.name" . }}-migrate
+  generateName: {{ include "common.name" . }}-migrate-
 spec:
   arguments:
     parameters:
@@ -11,10 +11,12 @@ spec:
       value: "{{ .Values.image.repository }}"
     - name: tag
       value: "{{ .Values.cloudsqlProxy.migrationTemplate.tag }}"
-  entrypoint: migrate-up
+    - name: command
+      value: "{{ .Values.cloudsqlProxy.migrationTemplate.command }}"
+  entrypoint: migrate
   serviceAccountName: workflows
   templates:
-  - name: migrate-up
+  - name: migrate
     steps:
     - - name: log-parameters
         template: log-parameters
@@ -25,13 +27,14 @@ spec:
         arguments:
           parameters:
           - name: cmd
-            value: export DB_HOST={{`{{ steps.cloudsql-proxy.ip }}`}} && {{ .Values.cloudsqlProxy.migrationTemplate.command }}
+            value: export DB_HOST={{`{{ steps.cloudsql-proxy.ip }}`}} && {{`{{workflow.parameters.command}}`}}
 
   - name: log-parameters
     container:
       image: alpine:latest
       command: [sh, -c]
-      args: ["echo Image:{{`{{workflow.parameters.image}}`}} Tag:{{`{{workflow.parameters.tag}}`}}"]
+      args: ["echo Image:{{`{{workflow.parameters.image}}`}} Tag:{{`{{workflow.parameters.tag}}`}} Command:{{`{{workflow.parameters.command}}`}}"]
+
   - name: database
     daemon: true
     retryStrategy:
