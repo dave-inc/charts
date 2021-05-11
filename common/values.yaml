@@ -22,6 +22,7 @@ initContainer:
 
 deploymentContainer:
   command: []
+  args: []
   port: 8080
   livenessProbe:
     path: /
@@ -45,7 +46,7 @@ image:
   repository: nginx
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
+  tag: latest
 
 imagePullSecrets: []
 
