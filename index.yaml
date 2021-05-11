@@ -3,6 +3,16 @@ entries:
   common:
   - apiVersion: v1
     appVersion: 1.17.0
+    created: "2021-05-11T23:57:16.591047418Z"
+    description: Standard Service Template
+    digest: 24fbb0ef586075041067bd79448114f0af3673c756fd2140456a636c35bf9453
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.7.12/common-0.7.12.tgz
+    version: 0.7.12
+  - apiVersion: v1
+    appVersion: 1.17.0
     created: "2021-04-22T20:49:09.372027737Z"
     description: Standard Service Template
     digest: bc7ee35f2ee1c4b026a74fc3d03fe3cfc6817c2de4f8cc2008f97a4e616e5ae8
