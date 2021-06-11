@@ -5,6 +5,10 @@ metadata:
   name: {{ .Values.service.name | default (include "common.name" .) }}
   labels:
     {{- include "common.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.cloudArmor.enabled }}
+    cloud.google.com/backend-config: '{"ports": {"80":"{{ .Values.cloudArmor.name | default (include "common.name" .) }}", "443":"{{ .Values.cloudArmor.name | default (include "common.name" .) }}"}}'
+    {{- end }}
 spec:
   type: {{ .Values.service.type }}
   ports:

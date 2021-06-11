@@ -1,0 +1,9 @@
+{{- if .Values.cloudArmor.enabled -}}
+apiVersion: cloud.google.com/v1beta1
+kind: BackendConfig
+metadata:
+  name: {{ .Values.service.name | default (include "common.name" .) }}
+spec:
+  securityPolicy:
+    name: {{ .Values.cloudArmor.securityPolicy | default (include "common.name" .) }}
+{{- end }}
