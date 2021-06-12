@@ -82,6 +82,7 @@ securityContext: {}
 
 service:
   enabled: true
+  # Only for cloudArmor use type: NodePort
   type: ClusterIP
   port: 80
   # The name of the service is optional, If not set, a name is generated using Release.Name

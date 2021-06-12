@@ -22,6 +22,21 @@ metadata:
   {{- end }}
 spec:
   rules:
+    {{ if .Values.cloudArmor.enabled -}}
+
+    {{- range .Values.ingress.hosts -}}
+    - http:
+        paths:
+          {{- range .paths }}
+          - path: {{ . }}
+            backend:
+              serviceName: {{ $name }}
+              servicePort: {{ $svcPort }}
+          {{- end -}}
+    {{ end }}
+
+    {{- else -}}
+
     {{- range .Values.ingress.hosts }}
     - host: {{ .host | quote }}
       http:
@@ -33,7 +48,9 @@ spec:
               servicePort: {{ $svcPort }}
           {{- end }}
     {{- end }}
-  {{- end }}
+
+    {{- end }}
+
   {{- if .Values.ingress.tls }}
   tls:
     {{- range .Values.ingress.tls }}
@@ -44,3 +61,4 @@ spec:
       secretName: {{ .secretName }}
     {{- end }}
   {{- end }}
+{{- end }}
