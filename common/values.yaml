@@ -107,14 +107,15 @@ cloudArmor:
   # name: ""
   host: chart-example.local
   secretName: chart-example-tls
-  # The name of securityPolicy is optional, If not set, a name is generated using Release.Name
+  # The name of securityPolicy used by backendConfig is optional, If not set, a name is generated using Release.Name
   # securityPolicy: ""
+  frontendConfig: {}
   # The name of staticIpName is optional, If not set, a name is generated using Release.Name
   # staticIpName: ""
 
 certificate:
   # Used with cloudArmor
-  issuer: aws-certificate-issuer
+  issuer: letsencrypt
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
