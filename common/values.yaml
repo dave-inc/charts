@@ -82,6 +82,7 @@ securityContext: {}
 
 service:
   enabled: true
+  # Only for cloudArmor use type: NodePort
   type: ClusterIP
   port: 80
   # The name of the service is optional, If not set, a name is generated using Release.Name
@@ -94,11 +95,39 @@ ingress:
     # kubernetes.io/tls-acme: "true"
   hosts:
     - host: chart-example.local
-      paths: []
+      paths:
+        - backend:
+            service:
+              name: chart-service
+              port: 
+                number: 80
+          path: /
+          pathType: ImplementationSpecific
   tls: []
   #  - secretName: chart-example-tls
   #    hosts:
   #      - chart-example.local
+
+cloudArmor:
+  enabled: false
+  # The name of cloudArmor is optional, If not set, a name is generated using Release.Name
+  # name: ""
+  # host and secretName are required to generate a certificate
+  host: chart-example.local
+  secretName: chart-example-tls
+  # The name of securityPolicy used by backendConfig is optional, If not set, a name is generated using Release.Name
+  # securityPolicy: ""
+  # By default we always use redirectToHttps if you want to define frontendConfig consider including it
+  frontendConfig:
+    redirectToHttps:
+      enabled: true
+      responseCodeName: PERMANENT_REDIRECT
+  # The name of staticIpName is optional, If not set, a name is generated using Release.Name
+  # staticIpName: ""
+
+certificate:
+  # Used with cloudArmor
+  issuer: letsencrypt
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -134,6 +163,7 @@ affinity: {}
 # Used for DD_TRACE_AGENT_HOSTNAME on DD APM/Node.js potentially can be used with logger vars too
 apm:
   enabled: false
+  # If datadogEnvironment is not defined we use variable environment as default
   datadogEnvironment: ""
 
 # Default Logger and DD variables are defined here: https://github.com/dave-inc/charts/blob/master/common/templates/deployment.yaml
