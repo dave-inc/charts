@@ -19,47 +19,76 @@ metadata:
     {{ if .Values.cloudArmor.enabled -}}
     kubernetes.io/ingress.global-static-ip-name: {{ .Values.cloudArmor.staticIpName | default (include "common.name" .) }}
     networking.gke.io/v1beta1.FrontendConfig: {{ include "common.name" . }}
-    {{- end }}
+    {{- end -}}
   {{- end }}
 spec:
   rules:
   {{ if .Values.cloudArmor.enabled -}}
-
   {{- range .Values.ingress.hosts -}}
   - http:
       paths:
+      {{- if gt (.paths | len) 1 -}}
+      {{- range .paths }}
+      - backend:
+        {{- range $backend, $service := .backend }}
+          service:
+            name: {{ $service.name }}
+            port:
+              {{- range $port, $number := $service.port }}
+              number: {{ $number }}
+              {{- end }}
+        {{- end }}
+        path: {{ .path | default "/*" | quote }}
+        pathType: {{ .pathType | default "ImplementationSpecific" | quote }}
+      {{- end -}}
+      {{- else }}
       {{- range .paths }}
       - backend:
           service:
             name: {{ $name }}
             port:
               number: {{ $svcPort }}
-        path: {{ . }}
-        pathType: ImplementationSpecific
+        path: {{ . | quote }}
+        pathType: {{ default "ImplementationSpecific" | quote }}
+      {{- end -}}
       {{- end -}}
   {{- end }}
-
   {{- if .Values.ingress.tls }}
   tls:
     - secretName: {{ .Values.cloudArmor.secretName }}
   {{- end }}
-
   {{- else -}}
 
-  {{- range .Values.ingress.hosts }}
+  {{- range .Values.ingress.hosts -}}
   - host: {{ .host | quote }}
     http:
       paths:
+      {{- if gt (.paths | len) 1 -}}
+      {{- range .paths }}
+      - backend:
+        {{- range $backend, $service := .backend }}
+          service:
+            name: {{ $service.name }}
+            port:
+              {{- range $port, $number := $service.port }}
+              number: {{ $number }}
+              {{- end }}
+        {{- end }}
+        path: {{ .path | default "/" | quote }}
+        pathType: {{ .pathType | default "ImplementationSpecific" | quote }}
+      {{- end -}}
+      {{- else }}
       {{- range .paths }}
       - backend:
           service:
             name: {{ $name }}
             port:
               number: {{ $svcPort }}
-        path: {{ . }}
+        path: {{ . | quote }}
+        pathType: {{ default "ImplementationSpecific" | quote }}
       {{- end -}}
+      {{- end }}
   {{- end }}
-
   {{- if .Values.ingress.tls }}
   tls:
     {{- range .Values.ingress.tls }}
@@ -70,7 +99,5 @@ spec:
       secretName: {{ .secretName }}
     {{- end -}}
   {{- end }}
-
   {{- end -}}
-
 {{- end }}

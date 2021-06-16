@@ -95,7 +95,14 @@ ingress:
     # kubernetes.io/tls-acme: "true"
   hosts:
     - host: chart-example.local
-      paths: []
+      paths:
+        - backend:
+            service:
+              name: chart-service
+              port: 
+                number: 80
+          path: /
+          pathType: ImplementationSpecific
   tls: []
   #  - secretName: chart-example-tls
   #    hosts:
@@ -105,11 +112,16 @@ cloudArmor:
   enabled: false
   # The name of cloudArmor is optional, If not set, a name is generated using Release.Name
   # name: ""
+  # host and secretName are required to generate a certificate
   host: chart-example.local
   secretName: chart-example-tls
   # The name of securityPolicy used by backendConfig is optional, If not set, a name is generated using Release.Name
   # securityPolicy: ""
-  frontendConfig: {}
+  # By default we always use redirectToHttps if you want to define frontendConfig consider including it
+  frontendConfig:
+    redirectToHttps:
+      enabled: true
+      responseCodeName: PERMANENT_REDIRECT
   # The name of staticIpName is optional, If not set, a name is generated using Release.Name
   # staticIpName: ""
 
