@@ -4,6 +4,5 @@ kind: BackendConfig
 metadata:
   name: {{ include "common.name" . }}
 spec:
-  securityPolicy:
-    name: {{ .Values.cloudArmor.securityPolicyName | default (include "common.name" .) | quote }}
+  {{- toYaml .Values.cloudArmor.backendConfig | nindent 2 }}
 {{- end }}
