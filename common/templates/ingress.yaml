@@ -53,12 +53,9 @@ spec:
       {{- end -}}
       {{- end -}}
   {{- end }}
-  {{- if .Values.ingress.tls }}
   tls:
     - secretName: {{ .Values.cloudArmor.secretName }}
-  {{- end }}
   {{- else -}}
-
   {{- range .Values.ingress.hosts -}}
   - host: {{ .host | quote }}
     http:

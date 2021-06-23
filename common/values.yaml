@@ -107,6 +107,7 @@ ingress:
   #  - secretName: chart-example-tls
   #    hosts:
   #      - chart-example.local
+  # tls section is not used with using cloudArmor: enabled
 
 cloudArmor:
   enabled: false
@@ -115,9 +116,14 @@ cloudArmor:
   # host and secretName are required to generate a certificate
   host: chart-example.local
   secretName: chart-example-tls
-  # The name of securityPolicy used by backendConfig is optional, If not set, a name is generated using Release.Name
-  # securityPolicy: ""
-  # By default we always use redirectToHttps if you want to define frontendConfig consider including it
+  # securityPolicy is required in backendConfig
+  backendConfig:
+    securityPolicy:
+      name: chart-securitypolicy
+    healthCheck:
+      requestPath: /
+      type: HTTP
+  # By default we always use redirectToHttps in frontendConfig if you want to define overwrite consider including it
   frontendConfig:
     redirectToHttps:
       enabled: true
@@ -125,8 +131,8 @@ cloudArmor:
   # The name of staticIpName is optional, If not set, a name is generated using Release.Name
   # staticIpName: ""
 
+# Used with cloudArmor only
 certificate:
-  # Used with cloudArmor
   issuer: letsencrypt
 
 resources: {}
