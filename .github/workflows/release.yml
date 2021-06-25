@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-      - or-testing
+      - or-tests
 
 jobs:
   release:
