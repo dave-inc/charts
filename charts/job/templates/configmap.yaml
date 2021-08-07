@@ -1,0 +1,10 @@
+{{- if .Values.env }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.configMapName | default (include "job.name" .) }}
+  labels:
+    {{- include "job.labels" . | nindent 4 }}
+data:
+  {{- .Values.env | toYaml | nindent 2 }}
+{{- end }}

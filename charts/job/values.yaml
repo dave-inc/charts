@@ -1,0 +1,136 @@
+# Default values for job.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+# Used for NODE_ENV and DD_ENV
+environment: staging
+# Required: GCP Project where this Release will be deployed
+project: ""
+
+image:
+  repository: nginx
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: latest
+
+command: []
+args: []
+port: 8080
+
+# Init container must have a name, image and command to run before
+# deployContainer initializes.  Both containers share a /tmp volume mount.
+initContainer:
+  enabled: false
+  name: "setup"
+  image: "alpine:latest"
+  command: ["sh", "-c", "touch /tmp/this"]
+  volumeMounts:
+    - name: tmp
+      mountPath: /tmp
+
+imagePullSecrets: []
+
+# schedule timezone is UTC
+schedule: "* 0 * * *"
+suspend: false
+failedJobsHistoryLimit: ""
+successfulJobsHistoryLimit: ""
+
+backoffLimit: ""
+ttlSecondsAfterFinished: ""
+
+restartPolicy: "OnFailure"
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using Release.Name
+  name: ""
+  # IAM workload idenitity binding name
+  # If not set and serviceAccount.create:true, a name is generated using Release.Name
+  # If Release.Name is bigger than 30 characteres use this variable to overwrite it with something shorter to identify this workload
+  workloadIdentitySA: ""
+  # Specifies whether an existing service account will be used
+  # Make sure you set serviceAccount.create:false when using this option
+  # Dynamic environments will use of this one
+  existingNameSA: ""
+
+lifecycle: {}
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Used for DD_TRACE_AGENT_HOSTNAME on DD APM/Node.js potentially can be used with logger vars too
+apm:
+  enabled: false
+  # If datadogEnvironment is not defined we use variable environment as default
+  datadogEnvironment: ""
+
+# Default Logger and DD variables are defined here: https://github.com/dave-inc/charts/blob/master/job/templates/deployment.yaml
+# Custom env variables are defined here and will be populated via Deployment's ConfigMap
+env: {}
+
+# ConfigMap
+# The configMapName is optional, If not set, a name is generated using Release.Name
+configMapName: ""
+existingConfigMapName: ""
+
+# Secret
+createSecret: false
+createSecretName: ""
+# Mutually exclusive with the two above
+existingSecretName: ""
+
+sideCar:
+  enabled: true
+  name: sidecar
+  image:
+    repository: nginx
+    pullPolicy: Always
+  command: []
+  args: []
+  resources:
+    requests:
+      cpu: '100m'
+  volumeMounts:
+    - name: tmp
+      mountPath: /tmp/
+  lifecycle:
+    preStop:
+      exec:
+        command: ['/bin/sh','-c','/bin/sleep 30']
+  # Use this one for shared volume name with mainContainer
+  # volume: cloudsql
