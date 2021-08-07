@@ -132,5 +132,5 @@ sideCar:
     preStop:
       exec:
         command: ['/bin/sh','-c','/bin/sleep 30']
-  # Use this one for shared volume name with mainContainer
+  # Volume name to use when sharing volumne with mainContainer for example for cloudsql
   # volume: cloudsql
