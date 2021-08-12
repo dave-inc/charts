@@ -75,8 +75,8 @@ spec:
                 - name: tmp
                   mountPath: /tmp
               {{- if .Values.sideCar.enabled }}
-                - name: {{ .Values.sideCar.volume }}
-                  mountPath: /{{ .Values.sideCar.volume }}
+                - name: {{ .Values.sideCar.volumeName }}
+                  mountPath: /{{ .Values.sideCar.volumeName }}
               {{- end }}
                 {{- if .Values.lifecycle }}
               lifecycle:
@@ -164,8 +164,8 @@ spec:
             - name: tmp
               emptyDir: {}
           {{- if .Values.sideCar.enabled }}
-            - name: {{ .Values.sideCar.volume }}
-              emptyDir: null
+            - name: {{ .Values.sideCar.volumeName }}
+              emptyDir: {}
           {{- end }}
           {{- with .Values.nodeSelector }}
           nodeSelector:

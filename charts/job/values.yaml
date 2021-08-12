@@ -113,7 +113,7 @@ createSecretName: ""
 existingSecretName: ""
 
 sideCar:
-  enabled: true
+  enabled: false
   name: sidecar
   image:
     repository: nginx
@@ -124,11 +124,15 @@ sideCar:
     requests:
       cpu: '100m'
   volumeMounts:
+    # Both containers share a /tmp volume mount.
     - name: tmp
       mountPath: /tmp/
+    # Match VolumeName variable when sharing volume with mainContainer (mostly used for cloudsql-proxy)
+    # - name: sidecar
+    #   mountPath: /sidecar/
   lifecycle:
     preStop:
       exec:
         command: ['/bin/sh','-c','/bin/sleep 30']
-  # Volume name to use when sharing volumne with mainContainer for example for cloudsql
-  # volume: cloudsql
+  # VolumeName used when sharing volume with mainContainer, make sure matches the name in sideCar.volumeMounts (mostly used for cloudsql-proxy)
+  #volumeName: sidecar
