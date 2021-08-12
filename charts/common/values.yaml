@@ -97,10 +97,8 @@ ingress:
     - host: chart-example.local
       paths:
         - backend:
-            service:
-              name: chart-service
-              port: 
-                number: 80
+            serviceName: chart-service
+            servicePort: 80
           path: /
           pathType: ImplementationSpecific
   tls: []

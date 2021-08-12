@@ -1,0 +1,181 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: {{ include "job.name" . }}
+  labels:
+    run: {{ include "job.name" . }}
+spec:
+  schedule: "{{ .Values.schedule }}"
+  suspend: {{ .Values.suspend }}
+  {{- if .Values.failedJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.failedJobsHistoryLimit }}
+  {{- end }}
+  {{- if .Values.successfulJobsHistoryLimit }}
+  successfulJobsHistoryLimit: {{ .Values.successfulJobsHistoryLimit }}
+  {{- end }}
+  jobTemplate:
+    spec:
+      {{- if .Values.backoffLimit }}
+      backoffLimit: {{ .Values.backoffLimit }}
+      {{- end }}
+      {{- if .Values.ttlSecondsAfterFinished }}
+      ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
+      {{- end }}
+      template:
+        metadata:
+          annotations:
+            {{/*
+            https://helm.sh/docs/howto/charts_tips_and_tricks/#automatically-roll-deployments
+            */}}
+            checksum/config: {{ .Values.env | toString | sha256sum }}
+            {{- if .Values.podAnnotations }}
+            {{- toYaml .Values.podAnnotations | nindent 12 }}
+            {{- end }}
+          labels:
+            run: {{ include "job.name" . }}
+            tags.datadoghq.com/version: {{ .Values.image.tag }}
+            {{- include "job.selectorLabels" . | nindent 12 }}
+        spec:
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 8 }}
+          {{- end }}
+          restartPolicy: {{ .Values.restartPolicy }}
+          serviceAccountName: {{ include "job.serviceAccountName" . }}
+          securityContext:
+            {{- toYaml .Values.podSecurityContext | nindent 12 }}         
+          {{- if .Values.initContainer.enabled }}
+          initContainers:
+            - name: {{ .Values.initContainer.name }}
+              image: {{ .Values.initContainer.image }}
+              command: {{ toYaml .Values.initContainer.command | nindent 14 }}
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+          {{- end }}
+          containers:
+            - name: {{ include "job.name" . }}
+              securityContext:
+                {{- toYaml .Values.securityContext | nindent 16 }}
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              {{- if .Values.command }}
+              command:
+                {{- toYaml .Values.command | nindent 14 }}
+              {{- end }}
+              {{- if .Values.args }}
+              args:
+                {{- toYaml .Values.args | nindent 14 }}
+              {{- end }}
+              {{- if .Values.resources }}
+              resources:
+                {{- toYaml .Values.resources | nindent 16 }}
+              {{- end }}                  
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+              {{- if .Values.sideCar.enabled }}
+                - name: {{ .Values.sideCar.volume }}
+                  mountPath: /{{ .Values.sideCar.volume }}
+              {{- end }}
+                {{- if .Values.lifecycle }}
+              lifecycle:
+                {{- toYaml .Values.lifecycle | nindent 16 }}
+              {{- end }}
+              env:
+                - name: NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+                - name: NODE_ENV
+                  value: {{ .Values.environment }}
+                - name: NODE_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: spec.nodeName
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      apiVersion: v1
+                      fieldPath: metadata.name
+              {{- if .Values.apm.enabled }}
+                - name: DD_ENV
+                  value: {{ .Values.apm.datadogEnvironment | default .Values.environment }}
+                - name: DD_TRACE_AGENT_HOSTNAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: status.hostIP
+                {{/*
+                Used by hot-shots package as default StatsD host
+                */}}
+                - name: DD_AGENT_HOST
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: status.hostIP
+                - name: DD_SERVICE_NAME
+                  value: {{ include "job.name" . }}
+              {{- end }}
+              envFrom:
+                {{- if .Values.existingConfigMapName }}
+                - configMapRef:
+                    name: {{ .Values.existingConfigMapName }}
+                {{- end }}
+                {{- if .Values.env }}
+                - configMapRef:
+                    name: {{ .Values.configMapName | default (include "job.name" .) }}
+                {{- end}}
+                {{- if and (.Values.createSecret) (not .Values.createSecretName) }}
+                - secretRef:
+                    name: {{ include "job.name" . }}
+                {{- else if and (.Values.createSecret) (.Values.createSecretName) }}
+                - secretRef:
+                    name: {{ .Values.createSecretName }}
+                {{- else if and (.Values.existingSecretName) (not .Values.createSecret) }}
+                - secretRef:
+                    name: {{ .Values.existingSecretName }}
+                {{- else }}
+                {{- end }}
+            {{- if .Values.sideCar.enabled }}
+            - name: {{ .Values.sideCar.name }}
+              image: "{{ .Values.sideCar.image.repository }}"
+              imagePullPolicy: {{ .Values.sideCar.image.pullPolicy }}
+              {{- if .Values.sideCar.command }}
+              command:
+                {{- toYaml .Values.sideCar.command | nindent 14 }}
+              {{- end }}
+              {{- if .Values.sideCar.args }}
+              args:
+                {{- toYaml .Values.sideCar.args | nindent 14 }}
+              {{- end }}
+              {{- if .Values.sideCar.resources }}
+              resources:
+                {{- toYaml .Values.sideCar.resources | nindent 16 }}
+              {{- end }}
+              {{- if .Values.sideCar.volumeMounts }}
+              volumeMounts:
+                {{- toYaml .Values.sideCar.volumeMounts | nindent 14 }}
+              {{- end }}
+              {{- if .Values.sideCar.lifecycle }}
+              lifecycle:
+                {{- toYaml .Values.sideCar.lifecycle | nindent 16 }}
+              {{- end }}
+            {{- end }}
+          volumes:
+            - name: tmp
+              emptyDir: {}
+          {{- if .Values.sideCar.enabled }}
+            - name: {{ .Values.sideCar.volume }}
+              emptyDir: null
+          {{- end }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
