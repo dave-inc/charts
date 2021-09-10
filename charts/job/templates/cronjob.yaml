@@ -42,8 +42,10 @@ spec:
           {{- end }}
           restartPolicy: {{ .Values.restartPolicy }}
           serviceAccountName: {{ include "job.serviceAccountName" . }}
+          {{- if .Values.podSecurityContext }}
           securityContext:
             {{- toYaml .Values.podSecurityContext | nindent 12 }}         
+          {{- end }}
           {{- if .Values.initContainer.enabled }}
           initContainers:
             - name: {{ .Values.initContainer.name }}
@@ -55,8 +57,10 @@ spec:
           {{- end }}
           containers:
             - name: {{ include "job.name" . }}
+              {{- if .Values.securityContext }}
               securityContext:
                 {{- toYaml .Values.securityContext | nindent 16 }}
+              {{- end }}
               image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
               imagePullPolicy: {{ .Values.image.pullPolicy }}
               {{- if .Values.command }}
