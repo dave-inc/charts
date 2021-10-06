@@ -1,14 +1,16 @@
 {{- if .Values.cloudArmor.enabled -}}
 apiVersion: cert-manager.io/v1
-kind: "Certificate"
+kind: Certificate
 metadata:
   name: {{ include "common.name" . }}
 spec:
   secretName: {{ .Values.cloudArmor.secretName }}
   issuerRef:
     kind: ClusterIssuer
-    name: {{ .Values.certificate.issuer }}
-  commonName: {{ .Values.cloudArmor.host | quote }}
+    name: {{ .Values.cloudArmor.certificate.issuer }}
+  {{ range .Values.cloudArmor.hosts -}}
+  commonName: {{ .host | quote }}
   dnsNames:
-    - {{ .Values.cloudArmor.host | quote }}
+    - {{ .host | quote }}
+  {{- end }}
 {{- end }}

@@ -4,52 +4,28 @@
 apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
-  {{ if .Values.cloudArmor.enabled -}}
-  name: {{ .Values.cloudArmor.name | default (include "common.name" .) }}
-  {{- else -}}
-  name: {{ $name }}
-  {{- end }}
+  name: {{ .Values.ingress.name | default (include "common.name" .) }}
   labels:
     {{- include "common.labels" . | nindent 4 }}
-  {{- if or .Values.cloudArmor.enabled .Values.ingress.annotations }}
+  {{- if .Values.ingress.annotations }}
   annotations:
     {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-    {{ if .Values.cloudArmor.enabled -}}
-    kubernetes.io/ingress.global-static-ip-name: {{ .Values.cloudArmor.staticIpName | default (include "common.name" .) }}
-    networking.gke.io/v1beta1.FrontendConfig: {{ include "common.name" . }}
-    {{- end -}}
   {{- end }}
 spec:
   rules:
-  {{ if .Values.cloudArmor.enabled -}}
-  {{- range .Values.ingress.hosts -}}
-  - http:
-      paths:
-      {{- range .paths }}
-      - backend:
-          serviceName: {{ .backend.serviceName }}
-          servicePort: {{ .backend.servicePort }}
-        path: {{ .path | default "/*" | quote }}
-        pathType: {{ .pathType | default "ImplementationSpecific" | quote }}
-      {{- end -}}
-  {{- end }}
-  tls:
-    - secretName: {{ .Values.cloudArmor.secretName }}
-  {{- else -}}
-  {{- range .Values.ingress.hosts -}}
+  {{- range .Values.ingress.hosts }}
   - host: {{ .host | quote }}
     http:
       paths:
       {{- range .paths }}
       - backend:
-          serviceName: {{ .backend.serviceName }}
-          servicePort: {{ .backend.servicePort }}
-        path: {{ .path | default "/" | quote }}
-        pathType: {{ .pathType | default "ImplementationSpecific" | quote }}
-      {{- end -}}
-
+          serviceName: {{ .backend.serviceName | default $name }}
+          servicePort: {{ .backend.servicePort | default $svcPort }}
+        path: {{ .path | default "/" }}
+        pathType: {{ .pathType | default "ImplementationSpecific" }}
+      {{- end }}
   {{- end }}
   {{- if .Values.ingress.tls }}
   tls:
@@ -60,6 +36,5 @@ spec:
         {{- end }}
       secretName: {{ .secretName }}
     {{- end -}}
-  {{- end }}
   {{- end -}}
 {{- end }}
