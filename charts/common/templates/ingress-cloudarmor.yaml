@@ -27,5 +27,5 @@ spec:
       {{- end -}}
   {{- end }}
   tls:
-    - secretName: {{ .Values.cloudArmor.secretName }}
+    - secretName: {{ include "common.cloudArmorTlsSecret" . }}
 {{- end }}
