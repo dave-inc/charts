@@ -1,0 +1,31 @@
+{{- if .Values.cloudArmor.enabled -}}
+{{- $name := include "common.cloudArmorName" . -}}
+{{- $svcPort := .Values.service.port -}}
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: {{ include "common.cloudArmorName" . }}
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+  annotations:
+    {{- with .Values.cloudArmor.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    kubernetes.io/ingress.global-static-ip-name: {{ .Values.cloudArmor.staticIpName | default (include "common.name" .) }}
+    networking.gke.io/v1beta1.FrontendConfig: {{ include "common.name" . }}
+spec:
+  rules:
+  {{ range .Values.cloudArmor.hosts -}}
+  - http:
+      paths:
+      {{- range .paths }}
+      - backend:
+          serviceName: {{ .backend.serviceName | default $name }}
+          servicePort: {{ .backend.servicePort | default $svcPort }}
+        path: {{ .path | default "/*" }}
+        pathType: {{ .pathType | default "ImplementationSpecific" }}
+      {{- end -}}
+  {{- end }}
+  tls:
+    - secretName: {{ include "common.cloudArmorTlsSecret" . }}
+{{- end }}

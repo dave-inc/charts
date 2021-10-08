@@ -82,7 +82,6 @@ securityContext: {}
 
 service:
   enabled: true
-  # Only for cloudArmor use type: NodePort
   type: ClusterIP
   port: 80
   # The name of the service is optional, If not set, a name is generated using Release.Name
@@ -90,6 +89,8 @@ service:
 
 ingress:
   enabled: false
+  # The name is optional, If not set, a name is generated using Release.Name
+  # name: ""
   annotations: {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
@@ -109,11 +110,20 @@ ingress:
 
 cloudArmor:
   enabled: false
-  # The name of cloudArmor is optional, If not set, a name is generated using Release.Name
+  # The name of cloudArmor is optional, if not set, a name is generated using <Release.Name>-ca
   # name: ""
-  # host and secretName are required to generate a certificate
-  host: chart-example.local
-  secretName: chart-example-tls
+  # If you overwrite <name> it should match <serviceName> under the hosts section
+  annotations: {}
+  hosts:
+    - host: chart-example.local
+      paths:
+        - backend:
+            serviceName: <chart-service>-ca
+            servicePort: 80
+          path: /*
+          pathType: ImplementationSpecific
+  # secretName is optional, if not set, a name is generated using <host> will be converted to chart-example-local-tls
+  # secretName: chart-example-local-tls
   # securityPolicy is required in backendConfig
   backendConfig:
     securityPolicy:
@@ -128,10 +138,11 @@ cloudArmor:
       responseCodeName: PERMANENT_REDIRECT
   # The name of staticIpName is optional, If not set, a name is generated using Release.Name
   # staticIpName: ""
-
-# Used with cloudArmor only
-certificate:
-  issuer: letsencrypt
+  # cloudArmor needs a service type NodePort
+  service:
+    type: NodePort
+  certificate:
+    issuer: letsencrypt
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious

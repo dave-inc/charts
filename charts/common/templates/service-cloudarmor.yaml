@@ -1,12 +1,15 @@
+{{- if .Values.cloudArmor.enabled -}}
 {{- if .Values.service.enabled -}}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.service.name | default (include "common.name" .) }}
+  name: {{ include "common.cloudArmorName" . }}
   labels:
     {{- include "common.labels" . | nindent 4 }}
+  annotations:
+    cloud.google.com/backend-config: '{"ports": {"80":"{{ include "common.name" . }}", "443":"{{ include "common.name" . }}"}}'
 spec:
-  type: {{ .Values.service.type }}
+  type: {{ .Values.cloudArmor.service.type }}
   ports:
     - port: {{ .Values.service.port }}
       targetPort: {{ .Values.deploymentContainer.port }}
@@ -14,4 +17,5 @@ spec:
       name: http
   selector:
     {{- include "common.selectorLabels" . | nindent 4 }}
+{{- end }}
 {{- end }}
