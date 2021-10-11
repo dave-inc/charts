@@ -124,7 +124,7 @@ cloudArmor:
           pathType: ImplementationSpecific
   # secretName is optional, if not set, a name is generated using <host> will be converted to chart-example-local-tls
   # secretName: chart-example-local-tls
-  # securityPolicy is required in backendConfig
+  # securityPolicy is required in backendConfig. This is a resource in GCP.
   backendConfig:
     securityPolicy:
       name: chart-securitypolicy
@@ -136,7 +136,7 @@ cloudArmor:
     redirectToHttps:
       enabled: true
       responseCodeName: PERMANENT_REDIRECT
-  # The name of staticIpName is optional, If not set, a name is generated using Release.Name
+  # staticIpName is optional, If not set, a name is generated using Release.Name. This is a resource in GCP.
   # staticIpName: ""
   # cloudArmor needs a service type NodePort
   service:
