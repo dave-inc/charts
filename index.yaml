@@ -33,6 +33,16 @@ entries:
     version: 0.7.18-beta
   - apiVersion: v2
     appVersion: 1.17.0
+    created: "2021-11-03T04:58:22.897134346Z"
+    description: Standard Service Template
+    digest: c1cd167d17b11b567223afd4bd13c5a53b6a3e76d236e4e0ea70360d073a558b
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.7.18-beta/common-0.7.18-beta.tgz
+    version: 0.7.18-beta
+  - apiVersion: v2
+    appVersion: 1.17.0
     created: "2021-10-11T17:28:35.825221055Z"
     description: Standard Service Template
     digest: fc0991ccd37c2e78c365319bcfb191fb047aee20e3e0c8ae01ac0318fd22e0c1
@@ -392,4 +402,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/job-0.1.0/job-0.1.0.tgz
     version: 0.1.0
-generated: "2021-11-03T04:53:49.670144449Z"
+generated: "2021-11-03T04:58:22.897551849Z"
