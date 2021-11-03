@@ -58,7 +58,7 @@ spec:
           livenessProbe:
             httpGet:
               path: {{ .Values.deploymentContainer.livenessProbe.path }}
-              port: {{ .Values.deploymentContainer.livenessProbe.port | default ".Values.deploymentContainer.port" }}
+              port: {{ .Values.deploymentContainer.livenessProbe.port | default .Values.deploymentContainer.port }}
             failureThreshold: {{ .Values.deploymentContainer.livenessProbe.failureThreshold }}
             initialDelaySeconds: {{ .Values.deploymentContainer.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.deploymentContainer.livenessProbe.periodSeconds }}
@@ -67,7 +67,7 @@ spec:
           readinessProbe:
             httpGet:
               path: {{ .Values.deploymentContainer.readinessProbe.path }}
-              port: {{ .Values.deploymentContainer.readinessProbe.port | default ".Values.deploymentContainer.port" }}
+              port: {{ .Values.deploymentContainer.readinessProbe.port | default .Values.deploymentContainer.port }}
             failureThreshold: {{ .Values.deploymentContainer.readinessProbe.failureThreshold }}
             initialDelaySeconds: {{ .Values.deploymentContainer.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.deploymentContainer.readinessProbe.periodSeconds }}
