@@ -151,6 +151,13 @@ spec:
             - name: {{ .Values.cloudsqlProxy.volume }}
               mountPath: /{{ .Values.cloudsqlProxy.volume }}
           {{- end }}
+          {{- if .Values.existingSecretMount.enabled }}
+            {{- range .Values.existingSecretMount.secrets }}
+            - name: {{ .name }}-vol
+              mountPath: {{ .mountPath }}
+              readOnly: true
+            {{- end }}
+          {{- end }}
 
           {{- if .Values.cloudsqlProxy.enabled }}
         - name: {{ .Values.cloudsqlProxy.name }}
@@ -182,6 +189,15 @@ spec:
         - name: {{ .Values.cloudsqlProxy.volume }}
           emptyDir: null
       {{- end }}
+      {{- if .Values.existingSecretMount.enabled }}
+        {{- range .Values.existingSecretMount.secrets }}
+        - name: {{ .name }}-vol
+          secret:
+            secretName: {{ .name }}
+            defaultMode: {{ .defaultMode }}
+        {{- end }}
+      {{- end}}
+
 
       {{- with .Values.nodeSelector }}
       nodeSelector:

@@ -194,7 +194,19 @@ existingConfigMapName: ""
 createSecret: false
 createSecretName: ""
 # Mutually exclusive with the two above
+# existingSecretName will used as secretRef
 existingSecretName: ""
+# existingSecretMount used for SSH keys or Tls certs and mounted as volume
+existingSecretMount:
+  enabled: false
+  # Specify secret(s), mountPath and defaultMode
+  # secrets:
+  #   - name: secret-ssh-keys
+  #     mountPath: /home/someuser/
+  #     defaultMode: 420
+  #   - name: secret-ssh-tls
+  #     mountPath: /www/somepath/
+  #     defaultMode: 420
 
 # CloudSQL side container
 cloudsqlProxy:
