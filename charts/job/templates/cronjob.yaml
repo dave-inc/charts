@@ -17,7 +17,7 @@ spec:
   startingDeadlineSeconds: {{ .Values.startingDeadlineSeconds }}
   {{- end }}
   {{- if .Values.concurrencyPolicy }}
-  startingDeadlineSeconds: {{ .Values.concurrencyPolicy }}
+  concurrencyPolicy: {{ .Values.concurrencyPolicy }}
   {{- end }}
   jobTemplate:
     spec:
