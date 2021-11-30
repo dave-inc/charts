@@ -13,6 +13,12 @@ spec:
   {{- if .Values.successfulJobsHistoryLimit }}
   successfulJobsHistoryLimit: {{ .Values.successfulJobsHistoryLimit }}
   {{- end }}
+  {{- if .Values.startingDeadlineSeconds }}
+  startingDeadlineSeconds: {{ .Values.startingDeadlineSeconds }}
+  {{- end }}
+  {{- if .Values.concurrencyPolicy }}
+  concurrencyPolicy: {{ .Values.concurrencyPolicy }}
+  {{- end }}
   jobTemplate:
     spec:
       {{- if .Values.backoffLimit }}
