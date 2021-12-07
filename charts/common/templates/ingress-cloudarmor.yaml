@@ -1,7 +1,6 @@
 {{- if .Values.cloudArmor.enabled -}}
-{{- $name := include "common.cloudArmorName" . -}}
-{{- $svcPort := .Values.service.port -}}
-apiVersion: networking.k8s.io/v1beta1
+{{- $svcport := .Values.service.port -}}
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ include "common.cloudArmorName" . }}
@@ -20,8 +19,16 @@ spec:
       paths:
       {{- range .paths }}
       - backend:
-          serviceName: {{ .backend.serviceName | default $name }}
-          servicePort: {{ .backend.servicePort | default $svcPort }}
+        {{- range $backend, $service := .backend }}
+          service:
+            name: {{ $service.name }}
+            port:
+              {{- if $service.port }}
+              number: {{ $service.port.number }}
+              {{- else }}
+              number: {{ default $svcport }}
+              {{- end }}
+        {{- end }}
         path: {{ .path | default "/*" }}
         pathType: {{ .pathType | default "ImplementationSpecific" }}
       {{- end -}}
