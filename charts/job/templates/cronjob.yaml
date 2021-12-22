@@ -1,3 +1,4 @@
+{{- if .Values.cronjob -}}
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
@@ -88,7 +89,14 @@ spec:
                 - name: {{ .Values.sideCar.volumeName }}
                   mountPath: /{{ .Values.sideCar.volumeName }}
               {{- end }}
-                {{- if .Values.lifecycle }}
+              {{- if .Values.existingSecretMount.enabled }}
+                {{- range .Values.existingSecretMount.secrets }}
+                - name: {{ .name }}-vol
+                  mountPath: {{ .mountPath }}
+                  readOnly: true
+                {{- end }}
+              {{- end }}
+              {{- if .Values.lifecycle }}
               lifecycle:
                 {{- toYaml .Values.lifecycle | nindent 16 }}
               {{- end }}
@@ -177,6 +185,14 @@ spec:
             - name: {{ .Values.sideCar.volumeName }}
               emptyDir: {}
           {{- end }}
+          {{- if .Values.existingSecretMount.enabled }}
+            {{- range .Values.existingSecretMount.secrets }}
+            - name: {{ .name }}-vol
+              secret:
+                secretName: {{ .name }}
+                defaultMode: {{ .defaultMode }}
+            {{- end }}
+          {{- end}}
           {{- with .Values.nodeSelector }}
           nodeSelector:
             {{- toYaml . | nindent 12 }}
@@ -189,3 +205,4 @@ spec:
           tolerations:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+{{- end }}
