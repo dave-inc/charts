@@ -4,13 +4,11 @@ kind: Certificate
 metadata:
   name: {{ include "common.name" . }}
 spec:
-  secretName: {{ .Values.cloudArmor.secretName | default (include "common.cloudArmorTlsSecret" .) }}
+  secretName: {{ .Values.cloudArmor.certificate.secretName | default (include "common.cloudArmorTlsSecret" .) }}
   issuerRef:
     kind: ClusterIssuer
     name: {{ .Values.cloudArmor.certificate.issuer }}
-  {{ range .Values.cloudArmor.hosts -}}
-  commonName: {{ .host | quote }}
+  commonName: {{ .Values.cloudArmor.certificate.host | quote }}
   dnsNames:
-    - {{ .host | quote }}
-  {{- end }}
+    - {{ .Values.cloudArmor.certificate.host | quote }}
 {{- end }}

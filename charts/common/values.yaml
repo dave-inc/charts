@@ -117,15 +117,19 @@ cloudArmor:
   # If you overwrite <name> it should match <serviceName> under the hosts section
   annotations: {}
   hosts:
-    - host: chart-example.local
-      paths:
-        - backend:
-            serviceName: <chart-service>-ca
-            servicePort: 80
-          path: /*
-          pathType: ImplementationSpecific
-  # secretName is optional, if not set, a name is generated using <host> will be converted to chart-example-local-tls
-  # secretName: chart-example-local-tls
+    paths:
+      - backend:
+          service:
+            name: chart-service-ca
+            port:
+              number: 80
+        path: /*
+        pathType: ImplementationSpecific
+  certificate:
+    host: chart-example.local
+    # secretName is optional, if not set, a name is generated using <host> will be converted to chart-example-local-tls
+    # secretName: chart-example-local-tls
+    issuer: letsencrypt
   # securityPolicy is required in backendConfig. This is a resource in GCP.
   backendConfig:
     securityPolicy:
@@ -143,8 +147,6 @@ cloudArmor:
   # cloudArmor needs a service type NodePort
   service:
     type: NodePort
-  certificate:
-    issuer: letsencrypt
 
 resources:
   # We usually recommend not to specify default resources and to leave this as a conscious

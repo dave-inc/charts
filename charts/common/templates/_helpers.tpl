@@ -1,9 +1,10 @@
 {{/* vim: set filetype=mustache: */}}
+
 {{/*
 Expand the name of the chart.
 */}}
 {{- define "common.name" -}}
-{{- default .Release.Name .Values.name | trunc 63 | trimSuffix "-" }}
+{{- default .Release.Name ( required ".Values.name is missing, this can be caused by a mismatch in chart alias reference" .Values.name ) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
@@ -64,7 +65,5 @@ Create Cloud Armor tls secret name.
 This is needed to avoid overlap with default Service and Ingress (the ones not used by Cloud Armor)
 */}}
 {{- define "common.cloudArmorTlsSecret" -}}
-{{- range .Values.cloudArmor.hosts -}}
-{{- printf "%s-tls" .host | replace "." "-" }}
-{{- end }}
+{{- printf "%s-tls" .Values.cloudArmor.certificate.host | replace "." "-" }}
 {{- end }}
