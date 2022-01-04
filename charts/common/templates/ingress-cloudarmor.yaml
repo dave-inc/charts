@@ -14,10 +14,9 @@ metadata:
     networking.gke.io/v1beta1.FrontendConfig: {{ include "common.name" . }}
 spec:
   rules:
-  {{ range .Values.cloudArmor.hosts -}}
   - http:
       paths:
-      {{- range .paths }}
+      {{- range .Values.cloudArmor.paths }}
       - backend:
         {{- range $backend, $service := .backend }}
           service:
@@ -31,8 +30,7 @@ spec:
         {{- end }}
         path: {{ .path | default "/*" }}
         pathType: {{ .pathType | default "ImplementationSpecific" }}
-      {{- end -}}
-  {{- end }}
+      {{- end }}
   tls:
     - secretName: {{ include "common.cloudArmorTlsSecret" . }}
 {{- end }}
