@@ -55,6 +55,7 @@ spec:
             - name: http
               containerPort: {{ .Values.deploymentContainer.port }}
               protocol: TCP
+          {{- if .Values.deploymentContainer.livenessProbe }}
           livenessProbe:
             httpGet:
               path: {{ .Values.deploymentContainer.livenessProbe.path }}
@@ -64,6 +65,8 @@ spec:
             periodSeconds: {{ .Values.deploymentContainer.livenessProbe.periodSeconds }}
             successThreshold: {{ .Values.deploymentContainer.livenessProbe.successThreshold }}
             timeoutSeconds: {{ .Values.deploymentContainer.livenessProbe.timeoutSeconds }}
+          {{- end }}
+          {{- if .Values.deploymentContainer.readinessProbe }}
           readinessProbe:
             httpGet:
               path: {{ .Values.deploymentContainer.readinessProbe.path }}
@@ -73,8 +76,11 @@ spec:
             periodSeconds: {{ .Values.deploymentContainer.readinessProbe.periodSeconds }}
             successThreshold: {{ .Values.deploymentContainer.readinessProbe.successThreshold }}
             timeoutSeconds: {{ .Values.deploymentContainer.readinessProbe.timeoutSeconds }}
+          {{- end }}
+          {{- if .Values.resources }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          {{- end }}
           {{- if .Values.deploymentContainer.command }}
           command:
             {{- toYaml .Values.deploymentContainer.command | nindent 12 }}
