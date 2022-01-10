@@ -167,13 +167,12 @@ strategy:
     maxUnavailable: 25%
   type: RollingUpdate
 
-# configs for the HorizontalPodAutoscaler of the worker Pods
-#
-# ____ EXAMPLE 1_______________
-#  autoscaling:
-#    enabled: true
-#    minReplicas: 1
-#    maxReplicas: 5
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  metrics: []
+# Type Resource
 #    metrics:
 #    - type: Resource
 #      resource:
@@ -181,25 +180,15 @@ strategy:
 #        target:
 #          type: Utilization
 #          averageUtilization: 80
-#
-# ____ EXAMPLE 2_______________
-#  autoscaling:
-#    enabled: true
-#    minReplicas: 1
-#    maxReplicas: 5
+# Type External
 #    metrics:
-#      type: External
-#    - external:
+#    - type: External
+#      external:
 #        metricName: pubsub.googleapis.com|subscription|num_undelivered_messages
 #        metricSelector:
 #          matchLabels:
 #            resource.labels.subscription_id: staging_plaid-updater
 #        targetAverageValue: "100"
-autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 100
-  metrics: []
 
 nodeSelector: {}
 
