@@ -114,18 +114,17 @@ ingress:
 cloudArmor:
   enabled: false
   # The name of cloudArmor is optional, if not set, a name is generated using <Release.Name>-ca
+  # If you overwrite <name> it should match <serviceName> under the paths section
   # name: ""
-  # If you overwrite <name> it should match <serviceName> under the hosts section
   annotations: {}
-  hosts:
-    paths:
-      - backend:
-          service:
-            name: chart-service-ca
-            port:
-              number: 80
-        path: /*
-        pathType: ImplementationSpecific
+  paths:
+    - backend:
+        service:
+          name: chart-service-ca
+          port:
+            number: 80
+      path: /*
+      pathType: ImplementationSpecific
   certificate:
     host: chart-example.local
     # secretName is optional, if not set, a name is generated using <host> will be converted to chart-example-local-tls
