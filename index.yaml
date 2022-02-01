@@ -3,6 +3,16 @@ entries:
   common:
   - apiVersion: v2
     appVersion: 1.17.0
+    created: "2022-02-01T05:17:36.650809739Z"
+    description: Standard Service Template
+    digest: 23b1bb7ccd37a985bc469861cc7ce6a90b48e4cd6afe4e09acd68b01f5cee6fc
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.7.19-beta.2/common-0.7.19-beta.2.tgz
+    version: 0.7.19-beta.2
+  - apiVersion: v2
+    appVersion: 1.17.0
     created: "2022-01-11T17:14:31.236595371Z"
     description: Standard Service Template
     digest: 0f4ea81c2a5c4c086fc896622961118fbaf0622d5bdd2cd9e85db7c92c12d0bc
@@ -73,16 +83,6 @@ entries:
     version: 0.7.18-beta.1
   - apiVersion: v2
     appVersion: 1.17.0
-    created: "2021-11-03T04:12:34.518008678Z"
-    description: Standard Service Template
-    digest: 9be02a02dc9c06b1a1f36e4519a6005fe316e1e83267661946f5a8b61346ad57
-    name: common
-    type: application
-    urls:
-    - https://github.com/dave-inc/charts/releases/download/common-0.7.18-beta/common-0.7.18-beta.tgz
-    version: 0.7.18-beta
-  - apiVersion: v2
-    appVersion: 1.17.0
     created: "2021-11-03T05:13:54.852989572Z"
     description: Standard Service Template
     digest: bbea04490b668cd1fc10fe2246647232ac7b25a936fef2c31d00a3a7b022c024
@@ -116,6 +116,16 @@ entries:
     created: "2021-11-03T04:53:49.669639547Z"
     description: Standard Service Template
     digest: 0a0258499ef1bd817060ff0fd0a8a08cd8a6b0085161df135de6ccd2149f6f5b
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.7.18-beta/common-0.7.18-beta.tgz
+    version: 0.7.18-beta
+  - apiVersion: v2
+    appVersion: 1.17.0
+    created: "2021-11-03T04:12:34.518008678Z"
+    description: Standard Service Template
+    digest: 9be02a02dc9c06b1a1f36e4519a6005fe316e1e83267661946f5a8b61346ad57
     name: common
     type: application
     urls:
@@ -502,4 +512,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/job-0.1.0/job-0.1.0.tgz
     version: 0.1.0
-generated: "2022-01-11T17:14:31.236978474Z"
+generated: "2022-02-01T05:17:36.651448045Z"
