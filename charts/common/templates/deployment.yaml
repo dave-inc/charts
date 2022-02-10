@@ -34,8 +34,7 @@ spec:
       {{- end }}
       serviceAccountName: {{ include "common.serviceAccountName" . }}
       securityContext:
-        runAsUser: 1000
-        runAsGroup: 3000
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       {{- if .Values.initContainer.enabled }}
       initContainers:
@@ -49,7 +48,7 @@ spec:
       containers:
         - name: {{ include "common.name" . }}
           securityContext:
-            allowPrivilegeEscalation: false
+            {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
