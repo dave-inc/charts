@@ -224,6 +224,21 @@ env: {}
 configMapName: ""
 existingConfigMapName: ""
 
+# existingConfigMapMount used for configs that need
+# to be used as files and mounted as volume
+existingConfigMapMount:
+  enabled: false
+  # Specify configMap(s), mountPath and defaultMode
+  # configMaps:
+  #   - name: configMap-name-1
+  #     mountPath: /home/someuser/
+  #     subPath: ""
+  #     defaultMode: 420
+  #   - name: configMap-name-2
+  #     mountPath: /www/somepath/
+  #     subPath: ""
+  #     defaultMode: 420
+
 # Secret
 createSecret: false
 createSecretName: ""

@@ -164,6 +164,16 @@ spec:
               readOnly: true
             {{- end }}
           {{- end }}
+          {{- if .Values.existingConfigMapMount.enabled }}
+            {{- range .Values.existingConfigMapMount.configMaps }}
+            - name: {{ .name }}-vol
+              mountPath: {{ .mountPath }}
+              {{- if .subPath }}
+              subPath: {{ .subPath }}
+              {{- end }}
+              readOnly: true
+            {{- end }}
+          {{- end }}
 
           {{- if .Values.cloudsqlProxy.enabled }}
         - name: {{ .Values.cloudsqlProxy.name }}
@@ -203,7 +213,14 @@ spec:
             defaultMode: {{ .defaultMode }}
         {{- end }}
       {{- end}}
-
+      {{- if .Values.existingConfigMapMount.enabled }}
+        {{- range .Values.existingConfigMapMount.configMaps }}
+        - name: {{ .name }}-vol
+          configMap:
+            name: {{ .name }}
+            defaultMode: {{ .defaultMode }}
+        {{- end }}
+      {{- end}}
 
       {{- with .Values.nodeSelector }}
       nodeSelector:
