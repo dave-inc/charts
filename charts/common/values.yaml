@@ -70,10 +70,12 @@ serviceAccount:
 
 podAnnotations: {}
 
-podSecurityContext: {}
-  # fsGroup: 2000
-
-securityContext: {}
+podSecurityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  
+securityContext:
+  allowPrivilegeEscalation: false
   # capabilities:
   #   drop:
   #   - ALL
