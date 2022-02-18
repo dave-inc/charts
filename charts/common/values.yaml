@@ -134,7 +134,7 @@ cloudArmor:
     issuer: letsencrypt
     # alternativeDnsNames:
     #  - www.chart-example.local
-    #  - *.chart-example.local
+    #  - blog.chart-example.local
   # securityPolicy is required in backendConfig. This is a resource in GCP.
   backendConfig:
     securityPolicy:
