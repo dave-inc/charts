@@ -132,6 +132,9 @@ cloudArmor:
     # secretName is optional, if not set, a name is generated using <host> will be converted to chart-example-local-tls
     # secretName: chart-example-local-tls
     issuer: letsencrypt
+    # alternativeDnsNames:
+    #  - www.chart-example.local
+    #  - *.chart-example.local
   # securityPolicy is required in backendConfig. This is a resource in GCP.
   backendConfig:
     securityPolicy:
