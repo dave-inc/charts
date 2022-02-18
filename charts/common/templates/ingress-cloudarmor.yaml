@@ -32,5 +32,5 @@ spec:
         pathType: {{ .pathType | default "ImplementationSpecific" }}
       {{- end }}
   tls:
-    - secretName: {{ include "common.cloudArmorTlsSecret" . }}
+    - secretName: {{ .Values.cloudArmor.certificate.secretName | default (include "common.cloudArmorTlsSecret" .) }}
 {{- end }}
