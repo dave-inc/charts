@@ -70,10 +70,12 @@ serviceAccount:
 
 podAnnotations: {}
 
-podSecurityContext: {}
-  # fsGroup: 2000
-
-securityContext: {}
+podSecurityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  
+securityContext:
+  allowPrivilegeEscalation: false
   # capabilities:
   #   drop:
   #   - ALL
@@ -130,6 +132,9 @@ cloudArmor:
     # secretName is optional, if not set, a name is generated using <host> will be converted to chart-example-local-tls
     # secretName: chart-example-local-tls
     issuer: letsencrypt
+    # alternativeDnsNames:
+    #  - www.chart-example.local
+    #  - blog.chart-example.local
   # securityPolicy is required in backendConfig. This is a resource in GCP.
   backendConfig:
     securityPolicy:
@@ -172,22 +177,34 @@ autoscaling:
   maxReplicas: 100
   metrics: []
 # Type Resource
-#    metrics:
-#    - type: Resource
-#      resource:
-#        name: memory
-#        target:
-#          type: Utilization
-#          averageUtilization: 80
+#
+#  metrics:
+#  - type: Resource
+#    resource:
+#      name: cpu
+#      target:
+#        type: Utilization
+#        averageUtilization: 50
+#  - type: Resource
+#    resource:
+#      name: memory
+#      target:
+#        type: AverageValue
+#        averageValue: 100Mi
+#
 # Type External
-#    metrics:
-#    - type: External
-#      external:
-#        metricName: pubsub.googleapis.com|subscription|num_undelivered_messages
-#        metricSelector:
+#
+#  metrics:
+#  - type: External
+#    external:
+#      metric:
+#        name: pubsub.googleapis.com|subscription|num_undelivered_messages
+#        selector:
 #          matchLabels:
-#            resource.labels.subscription_id: staging_plaid-updater
-#        targetAverageValue: "100"
+#            resource.labels.subscription_id: payment-method-update
+#      target:
+#        type: AverageValue
+#        averageValue: 100
 
 nodeSelector: {}
 
@@ -209,6 +226,21 @@ env: {}
 # The configMapName is optional, If not set, a name is generated using Release.Name
 configMapName: ""
 existingConfigMapName: ""
+
+# existingConfigMapMount used for configs that need
+# to be used as files and mounted as volume
+existingConfigMapMount:
+  enabled: false
+  # Specify configMap(s), mountPath and defaultMode
+  # configMaps:
+  #   - name: configMap-name-1
+  #     mountPath: /home/someuser/
+  #     subPath: ""
+  #     defaultMode: 420
+  #   - name: configMap-name-2
+  #     mountPath: /www/somepath/
+  #     subPath: ""
+  #     defaultMode: 420
 
 # Secret
 createSecret: false
