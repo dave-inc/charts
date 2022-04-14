@@ -33,7 +33,7 @@ spec:
     container:
       image: alpine:latest
       command: [sh, -c]
-      args: ["echo Image:{{`{{workflow.parameters.image}}`}} Tag:{{`{{workflow.parameters.tag}}`}} Command:{{`{{workflow.parameters.command}}`}}"]
+      args: ["echo 'Image:{{`{{workflow.parameters.image}}`}} Tag:{{`{{workflow.parameters.tag}}`}} Command:{{`{{workflow.parameters.command}}`}}'"]
 
   - name: database
     daemon: true
