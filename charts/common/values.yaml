@@ -287,3 +287,20 @@ cloudsqlProxy:
     #instanceConnectionName: project_name:region:instance_name
     port: 3306
     secretName: migration
+
+# customScriptRunner will use env vars, configmap and secrets from main application
+customScriptRunner:
+  enabled: false
+  name: script-runner
+  image:
+    # If no repository specified will use .Values.image.repository
+    #repository: alpine
+    tag: latest
+  args: []
+  resources: {}
+    # limits:
+    #   cpu: 200m
+    #   memory: 256Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
