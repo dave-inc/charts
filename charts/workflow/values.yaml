@@ -1,0 +1,50 @@
+# Default values for common.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+# Used for NODE_ENV and DD_ENV
+environment: staging
+# Required: GCP Project where this Release will be deployed
+project: ""
+
+image:
+  repository: nginx
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: latest
+
+args: ""
+
+serviceAccount:
+  # At this moment all workflows run with this specific
+  # Please don't change it until a version that supports custom service account is released
+  name: workflows
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 200m
+  #   memory: 256Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+# Used for DD_TRACE_AGENT_HOSTNAME on DD APM/Node.js potentially can be used with logger vars too
+apm:
+  enabled: false
+  # If datadogEnvironment is not defined we use variable environment as default
+  datadogEnvironment: ""
+
+# Default Logger and DD variables are defined here: https://github.com/dave-inc/charts/blob/master/common/templates/deployment.yaml
+# Custom env variables are defined here and will be populated via Deployment's ConfigMap
+env: {}
+
+# ConfigMap
+# The configMapName is optional, If not set, a name is generated using Release.Name
+configMapName: ""
+existingConfigMapName: ""

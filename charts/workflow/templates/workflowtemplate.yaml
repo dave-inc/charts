@@ -1,0 +1,85 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: {{ include "common.name" . }}
+  generateName: {{ include "common.name" . }}-
+spec:
+  arguments:
+    parameters:
+    - name: image
+      value: "{{ .Values.image.repository }}"
+    - name: tag
+      value: "{{ .Values.image.tag }}"
+    - name: args
+      value: "{{ .Values.args }}"
+  entrypoint: main-runner
+  serviceAccountName: "{{ .Values.serviceAccount.name }}"
+  templates:
+  
+  - name: main-runner
+    steps:
+    - - name: log-parameters
+        template: log-parameters
+    - - name: script-runner
+        template: runner
+        arguments:
+          parameters:
+          - name: args
+            value: "{{`{{workflow.parameters.args}}`}}"
+
+  - name: log-parameters
+    container:
+      image: alpine:latest
+      command: [sh, -c]
+      args: ["echo 'Image:{{`{{workflow.parameters.image}}`}} Tag:{{`{{workflow.parameters.tag}}`}} Args:{{`{{workflow.parameters.args}}`}}'"]
+
+  - name: runner
+    inputs:
+      parameters:
+      - name: args
+    container:
+      image: "{{`{{workflow.parameters.image}}`}}:{{`{{workflow.parameters.tag}}`}}"
+      command: [sh, -c]
+      args: ["{{`{{ inputs.parameters.args }}`}}"]
+      envFrom:
+      {{- if .Values.existingConfigMapName }}
+      - configMapRef:
+          name: {{ .Values.existingConfigMapName }}
+      {{- end }}
+      {{- if .Values.env }}
+      - configMapRef:
+          name: {{ .Values.configMapName | default (include "common.name" .) }}
+      {{- end}}
+      {{- if and (.Values.createSecret) (not .Values.createSecretName) }}
+      - secretRef:
+          name: {{ include "common.name" . }}
+      {{- else if and (.Values.createSecret) (.Values.createSecretName) }}
+      - secretRef:
+          name: {{ .Values.createSecretName }}
+      {{- else if and (.Values.existingSecretName) (not .Values.createSecret) }}
+      - secretRef:
+          name: {{ .Values.existingSecretName }}
+      {{- else }}
+      {{- end }}
+      env:
+      - name: NODE_ENV
+        value: {{ .Values.environment }}
+      {{- if .Values.apm.enabled }}
+      - name: DD_ENV
+        value: {{ .Values.apm.datadogEnvironment | default .Values.environment }}
+      - name: DD_TRACE_AGENT_HOSTNAME
+        valueFrom:
+          fieldRef:
+            fieldPath: status.hostIP
+      {{/*
+      Used by hot-shots package as default StatsD host
+      */}}
+      - name: DD_AGENT_HOST
+        valueFrom:
+          fieldRef:
+            fieldPath: status.hostIP
+      - name: DD_SERVICE_NAME
+        value: {{ include "common.name" . }}
+      {{- end }}
+      resources:
+        {{- toYaml .Values.resources | nindent 12 }}
