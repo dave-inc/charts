@@ -562,4 +562,15 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/job-0.1.0/job-0.1.0.tgz
     version: 0.1.0
-generated: "2022-04-14T01:30:35.163081953Z"
+  workflow:
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2022-04-19T00:22:00.63160297Z"
+    description: Standard Service Template
+    digest: 80c5072d85455de6537827e44dc93ff9de79ffc737c71482b0178cc82eb1f88e
+    name: workflow
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
+    version: 0.1.0-beta.1
+generated: "2022-04-19T00:22:00.63248034Z"
