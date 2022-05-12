@@ -53,9 +53,23 @@ deploymentContainer:
     # timeoutSeconds: 1
 
   # customlivenessProbe that overrides the default one
+  # example:
+  # customLivenessProbe:
+  #   exec:
+  #     command:
+  #     - cat
+  #     - /tmp/healthy
+  #   initialDelaySeconds: 5
+  #   periodSeconds: 5
   customLivenessProbe: {}
 
   # customReadinessProbe that overrides the default one
+  #example:
+  # customReadinessProbe:
+  #   tcpSocket:
+  #     port: 8080
+  #   initialDelaySeconds: 15
+  #   periodSeconds: 20
   customReadinessProbe: {}
 
   # customStartupProbe that overrides the default one
