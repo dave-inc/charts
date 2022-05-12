@@ -26,35 +26,8 @@ deploymentContainer:
   port: 8080
 
   # https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
-  livenessProbe:
-    enabled: false
-    # exec, grcp, httpGet or tcpSocket https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#probe-check-methods
-    # exec:
-    #   command: #only for exec
-    #   - cat
-    #   - /tmp/healthy
-    # httpGet:
-    #   path: /healthz
-    #   port: 8080
-    # tcpSocket:
-    #   port: 8080
-    # failureThreshold: 3
-    # initialDelaySeconds: 0
-    # periodSeconds: 10
-    # successThreshold: 1
-    # timeoutSeconds: 1
-  readinessProbe:
-    enabled: false
-    # exec, grcp, httpGet or tcpSocket https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#probe-check-methods
-    # exec:
-    #   command: #only for exec
-    #   - cat
-    #   - /tmp/healthy
-    # httpGet:
-    #   path: /healthz
-    #   port: 8080
-    # tcpSocket:
-    #   port: 8080
+  # Default probe mechanism httpGet, if a different mechanism is needed use customLivenessProbe and customReadinessProbe
+  livenessProbe: {}
     # path: /
     # port: ""
     # failureThreshold: 3
@@ -62,6 +35,31 @@ deploymentContainer:
     # periodSeconds: 10
     # successThreshold: 1
     # timeoutSeconds: 1
+  readinessProbe: {}
+    # path: /
+    # port: ""
+    # failureThreshold: 3
+    # initialDelaySeconds: 0
+    # periodSeconds: 10
+    # successThreshold: 1
+    # timeoutSeconds: 1
+  startupProbe: {}
+    # path: /
+    # port: ""
+    # failureThreshold: 3
+    # initialDelaySeconds: 0
+    # periodSeconds: 10
+    # successThreshold: 1
+    # timeoutSeconds: 1
+
+  # customlivenessProbe that overrides the default one
+  customLivenessProbe: {}
+
+  # customReadinessProbe that overrides the default one
+  customReadinessProbe: {}
+
+  # customStartupProbe that overrides the default one
+  customStartupProbe: {}
 
   terminationGracePeriodSeconds: 30
 

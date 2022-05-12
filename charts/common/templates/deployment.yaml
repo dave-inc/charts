@@ -55,13 +55,47 @@ spec:
             - name: http
               containerPort: {{ .Values.deploymentContainer.port }}
               protocol: TCP
-          {{- if .Values.deploymentContainer.livenessProbe.enabled }}
+          {{- if .Values.deploymentContainer.livenessProbe }}
           livenessProbe:
-            {{- toYaml .Values.LivenessProbe | nindent 12 }}
+            httpGet:
+              path: {{ .Values.deploymentContainer.livenessProbe.path }}
+              port: {{ .Values.deploymentContainer.livenessProbe.port | default .Values.deploymentContainer.port }}
+            failureThreshold: {{ .Values.deploymentContainer.livenessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.deploymentContainer.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.deploymentContainer.livenessProbe.periodSeconds }}
+            successThreshold: {{ .Values.deploymentContainer.livenessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.deploymentContainer.livenessProbe.timeoutSeconds }}
+          {{- else if .Values.deploymentContainer.customLivenessProbe }}
+          livenessProbe:
+            {{- toYaml .Values.deploymentContainer.customLivenessProbe | nindent 12 }}
           {{- end }}
-          {{- if .Values.deploymentContainer.readinessProbe.enabled }}
+          {{- if .Values.deploymentContainer.readinessProbe }}
           readinessProbe:
-            {{- toYaml .Values.ReadinessProbe | nindent 12 }}
+            httpGet:
+              path: {{ .Values.deploymentContainer.readinessProbe.path }}
+              port: {{ .Values.deploymentContainer.readinessProbe.port | default .Values.deploymentContainer.port }}
+            failureThreshold: {{ .Values.deploymentContainer.readinessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.deploymentContainer.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.deploymentContainer.readinessProbe.periodSeconds }}
+            successThreshold: {{ .Values.deploymentContainer.readinessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.deploymentContainer.readinessProbe.timeoutSeconds }}
+          {{- else if .Values.deploymentContainer.customReadinessProbe }}
+          readinessProbe:
+            {{- toYaml .Values.deploymentContainer.customReadinessProbe | nindent 12 }}
+          {{- end }}
+          {{- if .Values.deploymentContainer.startupProbe }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.deploymentContainer.startupProbe.path }}
+              port: {{ .Values.deploymentContainer.startupProbe.port | default .Values.deploymentContainer.port }}
+            failureThreshold: {{ .Values.deploymentContainer.startupProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.deploymentContainer.startupProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.deploymentContainer.startupProbe.periodSeconds }}
+            successThreshold: {{ .Values.deploymentContainer.startupProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.deploymentContainer.startupProbe.timeoutSeconds }}
+          {{- else if .Values.deploymentContainer.customStartupProbe }}
+          startupProbe:
+            {{- toYaml .Values.deploymentContainer.customStartupProbe | nindent 12 }}
           {{- end }}
           {{- if .Values.resources }}
           resources:
