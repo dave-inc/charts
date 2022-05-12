@@ -55,27 +55,13 @@ spec:
             - name: http
               containerPort: {{ .Values.deploymentContainer.port }}
               protocol: TCP
-          {{- if .Values.deploymentContainer.livenessProbe }}
+          {{- if .Values.deploymentContainer.livenessProbe.enabled }}
           livenessProbe:
-            httpGet:
-              path: {{ .Values.deploymentContainer.livenessProbe.path }}
-              port: {{ .Values.deploymentContainer.livenessProbe.port | default .Values.deploymentContainer.port }}
-            failureThreshold: {{ .Values.deploymentContainer.livenessProbe.failureThreshold }}
-            initialDelaySeconds: {{ .Values.deploymentContainer.livenessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.deploymentContainer.livenessProbe.periodSeconds }}
-            successThreshold: {{ .Values.deploymentContainer.livenessProbe.successThreshold }}
-            timeoutSeconds: {{ .Values.deploymentContainer.livenessProbe.timeoutSeconds }}
+            {{- toYaml .Values.LivenessProbe | nindent 12 }}
           {{- end }}
-          {{- if .Values.deploymentContainer.readinessProbe }}
+          {{- if .Values.deploymentContainer.readinessProbe.enabled }}
           readinessProbe:
-            httpGet:
-              path: {{ .Values.deploymentContainer.readinessProbe.path }}
-              port: {{ .Values.deploymentContainer.readinessProbe.port | default .Values.deploymentContainer.port }}
-            failureThreshold: {{ .Values.deploymentContainer.readinessProbe.failureThreshold }}
-            initialDelaySeconds: {{ .Values.deploymentContainer.readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.deploymentContainer.readinessProbe.periodSeconds }}
-            successThreshold: {{ .Values.deploymentContainer.readinessProbe.successThreshold }}
-            timeoutSeconds: {{ .Values.deploymentContainer.readinessProbe.timeoutSeconds }}
+            {{- toYaml .Values.ReadinessProbe | nindent 12 }}
           {{- end }}
           {{- if .Values.resources }}
           resources:
