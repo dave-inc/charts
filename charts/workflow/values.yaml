@@ -15,10 +15,33 @@ image:
 
 args: ""
 
+sidecar:
+  enabled: false
+  name: "sidecar-runner"
+
+  image:
+    repository: nginx
+    tag: latest
+    pullPolicy: Always
+
+  args: ""
+
 serviceAccount:
   # At this moment all workflows run with this specific
   # Please don't change it until a version that supports custom service account is released
   name: workflows
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # IAM workload idenitity binding name
+  # If not set and serviceAccount.create:true, a name is generated using Release.Name
+  # If Release.Name is bigger than 30 characteres use this variable to overwrite it with something shorter to identify this workload
+  workloadIdentitySA: ""
+  # Specifies whether an existing service account will be used
+  # Make sure you set serviceAccount.create:false when using this option
+  # Dynamic environments will use of this one
+  existingNameSA: ""
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious

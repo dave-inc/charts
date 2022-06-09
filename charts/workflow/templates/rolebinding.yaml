@@ -1,0 +1,16 @@
+{{- if .Values.serviceAccount.create -}}
+apiVersion: rbacmanager.reactiveops.io/v1beta1
+kind: RBACDefinition
+metadata:
+  name: {{ include "common.serviceAccountName" . }}-workflows
+rbacBindings:
+  - name: {{ include "common.serviceAccountName" . }}-workflows
+    subjects:
+      - kind: ServiceAccount
+        name: {{ include "common.serviceAccountName" . }}
+    roleBindings:
+      - clusterRole: workflows-server
+        namespace: {{ .Release.Namespace }}
+      - clusterRole: workflows-admin
+        namespace: {{ .Release.Namespace }}
+{{- end }}
