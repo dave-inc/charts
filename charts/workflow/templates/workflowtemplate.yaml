@@ -91,5 +91,7 @@ spec:
       {{- end }}
       resources:
         {{- toYaml .Values.resources | nindent 12 }}
-    sidecar:
-      
+    {{- with .Values.sidecars }}
+    sidecars:
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
