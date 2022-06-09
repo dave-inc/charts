@@ -69,3 +69,15 @@ env: {}
 # The configMapName is optional, If not set, a name is generated using Release.Name
 configMapName: ""
 existingConfigMapName: ""
+
+# To run workflows on speccifc tagged nodes
+nodeSelector: {}
+# nodeSelector:
+#   node_pool: default
+
+tolerations: []
+# tolerations:
+#   - effect: NoExecute
+#     key: workload
+#     operator: Equal
+#     value: reserved-node
