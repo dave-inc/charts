@@ -13,6 +13,10 @@ spec:
     - name: args
       value: "{{ .Values.args }}"
   entrypoint: main-runner
+  {{- if .Values.podDisruptionBudget.minAvailable }}
+  podDisruptionBudget:
+    minAvailable: "{{ .Values.podDisruptionBudget.minAvailable }}"
+  {{- end }}
   serviceAccountName: "{{ .Values.serviceAccount.name }}"
   {{- with .Values.nodeSelector }}
   nodeSelector:

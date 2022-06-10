@@ -86,3 +86,8 @@ tolerations: []
 #     key: workload
 #     operator: Equal
 #     value: reserved-node
+
+# Seting disruption budget on workflow spec
+# If the task is critical to avoid accidental eviction set this to a high number
+podDisruptionBudget:
+  minAvailable: ""
