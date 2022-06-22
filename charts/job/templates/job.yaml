@@ -47,6 +47,31 @@ spec:
               mountPath: /tmp
       {{- end }}
       containers:
+        {{- if .Values.sideCar.enabled }}
+        - name: {{ .Values.sideCar.name }}
+          image: "{{ .Values.sideCar.image.repository }}"
+          imagePullPolicy: {{ .Values.sideCar.image.pullPolicy }}
+          {{- if .Values.sideCar.command }}
+          command:
+            {{- toYaml .Values.sideCar.command | nindent 10 }}
+          {{- end }}
+          {{- if .Values.sideCar.args }}
+          args:
+            {{- toYaml .Values.sideCar.args | nindent 10 }}
+          {{- end }}
+          {{- if .Values.sideCar.resources }}
+          resources:
+            {{- toYaml .Values.sideCar.resources | nindent 12 }}
+          {{- end }}
+          {{- if .Values.sideCar.volumeMounts }}
+          volumeMounts:
+            {{- toYaml .Values.sideCar.volumeMounts | nindent 10 }}
+          {{- end }}
+          {{- if .Values.sideCar.lifecycle }}
+          lifecycle:
+            {{- toYaml .Values.sideCar.lifecycle | nindent 12 }}
+          {{- end }}
+        {{- end }}
         - name: {{ include "job.name" . }}
           {{- if .Values.securityContext }}
           securityContext:
@@ -137,31 +162,6 @@ spec:
                 name: {{ .Values.existingSecretName }}
             {{- else }}
             {{- end }}
-        {{- if .Values.sideCar.enabled }}
-        - name: {{ .Values.sideCar.name }}
-          image: "{{ .Values.sideCar.image.repository }}"
-          imagePullPolicy: {{ .Values.sideCar.image.pullPolicy }}
-          {{- if .Values.sideCar.command }}
-          command:
-            {{- toYaml .Values.sideCar.command | nindent 10 }}
-          {{- end }}
-          {{- if .Values.sideCar.args }}
-          args:
-            {{- toYaml .Values.sideCar.args | nindent 10 }}
-          {{- end }}
-          {{- if .Values.sideCar.resources }}
-          resources:
-            {{- toYaml .Values.sideCar.resources | nindent 12 }}
-          {{- end }}
-          {{- if .Values.sideCar.volumeMounts }}
-          volumeMounts:
-            {{- toYaml .Values.sideCar.volumeMounts | nindent 10 }}
-          {{- end }}
-          {{- if .Values.sideCar.lifecycle }}
-          lifecycle:
-            {{- toYaml .Values.sideCar.lifecycle | nindent 12 }}
-          {{- end }}
-        {{- end }}
       volumes:
         - name: tmp
           emptyDir: {}
