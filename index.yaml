@@ -544,6 +544,16 @@ entries:
   job:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2022-06-22T22:32:17.748636972Z"
+    description: Standard Service Template
+    digest: 37adc624be2de2eff312de722e3ef2735b6414b6c194e836c99f5bde6c2e228d
+    name: job
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/job-0.1.4/job-0.1.4.tgz
+    version: 0.1.4
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2022-06-17T19:04:04.666667649Z"
     description: Standard Service Template
     digest: aae497b97330d92af52e1f0cb235dcd0dd39149085ffc6c673af7654de067a04
@@ -603,4 +613,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2022-06-17T19:04:04.667754744Z"
+generated: "2022-06-22T22:32:17.749631685Z"
