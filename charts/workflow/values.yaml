@@ -15,10 +15,38 @@ image:
 
 args: ""
 
+# Add custom sidecar containers to main script runner
+sidecars: []
+# sidecars:
+# - name: sidecar-1
+#   image: alpine:latest
+#   command: [sh, -c]
+#   args: ["while true; do echo hello world!!!; sleep 10; done"]
+
 serviceAccount:
   # At this moment all workflows run with this specific
   # Please don't change it until a version that supports custom service account is released
   name: workflows
+  # Specifies whether a service account should be created
+  # This flag will take no effect if SA is named workflows
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # IAM workload idenitity binding name
+  # If not set and serviceAccount.create:true, a name is generated using Release.Name
+  # If Release.Name is bigger than 30 characteres use this variable to overwrite it with something shorter to identify this workload
+  workloadIdentitySA: ""
+  # Specifies whether an existing service account will be used
+  # Make sure you set serviceAccount.create:false when using this option
+  # Dynamic environments will use of this one
+  existingNameSA: ""
+
+# You can add a cloudsql proxy template by enabling this option.
+# This is similar to migrations detifnitions.
+cloudsqlProxy:
+  enabled: false
+  port: ""
+  instanceConnectionName: ""
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -58,3 +86,8 @@ tolerations: []
 #     key: workload
 #     operator: Equal
 #     value: reserved-node
+
+# Seting disruption budget on workflow spec
+# If the task is critical to avoid accidental eviction set this to a high number
+podDisruptionBudget:
+  minAvailable: ""

@@ -13,6 +13,10 @@ spec:
     - name: args
       value: "{{ .Values.args }}"
   entrypoint: main-runner
+  {{- if .Values.podDisruptionBudget.minAvailable }}
+  podDisruptionBudget:
+    minAvailable: "{{ .Values.podDisruptionBudget.minAvailable }}"
+  {{- end }}
   serviceAccountName: "{{ .Values.serviceAccount.name }}"
   {{- with .Values.nodeSelector }}
   nodeSelector:
@@ -28,6 +32,10 @@ spec:
     steps:
     - - name: log-parameters
         template: log-parameters
+{{- if .Values.cloudsqlProxy.enabled }}
+    - - name: cloudsql-proxy
+        template: database
+{{- end }}
     - - name: script-runner
         template: runner
         arguments:
@@ -40,6 +48,19 @@ spec:
       image: alpine:latest
       command: [sh, -c]
       args: ["echo 'Image:{{`{{workflow.parameters.image}}`}} Tag:{{`{{workflow.parameters.tag}}`}} Args:{{`{{workflow.parameters.args}}`}}'"]
+
+{{- if .Values.cloudsqlProxy.enabled }}
+  - name: database
+    daemon: true
+    retryStrategy:
+      limit: 3
+    container:
+      image: gcr.io/cloudsql-docker/gce-proxy:latest
+      command: ["/cloud_sql_proxy","-instances={{ required `"A valid instanceUrl is required!"` .Values.cloudsqlProxy.instanceConnectionName }}=tcp:0.0.0.0:{{ .Values.cloudsqlProxy.port }}"]
+      readinessProbe:
+        tcpSocket:
+          port: {{ .Values.cloudsqlProxy.port }}
+{{- end }}
 
   - name: runner
     inputs:
@@ -91,3 +112,7 @@ spec:
       {{- end }}
       resources:
         {{- toYaml .Values.resources | nindent 12 }}
+    {{- with .Values.sidecars }}
+    sidecars:
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
