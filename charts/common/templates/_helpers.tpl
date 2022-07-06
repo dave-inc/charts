@@ -66,6 +66,6 @@ This is needed to avoid overlap with default Service and Ingress (the ones not u
 */}}
 {{- define "common.cloudArmorTlsSecret" -}}
 {{- if .Values.cloudArmor.enabled }}
-{{- printf "%s-tls" .Values.cloudArmor.certificate.host | replace "." "-" }}
+{{- printf "%s-ca-tls" .Values.cloudArmor.certificate.host | replace "." "-" }}
 {{- end }}
 {{- end }}

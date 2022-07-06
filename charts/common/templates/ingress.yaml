@@ -44,7 +44,7 @@ spec:
         {{- range .hosts }}
         - {{ . | quote }}
         {{- end }}
-      secretName: {{ .secretName }}
+      secretName: {{ .secretName | default $hostwithdashestls }}
     {{- end -}}
   {{- else }}
   tls:

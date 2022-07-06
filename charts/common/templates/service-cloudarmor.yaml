@@ -1,5 +1,4 @@
 {{- if .Values.cloudArmor.enabled -}}
-{{- if .Values.service.enabled -}}
 apiVersion: v1
 kind: Service
 metadata:
@@ -17,5 +16,4 @@ spec:
       name: http
   selector:
     {{- include "common.selectorLabels" . | nindent 4 }}
-{{- end }}
 {{- end }}
