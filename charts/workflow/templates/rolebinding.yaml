@@ -14,5 +14,7 @@ rbacBindings:
         namespace: {{ .Release.Namespace }}
       - clusterRole: workflows-admin
         namespace: {{ .Release.Namespace }}
+      - role: {{ include "common.serviceAccountName" . }}-workflows
+        namespace: {{ .Release.Namespace }}
 {{- end }}
 {{- end }}

@@ -1,0 +1,26 @@
+{{- if .Values.serviceAccount.create -}}
+{{- if ne .Values.serviceAccount.name "workflows" -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  annotations:
+  labels:
+  name: {{ include "common.serviceAccountName" . }}-workflows
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - watch
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - pods/log
+  verbs:
+  - get
+  - watch
+{{- end }}
+{{- end }}
