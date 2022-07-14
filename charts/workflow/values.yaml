@@ -45,7 +45,7 @@ serviceAccount:
 # This is similar to migrations detifnitions.
 cloudsqlProxy:
   enabled: false
-  port: ""
+  port: "3306"
   instanceConnectionName: ""
 
 resources: {}

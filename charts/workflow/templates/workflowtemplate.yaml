@@ -42,6 +42,10 @@ spec:
           parameters:
           - name: args
             value: "{{`{{workflow.parameters.args}}`}}"
+          {{- if .Values.cloudsqlProxy.enabled }}
+          - name: cloudsql-proxy-ip
+            value: "{{`{{steps.cloudsql-proxy.ip}}`}}"
+          {{- end }}
 
   - name: log-parameters
     container:
@@ -50,6 +54,7 @@ spec:
       args: ["echo 'Image:{{`{{workflow.parameters.image}}`}} Tag:{{`{{workflow.parameters.tag}}`}} Args:{{`{{workflow.parameters.args}}`}}'"]
 
 {{- if .Values.cloudsqlProxy.enabled }}
+
   - name: database
     daemon: true
     retryStrategy:
@@ -66,6 +71,9 @@ spec:
     inputs:
       parameters:
       - name: args
+      {{- if .Values.cloudsqlProxy.enabled }}
+      - name: cloudsql-proxy-ip
+      {{- end }}
     container:
       image: "{{`{{workflow.parameters.image}}`}}:{{`{{workflow.parameters.tag}}`}}"
       command: [sh, -c]
@@ -95,9 +103,9 @@ spec:
         value: {{ .Values.environment }}
       {{- if .Values.cloudsqlProxy.enabled }}
       - name: DB_HOST
-        value: '{{ steps.cloudsql-proxy.ip }}'
+        value: "{{`{{ inputs.parameters.cloudsql-proxy-ip }}`}}"
       - name: DB_PORT
-        value: {{ .Values.cloudsqlProxy.port }}
+        value: "{{ .Values.cloudsqlProxy.port }}"
       {{- end }}
       {{- if .Values.apm.enabled }}
       - name: DD_ENV
