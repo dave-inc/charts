@@ -93,6 +93,12 @@ spec:
       env:
       - name: NODE_ENV
         value: {{ .Values.environment }}
+      {{- if .Values.cloudsqlProxy.enabled }}
+      - name: DB_HOST
+        value: '{{ steps.cloudsql-proxy.ip }}'
+      - name: DB_PORT
+        value: {{ .Values.cloudsqlProxy.port }}
+      {{- end }}
       {{- if .Values.apm.enabled }}
       - name: DD_ENV
         value: {{ .Values.apm.datadogEnvironment | default .Values.environment }}
