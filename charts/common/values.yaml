@@ -298,7 +298,7 @@ cloudsqlProxy:
   enabled: false
   name: cloudsql-proxy
   image:
-    repository: gcr.io/cloudsql-docker/gce-proxy:latest
+    repository: gcr.io/cloudsql-docker/gce-proxy:1.31.1-alpine
   # Command should be defined with the command and custom values of your CloudSQL instance
   # command: ['/cloud_sql_proxy','--dir=/cloudsql','-instances=project_name:region:instance_name']
   resources:
