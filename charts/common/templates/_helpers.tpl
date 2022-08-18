@@ -69,3 +69,10 @@ This is needed to avoid overlap with default Service and Ingress (the ones not u
 {{- printf "%s-ca-tls" .Values.cloudArmor.certificate.host | replace "." "-" }}
 {{- end }}
 {{- end }}
+
+{{/*
+Name for the custom config configmap.
+*/}}
+{{- define "common.customConfig.name" -}}
+{{ .Values.customConfig.name | default (print (include "common.name" .) "-customconfig") }}
+{{- end -}}
