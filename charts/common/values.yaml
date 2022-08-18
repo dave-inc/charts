@@ -320,3 +320,17 @@ cloudsqlProxy:
     #instanceConnectionName: project_name:region:instance_name
     port: 3306
     secretName: migration
+
+# Generic mechanism to introduce arbitrary config files backed by a k8s ConfigMap.
+# If the file already exists on the given `path`, this will overwrite it.
+customConfig:
+  enabled: false
+  # If `name` is not defined, it will be Release.Name + '-customconfig'.
+  name: ""
+  path: /opt/app/config
+  data: {}
+#   default.json: |
+#      {
+#        "whatever": "your",
+#        "project": "secret:needs"
+#      }

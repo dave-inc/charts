@@ -1,0 +1,10 @@
+{{- if .Values.customConfig.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "common.customConfig.name" . }}
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+data:
+  {{- .Values.customConfig.data | toYaml | nindent 2 }}
+{{- end }}

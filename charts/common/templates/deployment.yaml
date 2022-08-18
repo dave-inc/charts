@@ -196,6 +196,15 @@ spec:
               readOnly: true
             {{- end }}
           {{- end }}
+          {{- if .Values.customConfig.enabled }}
+            {{ $path := .Values.customConfig.path }}
+            {{- range $fileName, $_ := .Values.customConfig.data }}
+            - name: customconfig-vol
+              mountPath: {{ $path }}/{{ $fileName }}
+              subPath: {{ $fileName }}
+              readOnly: true
+            {{- end }}
+          {{- end }}
 
           {{- if .Values.cloudsqlProxy.enabled }}
         - name: {{ .Values.cloudsqlProxy.name }}
@@ -243,6 +252,11 @@ spec:
             defaultMode: {{ .defaultMode }}
         {{- end }}
       {{- end}}
+      {{- if .Values.customConfig.enabled }}
+        - name: customconfig-vol
+          configMap:
+            name: {{ include "common.customConfig.name" . }}
+      {{- end }}
 
       {{- with .Values.nodeSelector }}
       nodeSelector:
