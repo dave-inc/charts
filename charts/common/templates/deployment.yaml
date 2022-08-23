@@ -231,9 +231,11 @@ spec:
                   - '-c'
                   - /bin/sleep 30
           {{- end }}
+      {{- if .Values.initContainer.enabled }}
       volumes:
         - name: tmp
           emptyDir: {}
+      {{- end }}
       {{- if .Values.cloudsqlProxy.enabled }}
         - name: {{ .Values.cloudsqlProxy.volume }}
           emptyDir: null
