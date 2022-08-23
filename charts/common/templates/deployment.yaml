@@ -172,9 +172,11 @@ spec:
                 name: {{ .Values.existingSecretName }}
             {{- else }}
             {{- end }}
+          {{- if .Values.initContainer.enabled }}
           volumeMounts:
             - name: tmp
               mountPath: /tmp
+          {{- end }}
           {{- if .Values.cloudsqlProxy.enabled }}
             - name: {{ .Values.cloudsqlProxy.volume }}
               mountPath: /{{ .Values.cloudsqlProxy.volume }}
