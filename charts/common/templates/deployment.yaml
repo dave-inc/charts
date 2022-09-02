@@ -1,3 +1,11 @@
+{{/* Any resource that defines a volume should be included in the list below */}}
+{{- $hasVolumes := (or
+.Values.initContainer.enabled
+.Values.cloudsqlProxy.enabled
+.Values.existingSecretMount.enabled
+.Values.existingConfigMapMount.enabled
+.Values.customConfig.enabled
+) -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -172,6 +180,7 @@ spec:
                 name: {{ .Values.existingSecretName }}
             {{- else }}
             {{- end }}
+          {{- if $hasVolumes }}{{/* begin volumeMounts */}}
           volumeMounts:
           {{- if .Values.initContainer.enabled }}
             - name: tmp
@@ -207,6 +216,7 @@ spec:
               readOnly: true
             {{- end }}
           {{- end }}
+          {{- end }}{{/* end volumeMounts */}}
 
           {{- if .Values.cloudsqlProxy.enabled }}
         - name: {{ .Values.cloudsqlProxy.name }}
@@ -231,6 +241,8 @@ spec:
                   - '-c'
                   - /bin/sleep 30
           {{- end }}
+
+      {{- if $hasVolumes }}{{/* begin volumes */}}
       volumes:
       {{- if .Values.initContainer.enabled }}
         - name: tmp
@@ -261,6 +273,7 @@ spec:
           configMap:
             name: {{ include "common.customConfig.name" . }}
       {{- end }}
+      {{- end }}{{/* end volumes */}}
 
       {{- with .Values.nodeSelector }}
       nodeSelector:
