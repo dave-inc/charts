@@ -1,0 +1,58 @@
+{{- if .Values.policySets.common.enabled }}
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: common-resources
+spec:
+  validationFailureAction: {{ .Values.policySets.common.validationFailureAction }}
+  rules:
+    - name: resources-set
+      match:
+        resources:
+          kinds:
+          - Deployment
+          - DaemonSet
+          - StatefulSet
+          - Job
+      validate:
+        message: "CPU and memory resource requests and limits are required"
+        pattern:
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: "*"
+                    resources:
+                      {{- if .Values.policySets.common.enforceLimits }}
+                      limits:
+                        memory: "?*"
+                        cpu: "?*"
+                      {{- end }}
+                      requests:
+                        memory: "?*"
+                        cpu: "?*"
+    - name: cronjob-resources
+      match:
+        resources:
+          kinds:
+          - CronJob
+      validate:
+        message: "CPU and memory resource requests and limits are required"
+        pattern:
+          spec:
+            jobTemplate:
+              spec:
+                template:
+                  spec:
+                    containers:
+                      - name: "*"
+                        resources:
+                          {{- if .Values.policySets.common.enforceLimits }}
+                          limits:
+                            memory: "?*"
+                            cpu: "?*"
+                          {{- end }}
+                          requests:
+                            memory: "?*"
+                            cpu: "?*"
+{{- end }}
