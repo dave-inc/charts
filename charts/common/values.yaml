@@ -350,3 +350,23 @@ podDisruptionBudget:
   enabled: false
   # minAvailable: "15%"
   # maxUnavailable: 5
+
+# VerticalPodAutoscaler
+#
+# TODO: (maybe) Support for "Initial", "Auto" and "Recreate" updateModes.
+#
+# Requires Vertical Pod Autoscaling feature to be enabled on the target GKE cluster
+#
+# VirtualPodAutoscaler's updateMode is hardcoded to "Off".  Purposely not allowing
+# "Initial", "Auto" and "Recreate" updateModes to be used as further understanding
+# of how the VPA work is required, specially if used in conjuction with HPAs.  When
+# updateMode is set to "Off", no vertical autoscaling actions are taken.  The purpose
+# of enabling the VPA with updateMode set to "Off" is to get recommendations on what
+# initial settings should be for resource requests and limits based on current
+# workloads.
+#
+# For more information refer to the GKE documentation on VPAs:
+#
+# https://cloud.google.com/kubernetes-engine/docs/concepts/verticalpodautoscaler
+verticalPodAutoscaler:
+  enabled: false
