@@ -334,3 +334,19 @@ customConfig:
 #        "whatever": "your",
 #        "project": "secret:needs"
 #      }
+
+# PodDisruptionBudget
+#
+# minAvailable and maxUnavailable are mutually exclusive, only one should be set.
+#
+# If podDisruptionBudget is enabled but no minAvailable or maxUnavailable fields
+# are set, the PodDisruptionTemplate template will default to `minAvailable: 15%`.
+#
+# The value for minAvailable and maxUnavailable should either be set to an integer
+# or a percentage.  For more information see the official documentation:
+#
+# https://kubernetes.io/docs/tasks/run-application/configure-pdb/
+podDisruptionBudget:
+  enabled: false
+  # minAvailable: "15%"
+  # maxUnavailable: 5
