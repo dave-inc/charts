@@ -7,7 +7,7 @@ metadata:
     {{- include "common.labels" . | nindent 4 }}
 spec:
 {{- if and (not .Values.podDisruptionBudget.minAvailable) (not .Values.podDisruptionBudget.maxUnavailable) }}
-  minAvailable: "13%"
+  minAvailable: "15%"
 {{- end}}
 {{- if .Values.podDisruptionBudget.minAvailable }}
   minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
