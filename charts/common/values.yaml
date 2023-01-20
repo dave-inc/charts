@@ -370,3 +370,8 @@ podDisruptionBudget:
 # https://cloud.google.com/kubernetes-engine/docs/concepts/verticalpodautoscaler
 verticalPodAutoscaler:
   enabled: false
+
+#  This is used to override "common.selectorLabels" on deployment, pods and services
+#  used mostly only when importing legacy deployments.
+
+podSelectorLabelsOverride: {}

@@ -17,5 +17,10 @@ spec:
       protocol: TCP
       name: http
   selector:
+  {{- if not .Values.podSelectorLabelsOverride }}
     {{- include "common.selectorLabels" . | nindent 4 }}
+  {{- end }}
+  {{- if .Values.podSelectorLabelsOverride }}
+    {{- .Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
+  {{- end }}
 {{- end }}
