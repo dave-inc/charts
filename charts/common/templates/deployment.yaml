@@ -20,7 +20,12 @@ spec:
 {{- end }}
   selector:
     matchLabels:
+    {{- if not .Values.podSelectorLabelsOverride }}
       {{- include "common.selectorLabels" . | nindent 6 }}
+    {{- end }}
+    {{- if .Values.podSelectorLabelsOverride }}
+      {{- .Values.podSelectorLabelsOverride | toYaml | nindent 6 }}
+    {{- end }}
   strategy:
     {{- toYaml .Values.strategy | nindent 6 }}
   template:
@@ -35,8 +40,13 @@ spec:
         {{- end }}
       labels:
         tags.datadoghq.com/version: "{{ .Values.image.tag }}"
+      {{- if not .Values.podSelectorLabelsOverride }}
         run: {{ include "common.name" . }}
         {{- include "common.selectorLabels" . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.podSelectorLabelsOverride }}
+        {{- .Values.podSelectorLabelsOverride | toYaml | nindent 8 }}
+      {{- end }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
