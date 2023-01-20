@@ -13,6 +13,16 @@ entries:
     version: 0.8.3
   - apiVersion: v2
     appVersion: 1.17.0
+    created: "2023-01-20T18:50:26.723957805Z"
+    description: Standard Service Template
+    digest: def47eceebe4e2b0f4196696dc1824caa392c8088b97a6bc2ec04498f2266e37
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.8.3-beta.1/common-0.8.3-beta.1.tgz
+    version: 0.8.3-beta.1
+  - apiVersion: v2
+    appVersion: 1.17.0
     created: "2023-01-18T00:18:22.080629962Z"
     description: Standard Service Template
     digest: 5b3105b693850fed367ffd7c05f55ff3b0fc15b701ef951c8688ea3cff774046
@@ -263,16 +273,6 @@ entries:
     version: 0.7.18-beta.1
   - apiVersion: v2
     appVersion: 1.17.0
-    created: "2021-11-03T04:58:22.897134346Z"
-    description: Standard Service Template
-    digest: c1cd167d17b11b567223afd4bd13c5a53b6a3e76d236e4e0ea70360d073a558b
-    name: common
-    type: application
-    urls:
-    - https://github.com/dave-inc/charts/releases/download/common-0.7.18-beta/common-0.7.18-beta.tgz
-    version: 0.7.18-beta
-  - apiVersion: v2
-    appVersion: 1.17.0
     created: "2021-11-03T04:21:50.363781516Z"
     description: Standard Service Template
     digest: b8f40a252aefde5d60e0aa81fa2b1a37e5d4377691491d7d7179a4ba3469167d
@@ -306,6 +306,16 @@ entries:
     created: "2021-11-03T04:12:34.518008678Z"
     description: Standard Service Template
     digest: 9be02a02dc9c06b1a1f36e4519a6005fe316e1e83267661946f5a8b61346ad57
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.7.18-beta/common-0.7.18-beta.tgz
+    version: 0.7.18-beta
+  - apiVersion: v2
+    appVersion: 1.17.0
+    created: "2021-11-03T04:58:22.897134346Z"
+    description: Standard Service Template
+    digest: c1cd167d17b11b567223afd4bd13c5a53b6a3e76d236e4e0ea70360d073a558b
     name: common
     type: application
     urls:
@@ -794,4 +804,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2023-01-18T00:18:22.081256164Z"
+generated: "2023-01-20T18:50:26.724805616Z"
