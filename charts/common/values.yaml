@@ -250,6 +250,12 @@ apm:
   enabled: false
   # If datadogEnvironment is not defined we use variable environment as default
   datadogEnvironment: ""
+  # Optional override DD_SERVICE_NAME to a custon name instead of common.name
+  datadogServiceName: ""
+  # Optional bool used to avoid definition of env DD_SERVICE_NAME
+  # Used to support imported workloads from legacy projects
+  # DD_SERVICE_NAME will take the value from the app name in package.json.
+  # datadogSkipServiceName: false
 
 # Default Logger and DD variables are defined here: https://github.com/dave-inc/charts/blob/master/common/templates/deployment.yaml
 # Custom env variables are defined here and will be populated via Deployment's ConfigMap
