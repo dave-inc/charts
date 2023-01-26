@@ -167,8 +167,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
+            {{- if not .Values.apm.datadogSkipServiceName }}
             - name: DD_SERVICE_NAME
-              value: {{ include "common.name" . }}
+              value: {{ .Values.apm.datadogServiceName | default (include "common.name" .) }}
+            {{- end }}
           {{- end }}
           envFrom:
             {{- if .Values.existingConfigMapName }}
