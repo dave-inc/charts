@@ -170,11 +170,17 @@ cloudArmor:
     #  - blog.chart-example.local
   # securityPolicy is required in backendConfig. This is a resource in GCP.
   backendConfig:
-    securityPolicy:
-      name: chart-securitypolicy
     healthCheck:
       requestPath: /
       type: HTTP
+    # securityPolicy should be set for CloudArmor and it's optional for Cloud IAP
+    # securityPolicy:
+    #   name: chart-securitypolicy
+    # Cloud IAP requires an existing Oauth client secret
+    # iap:
+    #   enabled: true
+    #   oauthclientCredentials:
+    #     secretName: chart-iapsecret
   # By default we always use redirectToHttps in frontendConfig if you want to define overwrite consider including it
   frontendConfig:
     redirectToHttps:

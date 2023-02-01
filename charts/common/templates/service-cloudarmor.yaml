@@ -6,7 +6,11 @@ metadata:
   labels:
     {{- include "common.labels" . | nindent 4 }}
   annotations:
+    {{- if .Values.cloudArmor.backendConfig.iap }}
+    cloud.google.com/backend-config: '{"ports": {"80":"{{ include "common.name" . }}", "443":"{{ include "common.name" . }}"},"default": "{{ include "common.name" . }}"}'
+    {{- else }}
     cloud.google.com/backend-config: '{"ports": {"80":"{{ include "common.name" . }}", "443":"{{ include "common.name" . }}"}}'
+    {{- end }}
 spec:
   type: {{ .Values.cloudArmor.service.type }}
   ports:
