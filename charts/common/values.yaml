@@ -175,6 +175,11 @@ cloudArmor:
     healthCheck:
       requestPath: /
       type: HTTP
+    # Cloud IAP requires an existing Oauth client secret
+    # iap:
+    #   enabled: true
+    #   oauthclientCredentials:
+    #     secretName: chart-iapsecret
   # By default we always use redirectToHttps in frontendConfig if you want to define overwrite consider including it
   frontendConfig:
     redirectToHttps:
@@ -185,6 +190,7 @@ cloudArmor:
   # cloudArmor needs a service type NodePort
   service:
     type: NodePort
+
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
