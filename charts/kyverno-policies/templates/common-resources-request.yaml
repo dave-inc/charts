@@ -23,7 +23,7 @@ spec:
     - name: resources-set
       match:
         any:
-          resources:
+        - resources:
             kinds:
             - Deployment
             - DaemonSet
@@ -49,9 +49,9 @@ spec:
     - name: cronjob-resources
       match:
         any:
-          resources:
-            kinds:
-            - CronJob
+          - resources:
+              kinds:
+              - CronJob
       validate:
         message: "CPU and memory resource requests and limits are required"
         pattern:
