@@ -22,12 +22,13 @@ spec:
   rules:
     - name: resources-set
       match:
-        resources:
-          kinds:
-          - Deployment
-          - DaemonSet
-          - StatefulSet
-          - Job
+        any:
+          resources:
+            kinds:
+            - Deployment
+            - DaemonSet
+            - StatefulSet
+            - Job
       validate:
         message: "CPU and memory resource requests and limits are required"
         pattern:
@@ -47,9 +48,10 @@ spec:
                         cpu: "?*"
     - name: cronjob-resources
       match:
-        resources:
-          kinds:
-          - CronJob
+        any:
+          resources:
+            kinds:
+            - CronJob
       validate:
         message: "CPU and memory resource requests and limits are required"
         pattern:
