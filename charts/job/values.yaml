@@ -49,6 +49,7 @@ concurrencyPolicy: ""
 
 backoffLimit: ""
 ttlSecondsAfterFinished: ""
+activeDeadlineSeconds: ""
 
 restartPolicy: "OnFailure"
 
