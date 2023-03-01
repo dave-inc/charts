@@ -2,9 +2,15 @@
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
+  {{- if .Values.jobName }}
+  name: {{ .Values.jobName }}
+  labels:
+    run: {{ .Values.jobName }}
+  {{- else }}
   name: {{ include "job.name" . }}
   labels:
     run: {{ include "job.name" . }}
+  {{- end }}
 spec:
   schedule: "{{ .Values.schedule }}"
   suspend: {{ .Values.suspend }}
@@ -42,7 +48,11 @@ spec:
             {{- toYaml .Values.podAnnotations | nindent 12 }}
             {{- end }}
           labels:
+            {{- if .Values.jobName }}
+            run: {{ .Values.jobName }}
+            {{- else }}
             run: {{ include "job.name" . }}
+            {{- end }}
             tags.datadoghq.com/version: "{{ .Values.image.tag }}"
             {{- include "job.selectorLabels" . | nindent 12 }}
         spec:
