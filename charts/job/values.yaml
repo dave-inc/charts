@@ -33,8 +33,9 @@ initContainer:
 
 imagePullSecrets: []
 
-### The following variables only apply for cronjobs: schedule. suspend, failedJobsHistoryLimit, startingDeadlineSeconds, concurrencyPolicy
+### The following variables only apply for cronjobs: jobName, schedule. suspend, failedJobsHistoryLimit, startingDeadlineSeconds, concurrencyPolicy
 # schedule timezone is UTC
+jobName: ""
 schedule: "* 0 * * *"
 suspend: false
 failedJobsHistoryLimit: ""
