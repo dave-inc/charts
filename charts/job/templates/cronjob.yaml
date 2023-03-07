@@ -90,6 +90,7 @@ spec:
               lifecycle:
                 {{- toYaml .Values.sideCar.lifecycle | nindent 16 }}
               {{- end }}
+              {{- if .Values.sideCar.envFromMainContainer }}
               envFrom:
                 {{- if .Values.existingConfigMapName }}
                 - configMapRef:
@@ -110,6 +111,7 @@ spec:
                     name: {{ .Values.existingSecretName }}
                 {{- else }}
                 {{- end }}
+              {{- end }}
             {{- end }}
             - name: {{ include "job.name" . }}
               {{- if .Values.securityContext }}
