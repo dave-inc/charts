@@ -159,3 +159,6 @@ sideCar:
         command: ['/bin/sh','-c','/bin/sleep 30']
   # VolumeName used when sharing volume with mainContainer, make sure matches the name in sideCar.volumeMounts (mostly used for cloudsql-proxy)
   #volumeName: sidecar
+
+  # Inherit environment variables that are also defined for the main container (through configmaps, secrets, etc)
+  envFromMainContainer: false

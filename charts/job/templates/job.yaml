@@ -74,6 +74,28 @@ spec:
           lifecycle:
             {{- toYaml .Values.sideCar.lifecycle | nindent 12 }}
           {{- end }}
+          {{- if .Values.sideCar.envFromMainContainer }}
+          envFrom:
+            {{- if .Values.existingConfigMapName }}
+            - configMapRef:
+                name: {{ .Values.existingConfigMapName }}
+            {{- end }}
+            {{- if .Values.env }}
+            - configMapRef:
+                name: {{ .Values.configMapName | default (include "job.name" .) }}
+            {{- end}}
+            {{- if and (.Values.createSecret) (not .Values.createSecretName) }}
+            - secretRef:
+                name: {{ include "job.name" . }}
+            {{- else if and (.Values.createSecret) (.Values.createSecretName) }}
+            - secretRef:
+                name: {{ .Values.createSecretName }}
+            {{- else if and (.Values.existingSecretName) (not .Values.createSecret) }}
+            - secretRef:
+                name: {{ .Values.existingSecretName }}
+            {{- else }}
+            {{- end }}
+          {{- end }}
         {{- end }}
         - name: {{ include "job.name" . }}
           {{- if .Values.securityContext }}
