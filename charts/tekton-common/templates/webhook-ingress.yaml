@@ -1,0 +1,34 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+    kubernetes.io/ingress.class: nginx-public
+    kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/client-body-buffer-size: 1m
+  labels:
+    app.kubernetes.io/instance: tek-ci-trydave-com
+    app.kubernetes.io/name: tek-ci-trydave
+    app.kubernetes.io/version: 1.17.0
+  name: tek-ci-trydave-com
+  namespace: {{ .Release.Namespace }}
+spec:
+  rules:
+    - host: tek-ci.trydave.com
+      http:
+        paths:
+          {{- range $.Values.webhooks }}
+          - backend:
+              service:
+                name: {{ .listener }}
+                port:
+                  number: 8080
+            path: {{ .path }}
+            pathType: ImplementationSpecific
+          {{- end }}
+  tls:
+    - hosts:
+        - tek-ci.trydave.com
+      secretName: tek-ci-trydave-com

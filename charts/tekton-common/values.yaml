@@ -1,0 +1,89 @@
+# Default values for tekton-common.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  name: tekton-pipelines
+  annotations:
+    iam.gke.io/gcp-service-account: tekton-pipelines@internal-1-4825.iam.gserviceaccount.com
+
+secrets:
+  serviceAccount:
+    name: tekton-secrets
+    annotations:
+      iam.gke.io/gcp-service-account: tekton-sm@internal-1-4825.iam.gserviceaccount.com
+
+  argo:
+    - argo-banking-api-staging
+    - argo-banking-goals-staging
+    - argo-banking-provider-service-staging
+    - argo-financier-staging
+    - argo-financier-production
+    - argo-identity-staging
+    - argo-identity-production
+    - argo-internal-dashboard-staging
+    - argo-internal-dashboard-production
+    - argo-nodeapi-staging
+    - argo-oracle-staging
+    - argo-oracle-production
+    - argo-promotions-api-staging
+    - argo-promotions-api-production
+    - argo-service-template-staging
+    - argo-subscription-staging
+    - argo-subscription-production
+    - argo-survey-staging
+    - argo-survey-production
+    - argo-website-staging
+    - argo-website-production
+
+  pipeline:
+    - secret: argo-banking
+      remoteKey: argo_banking_key
+    - secret: argo-tekton-account
+      remoteKey: argo-tekton-account
+    - secret: jenkins-ssh-key
+      remoteKey: jenkins-ssh-key
+    - secret: SONAR
+      remoteKey: SONAR
+    - secret: NODE_API_AMPLITUDE_API_KEY
+      remoteKey: node_api_amplitude_api_key
+    - secret: CODE_COVERAGE_DATADOG_API_KEY
+      remoteKey: code_coverage_datadog_api_key
+    - secret: SUMO_ACCESS_ID
+      remoteKey: SUMO_ACCESS_ID
+    - secret: SUMO_ACCESS_KEY
+      remoteKey: SUMO_ACCESS_KEY
+    - secret: apollo_key_dave_admin_supergraph
+      remoteKey: _cfgload-apollo-key-dave-admin-supergraph
+    - secret: apollo_key_dave_supergraph
+      remoteKey: _cfgload-apollo-key-dave-supergraph
+
+webhooks:
+  - path: /
+    listener: el-github-listener
+  - path: /infra
+    listener: el-infra-listener
+  - path: /soc
+    listener: el-soc-listener
+  - path: /nx
+    listener: el-nx-listener
+  - path: /rma
+    listener: el-rma-listener
+  - path: /banking-cloud-functions
+    listener: el-banking-cloud-functions-listener
+  - path: /react-internal-dashboard
+    listener: el-react-internal-dashboard-listener
+  - path: /oracle
+    listener: el-oracle-listener
+  - path: /kyverno
+    listener: el-kyverno-listener
+
+# Add DNS record: https://github.com/dave-inc/terraform/blob/master/dns/public/trydave.com/A-records.tf
+devNamespaces:
+  dpe:
+    ingressHost: dpe.trydave.com
+  tekton-fei:
+    ingressHost: tekton-fei.trydave.com
