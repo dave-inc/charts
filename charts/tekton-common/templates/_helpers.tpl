@@ -34,14 +34,15 @@ Create chart name and version as used by the chart label.
 Common labels
 */}}
 {{- define "tekton-common.labels" -}}
-team: dpe
-service: tekton
 helm.sh/chart: {{ include "tekton-common.chart" . }}
 {{ include "tekton-common.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- if .Values.commonLabels}}
+{{ toYaml .Values.commonLabels }}
+{{- end }}
 {{- end }}
 
 {{/*

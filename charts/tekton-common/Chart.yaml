@@ -1,5 +1,5 @@
 apiVersion: v2
 name: tekton-common
-description: A Helm chart with common resources needed to run Tekton pipelines in a namespace
+description: A Helm chart with common resources to run Tekton pipelines in a namespace
 type: application
-version: 1.0.0
+version: 0.0.1-beta.1

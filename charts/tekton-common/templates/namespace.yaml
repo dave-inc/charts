@@ -1,4 +1,4 @@
-{{- range $namespace, $spec := .Values.devNamespaces }}
+{{- range $namespace, $spec := .Values.development.namespaces }}
 apiVersion: v1
 kind: Namespace
 metadata:

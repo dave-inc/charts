@@ -1,4 +1,4 @@
-{{- $namespaces := concat ( list .Release.Namespace ) ( keys .Values.devNamespaces ) -}}
+{{- $namespaces := concat ( list .Release.Namespace ) ( keys .Values.development.namespaces ) -}}
 {{- range $namespaces }}
 apiVersion: v1
 kind: ServiceAccount
@@ -7,9 +7,16 @@ metadata:
   namespace: {{ . }}
   labels:
     {{- include "tekton-common.labels" $ | nindent 4 }}
+  {{- if eq . $.Release.Namespace }}
   {{- with $.Values.serviceAccount.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- else }}
+  {{- with $.Values.development.serviceAccount.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   {{- end }}
 secrets:
   - name: tekton-gh-secrets
