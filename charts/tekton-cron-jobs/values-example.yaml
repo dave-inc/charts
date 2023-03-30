@@ -1,0 +1,7 @@
+eventListener: {}
+jobs:
+  sentinel:
+    schedule: "*/1 * * * *"
+    triggerTemplate: "wat"
+    params:
+      repo: "tekton"

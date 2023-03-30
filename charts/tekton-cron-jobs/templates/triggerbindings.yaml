@@ -1,0 +1,13 @@
+{{- range $name, $val := .Values.jobs }}
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerBinding
+metadata:
+  name: {{ $name }}-cron-bindings
+spec:
+  params:
+    {{- range $k, $v := $val.params }}
+    - name: {{ $k | quote }}
+      value: {{ $v | quote }}
+    {{- end }}
+{{- end }}

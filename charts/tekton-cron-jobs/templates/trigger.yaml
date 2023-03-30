@@ -1,0 +1,19 @@
+{{- range $name, $val := .Values.jobs }}
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: Trigger
+metadata:
+  name: {{ $name }}-cron-trigger
+spec:
+  interceptors:
+    - name: "Filter by name"
+      ref:
+        name: "cel"
+      params:
+        - name: "filter"
+          value: "body.job == '{{ $name }}'"
+  bindings:
+    - ref: {{ $name }}-cron-bindings
+  template:
+    ref: {{ $val.triggerTemplate }}
+{{- end }}

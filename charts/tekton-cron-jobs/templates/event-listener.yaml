@@ -1,0 +1,26 @@
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: {{ include "tekton-cron-jobs.eventListenerName" . }}
+spec:
+  triggers:
+  {{- range $name, $val := .Values.jobs }}
+    - {{ $name }}-cron-trigger
+  {{- end }}
+  resources:
+    kubernetesResource:
+      replicas: {{ .Values.eventListener.replicas | default 2 }}
+      spec:
+        template:
+          spec:
+            serviceAccountName: {{ .Values.eventListener.serviceAccountName | default "tekton-pipelines" }}
+            containers:
+              - resources:
+                  requests:
+                    memory: "64Mi"
+                    cpu: "250m"
+                  limits:
+                    memory: "128Mi"
+                    cpu: "500m"
+
