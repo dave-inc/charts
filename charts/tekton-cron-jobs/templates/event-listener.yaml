@@ -6,7 +6,7 @@ metadata:
 spec:
   triggers:
   {{- range $name, $val := .Values.jobs }}
-    - {{ $name }}-cron-trigger
+    - triggerRef: {{ $name }}-cron-trigger
   {{- end }}
   resources:
     kubernetesResource:

@@ -2,6 +2,6 @@ eventListener: {}
 jobs:
   sentinel:
     schedule: "*/1 * * * *"
-    triggerTemplate: "wat"
+    triggerTemplate: "sentinel"
     params:
       repo: "tekton"
