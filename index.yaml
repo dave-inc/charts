@@ -813,6 +813,17 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/kyverno-policies-0.0.1-beta/kyverno-policies-0.0.1-beta.tgz
     version: 0.0.1-beta
+  tekton-cron-jobs:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2023-04-03T22:46:29.711457277Z"
+    description: A Helm chart for Kubernetes
+    digest: 5e0e068e97c037da86bba31fc2b33f86dfcc315e3e27368a67676307e717a637
+    name: tekton-cron-jobs
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/tekton-cron-jobs-0.1.0/tekton-cron-jobs-0.1.0.tgz
+    version: 0.1.0
   workflow:
   - apiVersion: v2
     appVersion: 1.0.0
@@ -884,4 +895,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2023-03-07T21:19:40.106832542Z"
+generated: "2023-04-03T22:46:29.712191789Z"
