@@ -813,6 +813,16 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/kyverno-policies-0.0.1-beta/kyverno-policies-0.0.1-beta.tgz
     version: 0.0.1-beta
+  tekton-common:
+  - apiVersion: v2
+    created: "2023-04-04T17:18:26.809634905Z"
+    description: A Helm chart with common resources to run Tekton pipelines in a namespace
+    digest: d4066f0a3b0a5d79320c2575586c4a549e8011ad094700253e958d99390f608d
+    name: tekton-common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/tekton-common-0.0.1-beta.1/tekton-common-0.0.1-beta.1.tgz
+    version: 0.0.1-beta.1
   tekton-cron-jobs:
   - apiVersion: v2
     appVersion: 1.16.0
@@ -895,4 +905,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2023-04-03T22:46:29.712191789Z"
+generated: "2023-04-04T17:18:26.81034892Z"
