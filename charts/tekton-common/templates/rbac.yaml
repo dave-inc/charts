@@ -1,0 +1,89 @@
+{{- $namespaces := concat ( list .Release.Namespace ) ( keys .Values.development.namespaces ) -}}
+{{- range $namespaces }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "tekton-common.serviceAccountName" $ }}
+  namespace: {{ . }}
+  labels:
+    {{- include "tekton-common.labels" $ | nindent 4 }}
+  {{- if eq . $.Release.Namespace }}
+  {{- with $.Values.serviceAccount.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- else }}
+  {{- with $.Values.development.serviceAccount.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- end }}
+secrets:
+  - name: tekton-gh-secrets
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  namespace: {{ . }}
+  name: tekton-deployer
+rules:
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "watch", "list", "create", "delete"]
+  - apiGroups: ["extensions", "apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["apps/v1"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["tekton.dev"]
+    resources: ["pipelineruns"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tekton-deployer-binding
+  namespace: {{ . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "tekton-common.serviceAccountName" $ }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: tekton-deployer
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: triggers-eventlistener-binding
+  namespace: {{ . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "tekton-common.serviceAccountName" $ }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tekton-triggers-eventlistener-roles
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  {{- if eq . $.Release.Namespace }}
+  name: triggers-eventlistener-clusterbinding
+  {{- else }}
+  name: {{ printf "triggers-eventlistener-clusterbinding-%s" . }}
+  {{- end }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "tekton-common.serviceAccountName" $ }}
+    namespace: {{ . }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tekton-triggers-eventlistener-clusterroles
+---
+{{- end }}

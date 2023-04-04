@@ -1,0 +1,35 @@
+{{- range $namespace, $spec := .Values.development.namespaces }}
+{{- $friendlyName := $spec.ingressHost | replace "." "-" -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+    kubernetes.io/ingress.class: nginx-public
+    kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/client-body-buffer-size: 1m
+  labels:
+    {{- include "tekton-common.labels" $ | nindent 4 }}
+  name: {{ $friendlyName }}
+  namespace: {{ $namespace }}
+spec:
+  rules:
+    - host: {{ $spec.ingressHost }}
+      http:
+        paths:
+          {{- range $.Values.webhooks }}
+          - backend:
+              service:
+                name: {{ .listener }}
+                port:
+                  number: 8080
+            path: {{ .path }}
+            pathType: ImplementationSpecific
+          {{- end }}
+  tls:
+    - hosts:
+        - {{ $spec.ingressHost }}
+      secretName: {{ $friendlyName }}
+---
+{{- end }}

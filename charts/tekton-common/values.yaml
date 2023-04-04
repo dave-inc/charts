@@ -1,0 +1,63 @@
+# Default values for tekton-common.
+
+nameOverride: ""
+fullnameOverride: ""
+
+# commonLabels - Labels to apply to resources
+commonLabels: {}
+  # team: dpe
+  # service: tekton
+
+# ServiceAccount to run pipelines and tasks
+serviceAccount:
+  # serviceAccount.name - Name of ServiceAccount to be created
+  name: tekton-pipelines
+
+  # serviceAccount.annotations - Annotations to add to the ServiceAccount
+  annotations: {}
+    # Use iam.gke.io/gcp-service-account annotation to allow the ServiceAccount to impersonate an IAM service account (Workload Identity must be configured)
+    # iam.gke.io/gcp-service-account: <gserviceaccount>
+
+# Secrets configuration
+secrets:
+  # ServiceAccount to access Secret Manager
+  serviceAccount:
+    # secrets.serviceAccount.name - Name of ServiceAccount to be created
+    name: tekton-secrets
+    annotations: {}
+      # See External Secrets Operator documentation for required configuration on the GCP service account
+      # iam.gke.io/gcp-service-account: <gserviceaccount>
+
+  # List of argo application token secrets
+  # Note: Secret names must match names in Secret Manager
+  argo: []
+    # - argo-app-staging
+    # - argo-app-production
+
+  # List of secrets to synchronize from Secret Manager
+  #   secret: secret name
+  #   remoteKey: name in Secret Manager
+  pipeline: []
+    # - secret: secret-name
+    #   remoteKey: gsm-secret-name
+
+# List of event listener webhooks
+#   path: path from ingress host
+#   listener: Tekton event listener
+webhooks: []
+  # - path: /
+  #   listener: el-github-listener
+
+# Development environment configuration
+development:
+  # ServiceAccount to run pipelines and tasks in development namespaces
+  serviceAccount:
+    # development.serviceAccount.annotations - Annotations to add to the ServiceAccount
+    annotations: {}
+      # Use iam.gke.io/gcp-service-account annotation to allow the ServiceAccount to impersonate an IAM service account (Workload Identity must be configured)
+      # iam.gke.io/gcp-service-account: <gserviceaccount>
+
+  # development.namespaces - Namespaces for testing tasks and pipelines
+  namespaces: {}
+    # tekton-dev:
+    #   ingressHost: tekton-dev.trydave.com
