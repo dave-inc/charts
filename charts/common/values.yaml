@@ -30,6 +30,9 @@ deploymentContainer:
   livenessProbe: {}
     # path: /
     # port: ""
+    # httpHeaders:
+    # - name: Custom-Header
+    #   value: Awesome
     # failureThreshold: 3
     # initialDelaySeconds: 0
     # periodSeconds: 10
@@ -38,6 +41,9 @@ deploymentContainer:
   readinessProbe: {}
     # path: /
     # port: ""
+    # httpHeaders:
+    # - name: Custom-Header
+    #   value: Awesome
     # failureThreshold: 3
     # initialDelaySeconds: 0
     # periodSeconds: 10
@@ -46,6 +52,9 @@ deploymentContainer:
   startupProbe: {}
     # path: /
     # port: ""
+    # httpHeaders:
+    # - name: Custom-Header
+    #   value: Awesome
     # failureThreshold: 3
     # initialDelaySeconds: 0
     # periodSeconds: 10

@@ -80,6 +80,10 @@ spec:
             httpGet:
               path: {{ .Values.deploymentContainer.livenessProbe.path }}
               port: {{ .Values.deploymentContainer.livenessProbe.port | default .Values.deploymentContainer.port }}
+              {{- if .Values.deploymentContainer.livenessProbe.httpHeaders }}
+              httpHeaders:
+                {{- toYaml .Values.deploymentContainer.livenessProbe.httpHeaders | nindent 16 }}
+              {{- end }}
             failureThreshold: {{ .Values.deploymentContainer.livenessProbe.failureThreshold }}
             initialDelaySeconds: {{ .Values.deploymentContainer.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.deploymentContainer.livenessProbe.periodSeconds }}
@@ -94,6 +98,10 @@ spec:
             httpGet:
               path: {{ .Values.deploymentContainer.readinessProbe.path }}
               port: {{ .Values.deploymentContainer.readinessProbe.port | default .Values.deploymentContainer.port }}
+              {{- if .Values.deploymentContainer.readinessProbe.httpHeaders }}
+              httpHeaders:
+                {{- toYaml .Values.deploymentContainer.readinessProbe.httpHeaders | nindent 16 }}
+              {{- end }}
             failureThreshold: {{ .Values.deploymentContainer.readinessProbe.failureThreshold }}
             initialDelaySeconds: {{ .Values.deploymentContainer.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.deploymentContainer.readinessProbe.periodSeconds }}
@@ -108,6 +116,10 @@ spec:
             httpGet:
               path: {{ .Values.deploymentContainer.startupProbe.path }}
               port: {{ .Values.deploymentContainer.startupProbe.port | default .Values.deploymentContainer.port }}
+              {{- if .Values.deploymentContainer.startupProbe.httpHeaders }}
+              httpHeaders:
+                {{- toYaml .Values.deploymentContainer.startupProbe.httpHeaders | nindent 16 }}
+              {{- end }}
             failureThreshold: {{ .Values.deploymentContainer.startupProbe.failureThreshold }}
             initialDelaySeconds: {{ .Values.deploymentContainer.startupProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.deploymentContainer.startupProbe.periodSeconds }}
