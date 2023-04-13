@@ -37,18 +37,18 @@ imagePullSecrets: []
 # schedule timezone is UTC
 schedule: "* 0 * * *"
 suspend: false
-failedJobsHistoryLimit: ""
-successfulJobsHistoryLimit: ""
+failedJobsHistoryLimit: "1"
+successfulJobsHistoryLimit: "3"
 # The optional startingDeadlineSeconds field indicates the maximum number of seconds 
 # the CronJob can take to start if it misses its scheduled time for any reason. Missed CronJobs are considered failures.
-startingDeadlineSeconds: ""
+startingDeadlineSeconds: "600"
 # The optional spec.concurrencyPolicy field specifies how to treat concurrent executions of a Job created by the CronJob controller.
 # If you do not set a value, multiple concurrent Jobs are allowed by default. Accepts the following values: Allow, Forbid, Replace
-concurrencyPolicy: ""
+concurrencyPolicy: "Forbid"
 ###
 
-backoffLimit: ""
-ttlSecondsAfterFinished: ""
+backoffLimit: "1"
+ttlSecondsAfterFinished: "3600"
 activeDeadlineSeconds: ""
 
 restartPolicy: "OnFailure"
