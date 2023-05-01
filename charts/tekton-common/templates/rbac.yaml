@@ -43,7 +43,7 @@ rules:
     resources: ["pipelineruns"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
   - apiGroups: ["tekton.dev"]
-    resources: ["pipelines", "pipelineresources"]
+    resources: ["pipelines", "pipelineresources", "taskruns"]
     verbs: ["get", "list"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
