@@ -825,6 +825,15 @@ entries:
     version: 0.0.1-beta
   tekton-common:
   - apiVersion: v2
+    created: "2023-05-02T16:56:42.035741658Z"
+    description: A Helm chart with common resources to run Tekton pipelines in a namespace
+    digest: f97e637f65711353ed689a3fd499e8e107d07cd2ed1c3f8584609e3fbb794472
+    name: tekton-common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/tekton-common-0.0.1-beta.4/tekton-common-0.0.1-beta.4.tgz
+    version: 0.0.1-beta.4
+  - apiVersion: v2
     created: "2023-05-01T23:14:57.274758313Z"
     description: A Helm chart with common resources to run Tekton pipelines in a namespace
     digest: 4a4c641fe6c482c4eeeffd1dbe8a93823a5d715e2383b0c668ffa7986d9234d8
@@ -933,4 +942,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2023-05-01T23:14:57.275562715Z"
+generated: "2023-05-02T16:56:42.036534683Z"
