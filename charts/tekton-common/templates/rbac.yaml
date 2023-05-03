@@ -43,11 +43,11 @@ rules:
     resources: ["pipelineruns"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
   - apiGroups: ["tekton.dev"]
-    resources: ["pipelines", "pipelineresources", "taskruns"]
-    verbs: ["get", "list"]
+    resources: ["pipelines", "pipelineresources", "taskruns", "runs"]
+    verbs: ["get", "list", "watch"]
   - apiGroups: [""]
-    resources: ["pods"]
-    verbs: ["get"]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list", "watch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
