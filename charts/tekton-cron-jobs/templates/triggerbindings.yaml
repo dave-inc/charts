@@ -6,8 +6,15 @@ metadata:
   name: {{ $name }}-cron-bindings
 spec:
   params:
-    {{- range $k, $v := $val.params }}
+    {{- range $k, $v := $val.params }} {{ if kindIs "string" $v }}
     - name: {{ $k | quote }}
       value: {{ $v | quote }}
+    {{ else if kindIs "slice" $v }}
+    - name: {{ $k | quote }}
+      value:
+    {{- range $v }}
+        - {{ . | quote}}
+    {{- end -}}
+    {{ end }}
     {{- end }}
 {{- end }}
