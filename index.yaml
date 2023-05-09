@@ -872,6 +872,16 @@ entries:
   tekton-cron-jobs:
   - apiVersion: v2
     appVersion: 1.16.0
+    created: "2023-05-09T18:38:28.300386565Z"
+    description: A Helm chart for Kubernetes
+    digest: 20ec5c1bb33e1955ee79a01ee1aead2c8f59c9f3f4bec9e102eac85cd62abd5f
+    name: tekton-cron-jobs
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/tekton-cron-jobs-0.1.1/tekton-cron-jobs-0.1.1.tgz
+    version: 0.1.1
+  - apiVersion: v2
+    appVersion: 1.16.0
     created: "2023-04-03T22:46:29.711457277Z"
     description: A Helm chart for Kubernetes
     digest: 5e0e068e97c037da86bba31fc2b33f86dfcc315e3e27368a67676307e717a637
@@ -951,4 +961,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2023-05-03T16:49:26.48725129Z"
+generated: "2023-05-09T18:38:28.301352802Z"
