@@ -9,9 +9,6 @@ metadata:
     {{- end }}
   labels:
     {{- include "common.labels" . | nindent 4 }}
-    {{- if .Values.additionalLabels }}
-      {{- .Values.additionalLabels | toYaml | nindent 6 }}
-    {{- end }}
 spec:
   type: {{ .Values.service.type }}
   ports:
