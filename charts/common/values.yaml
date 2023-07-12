@@ -397,7 +397,7 @@ verticalPodAutoscaler:
 
 podSelectorLabelsOverride: {}
 
-#  This is used to override "common.Labels" on deployment, pods and services
+#  This is used to apply additional labels on deployment, pods and services
 #  to properly tag the team and environment
 
 additionalLabels: {}
