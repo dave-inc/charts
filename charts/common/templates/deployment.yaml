@@ -47,6 +47,9 @@ spec:
       {{- if .Values.podSelectorLabelsOverride }}
         {{- .Values.podSelectorLabelsOverride | toYaml | nindent 8 }}
       {{- end }}
+      {{- if .Values.additionalLabels }}
+        {{- .Values.additionalLabels | toYaml | nindent 8 }}
+      {{- end }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
