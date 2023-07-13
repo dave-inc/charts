@@ -23,9 +23,6 @@ helm.sh/chart: {{ include "common.chart" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
-{{- if .Values.additionalLabels }}
-{{- .Values.additionalLabels }}
-{{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
