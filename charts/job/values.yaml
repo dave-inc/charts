@@ -162,3 +162,8 @@ sideCar:
 
   # Inherit environment variables that are also defined for the main container (through configmaps, secrets, etc)
   envFromMainContainer: false
+
+#  This is used to apply additional labels to cronjobs and jobs
+#  and properly tag the team and environment
+
+additionalLabels: {}
