@@ -59,6 +59,23 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- if or (.Values.topologySpreadConstraints.zone.enabled) (.Values.topologySpreadConstraints.node.enabled) }}
+      topologySpreadConstraints:
+        {{- if .Values.topologySpreadConstraints.zone.enabled }}
+        - topologyKey: {{ .Values.topologySpreadConstraints.zone.topologyKey }}
+          maxSkew: {{ .Values.topologySpreadConstraints.zone.maxSkew }}
+          whenUnsatisfiable: {{ .Values.topologySpreadConstraints.zone.whenUnsatisfiable }}
+          labelSelector:
+            {{- include "common.selectorLabels" . | nindent 12 }}
+        {{- end }}
+        {{- if .Values.topologySpreadConstraints.node.enabled }}
+        - topologyKey: {{ .Values.topologySpreadConstraints.node.topologyKey }}
+          maxSkew: {{ .Values.topologySpreadConstraints.node.maxSkew }}
+          whenUnsatisfiable: {{ .Values.topologySpreadConstraints.node.whenUnsatisfiable }}
+          labelSelector:
+            {{- include "common.selectorLabels" . | nindent 12 }}
+        {{- end }}
+      {{- end }}
       {{- if .Values.initContainer.enabled }}
       initContainers:
         - name: {{ .Values.initContainer.name }}
