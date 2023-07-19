@@ -66,14 +66,16 @@ spec:
           maxSkew: {{ .Values.topologySpreadConstraints.zone.maxSkew }}
           whenUnsatisfiable: {{ .Values.topologySpreadConstraints.zone.whenUnsatisfiable }}
           labelSelector:
-            {{- include "common.selectorLabels" . | nindent 12 }}
+            matchLabels:
+              {{- include "common.selectorLabels" . | nindent 14 }}
         {{- end }}
         {{- if .Values.topologySpreadConstraints.node.enabled }}
         - topologyKey: {{ .Values.topologySpreadConstraints.node.topologyKey }}
           maxSkew: {{ .Values.topologySpreadConstraints.node.maxSkew }}
           whenUnsatisfiable: {{ .Values.topologySpreadConstraints.node.whenUnsatisfiable }}
           labelSelector:
-            {{- include "common.selectorLabels" . | nindent 12 }}
+            matchLabels:
+              {{- include "common.selectorLabels" . | nindent 14 }}
         {{- end }}
       {{- end }}
       {{- if .Values.initContainer.enabled }}
