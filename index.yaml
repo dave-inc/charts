@@ -3,6 +3,16 @@ entries:
   common:
   - apiVersion: v2
     appVersion: 1.17.0
+    created: "2023-08-31T20:24:42.634510323Z"
+    description: Standard Service Template
+    digest: 4dc722e9def8515e8959deffafcd91e8a728042565cfb9a072d299b5d622605f
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.8.4/common-0.8.4.tgz
+    version: 0.8.4
+  - apiVersion: v2
+    appVersion: 1.17.0
     created: "2023-08-18T18:14:48.260178907Z"
     description: Standard Service Template
     digest: dca167abc66ffabd31878f200547cbf3a58ae8db1af8897f0ac6031aecdb578c
@@ -744,6 +754,16 @@ entries:
   job:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2023-08-31T20:24:42.797983111Z"
+    description: Standard Service Template
+    digest: 94f6e8de78133fa292d7c12f1a0a4e947ef040b595d1ed68f28fdbfd7336f6fb
+    name: job
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/job-0.1.6/job-0.1.6.tgz
+    version: 0.1.6
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2023-08-18T18:14:48.439919995Z"
     description: Standard Service Template
     digest: f93fa8ead528ee681c908a7db613112c1656d70320b1c4eaa45a1113bdd98099
@@ -1040,4 +1060,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2023-08-18T18:14:48.441722865Z"
+generated: "2023-08-31T20:24:42.799075037Z"
