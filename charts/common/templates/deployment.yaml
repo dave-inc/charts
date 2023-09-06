@@ -194,6 +194,12 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
+            {{- if .Values.apm.otlp }}
+            - name: OTEL_TRACES_EXPORTER
+              value: "otlp"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "$(DD_TRACE_AGENT_HOSTNAME):4318"
+            {{- end }}
             {{/*
             Used by hot-shots package as default StatsD host
             */}}
