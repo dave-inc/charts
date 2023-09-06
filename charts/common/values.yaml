@@ -263,6 +263,7 @@ affinity: {}
 # Used for DD_TRACE_AGENT_HOSTNAME on DD APM/Node.js potentially can be used with logger vars too
 apm:
   enabled: false
+  otlp: false
   # If datadogEnvironment is not defined we use variable environment as default
   datadogEnvironment: ""
   # Optional override DD_SERVICE_NAME to a custon name instead of common.name
