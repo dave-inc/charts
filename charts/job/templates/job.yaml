@@ -99,6 +99,11 @@ spec:
             {{- else if and (.Values.existingSecretName) (not .Values.createSecret) }}
             - secretRef:
                 name: {{ .Values.existingSecretName }}
+            {{- else if and (.Values.existingSecretList) (not .Values.createSecret) (not .Values.existingSecretName) }}
+            {{- range .Values.existingSecretList }}
+            - secretRef:
+                name: {{ . }}
+            {{- end }}
             {{- else }}
             {{- end }}
           {{- end }}
@@ -191,6 +196,11 @@ spec:
             {{- else if and (.Values.existingSecretName) (not .Values.createSecret) }}
             - secretRef:
                 name: {{ .Values.existingSecretName }}
+            {{- else if and (.Values.existingSecretList) (not .Values.createSecret) (not .Values.existingSecretName) }}
+            {{- range .Values.existingSecretList }}
+            - secretRef:
+                name: {{ . }}
+            {{- end }}
             {{- else }}
             {{- end }}
       volumes:
