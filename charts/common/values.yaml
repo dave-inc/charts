@@ -245,7 +245,7 @@ autoscaling:
 #      periodSeconds: 15
 #    selectPolicy: Max
 
-behavior: {}
+  hpaBehavior: {}
 
 # Type Resource
 #
