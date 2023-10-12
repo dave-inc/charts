@@ -15,6 +15,6 @@ spec:
   metrics:
     {{- toYaml .Values.autoscaling.metrics | nindent 4 }}
   behavior:
-    {{- toYaml .Values.autoscaling.behavior | nindent 4 }}
+    {{- toYaml .Values.autoscaling.hpaBehavior.behavior | nindent 4 }}
   {{- end }}
 {{- end }}
