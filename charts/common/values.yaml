@@ -224,26 +224,29 @@ autoscaling:
   minReplicas: 1
   maxReplicas: 100
   metrics: []
-  hpaBehavior:
-    enabled: false
-  scaleDown:
-    stabilizationWindowSeconds: 300
-    policies: 
-      type: percent
-      value: 100
-      periodSeconds: 15
-  scaleUp:
-    stabilizationWindowSeconds: 0
-    policies:
-      percent:
-        type: percent
-        value: 100
-        periodSeconds: 15
-      pods:
-        type: Pods
-        value: 4
-        periodSeconds: 15
-    selectPolicy: Max
+
+# custom HPA behavior
+# example
+# behavior:
+#  scaleDown:
+#    stabilizationWindowSeconds: 300
+#    policies:
+#    - type: Percent
+#      value: 100
+#      periodSeconds: 15
+#  scaleUp:
+#    stabilizationWindowSeconds: 0
+#    policies:
+#    - type: Percent
+#      value: 100
+#      periodSeconds: 15
+#    - type: Pods
+#      value: 4
+#      periodSeconds: 15
+#    selectPolicy: Max
+
+behavior: {}
+
 # Type Resource
 #
 #  metrics:

@@ -14,23 +14,7 @@ spec:
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:
     {{- toYaml .Values.autoscaling.metrics | nindent 4 }}
-  {{- if .Values.autoscaling.hpaBehavior.enabled }}
   behavior:
-    scaleDown:
-      stabilizationWindowSeconds: {{ .Values.autoscaling.scaleDown.stabilizationWindowSeconds }}
-      policies:
-      - type: {{ .Values.autoscaling.scaleDown.policies.type }}
-        value: {{ .Values.autoscaling.scaleDown.policies.value }}
-        periodSeconds: {{ .Values.autoscaling.scaleDown.policies.periodSeconds }}
-    scaleUp:
-      stabilizationWindowSeconds: {{ .Values.autoscaling.scaleUp.stabilizationWindowSeconds }}
-      policies:
-      - type: {{ .Values.autoscaling.scaleUp.policies.percent.type }}
-        value: {{ .Values.autoscaling.scaleUp.policies.percent.value }}
-        periodSeconds: {{ .Values.autoscaling.scaleUp.policies.percent.periodSeconds }}
-      - type: {{ .Values.autoscaling.scaleUp.policies.pod.type }}
-        value: {{ .Values.autoscaling.scaleUp.policies.pod.value }}
-        periodSeconds: {{ .Values.autoscaling.scaleUp.policies.pod.periodSeconds }}
-      selectPolicy: {{ .Values.autoscaling.scaleUp.selectPolicy }}
+    {{- toYaml .Values.behavior | nindent 4 }}
   {{- end }}
 {{- end }}
