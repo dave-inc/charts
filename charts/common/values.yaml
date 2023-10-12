@@ -224,6 +224,8 @@ autoscaling:
   minReplicas: 1
   maxReplicas: 100
   metrics: []
+  hpaBehavior:
+    enabled: false
   scaleDown:
     stabilizationWindowSeconds: 300
     policies: 
