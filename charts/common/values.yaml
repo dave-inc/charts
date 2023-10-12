@@ -224,6 +224,24 @@ autoscaling:
   minReplicas: 1
   maxReplicas: 100
   metrics: []
+  scaleDown:
+    stabilizationWindowSeconds: 300
+    policies: 
+      type: percent
+      value: 100
+      periodSeconds: 15
+  scaleUp:
+    stabilizationWindowSeconds: 0
+    policies:
+      percent:
+        type: percent
+        value: 100
+        periodSeconds: 15
+      pods:
+        type: Pods
+        value: 4
+        periodSeconds: 15
+    selectPolicy: Max
 # Type Resource
 #
 #  metrics:
