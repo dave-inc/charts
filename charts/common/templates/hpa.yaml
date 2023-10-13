@@ -16,6 +16,6 @@ spec:
     {{- toYaml .Values.autoscaling.metrics | nindent 4 }}
   {{- if .Values.hpaBehavior.enabled }}
   behavior:
-    {{- toYaml .Values.autoscaling.hpaBehavior.behavior | nindent 4 }}
+    {{- toYaml .Values.hpaBehavior.behavior | nindent 4 }}
   {{- end }}
 {{- end }}
