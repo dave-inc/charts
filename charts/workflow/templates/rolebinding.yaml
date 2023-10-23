@@ -1,5 +1,5 @@
-{{- if .Values.serviceAccount.create -}}
-{{- if ne .Values.serviceAccount.name "workflows" -}}
+{{- if or .Values.serviceAccount.create .Values.serviceAccount.addRBAC -}}
+{{- if or (ne .Values.serviceAccount.name "workflows") (.Values.serviceAccount.existingNameSA) -}}
 apiVersion: rbacmanager.reactiveops.io/v1beta1
 kind: RBACDefinition
 metadata:

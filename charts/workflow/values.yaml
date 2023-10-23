@@ -38,8 +38,12 @@ serviceAccount:
   workloadIdentitySA: ""
   # Specifies whether an existing service account will be used
   # Make sure you set serviceAccount.create:false when using this option
+  # Verify if you need serviceAccount.addRBAC:true when using this option
   # Dynamic environments will use of this one
   existingNameSA: ""
+  # Adds the necesary RBAC roles to an existent SA, this needs to be used only once per SA
+  # only if the SA was originally defined by an regultar deployment
+  addRBAC: false
 
 # You can add a cloudsql proxy template by enabling this option.
 # This is similar to migrations detifnitions.

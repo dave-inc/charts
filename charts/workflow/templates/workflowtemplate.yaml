@@ -17,7 +17,7 @@ spec:
   podDisruptionBudget:
     minAvailable: "{{ .Values.podDisruptionBudget.minAvailable }}"
   {{- end }}
-  serviceAccountName: "{{ .Values.serviceAccount.name }}"
+  serviceAccountName: {{ include "common.serviceAccountName" . }}
   {{- with .Values.nodeSelector }}
   nodeSelector:
     {{- toYaml . | nindent 4 }}
