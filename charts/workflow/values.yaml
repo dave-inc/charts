@@ -29,7 +29,7 @@ serviceAccount:
   # If you are using a complete new SA, change the name and set true to create and addRBAC
   name: workflows
   # Specifies whether a service account should be created
-  # This should be set to false if you are re-using an excisting SA
+  # This should be set to false if you are re-using an existing SA
   create: false
   # Adds the necesary RBAC roles for the SA, this needs to be used only once per SA
   # if you are using an SA originally created by a deployment with common chart, this should be set to true
