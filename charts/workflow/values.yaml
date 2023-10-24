@@ -24,22 +24,26 @@ sidecars: []
 #   args: ["while true; do echo hello world!!!; sleep 10; done"]
 
 serviceAccount:
-  # At this moment all workflows run with this specific
-  # Please don't change it until a version that supports custom service account is released
+  # Specify the name of the SA to use, defaults to workflows
+  # You can use an already defined SA
+  # If you are using a complete new SA, change the name and set true to create and addRBAC
   name: workflows
   # Specifies whether a service account should be created
-  # This flag will take no effect if SA is named workflows
+  # This should be set to false if you are re-using an existing SA
   create: false
+  # Adds the necesary RBAC roles for the SA, this needs to be used only once per SA
+  # if you are using an SA originally created by a deployment with common chart, this should be set to true
+  addRBAC: false
+
   # Annotations to add to the service account
+  # Only if serviceAccount.create:true
   annotations: {}
   # IAM workload idenitity binding name
   # If not set and serviceAccount.create:true, a name is generated using Release.Name
   # If Release.Name is bigger than 30 characteres use this variable to overwrite it with something shorter to identify this workload
+  # Only if serviceAccount.create:true
   workloadIdentitySA: ""
-  # Specifies whether an existing service account will be used
-  # Make sure you set serviceAccount.create:false when using this option
-  # Dynamic environments will use of this one
-  existingNameSA: ""
+
 
 # You can add a cloudsql proxy template by enabling this option.
 # This is similar to migrations detifnitions.
