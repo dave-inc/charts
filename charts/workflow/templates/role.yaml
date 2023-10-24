@@ -1,5 +1,5 @@
 {{- if or .Values.serviceAccount.create .Values.serviceAccount.addRBAC -}}
-{{- if or (ne .Values.serviceAccount.name "workflows") (.Values.serviceAccount.existingNameSA) -}}
+{{- if ne .Values.serviceAccount.name "workflows" -}}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
