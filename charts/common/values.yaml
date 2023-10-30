@@ -363,6 +363,11 @@ cloudsqlProxy:
     #instanceConnectionName: project_name:region:instance_name
     port: 3306
     secretName: migration
+    # Setting up Time to live Strategy for the migration template workflow, if user don't specify any by default will be 2592000 secs or 30 days max
+    ttlStrategy:
+      secondsAfterCompletion: 2592000 # Time to live after workflow is completed, replaces ttlSecondsAfterFinished
+      secondsAfterSuccess: 2592000     # Time to live after workflow is successful
+      secondsAfterFailure: 2592000     # Time to live after workflow fails
 
 # Generic mechanism to introduce arbitrary config files backed by a k8s ConfigMap.
 # If the file already exists on the given `path`, this will overwrite it.
