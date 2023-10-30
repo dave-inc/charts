@@ -12,6 +12,10 @@ spec:
       value: "{{ .Values.image.tag }}"
     - name: args
       value: "{{ .Values.args }}"
+  ttlStrategy:
+    secondsAfterCompletion: "{{ .Values.ttlStrategy.secondsAfterCompletion }}"
+    secondsAfterSuccess: "{{ .Values.ttlStrategy.secondsAfterSuccess }}"
+    secondsAfterFailure: "{{ .Values.ttlStrategy.secondsAfterFailure }}"
   entrypoint: main-runner
   {{- if .Values.podDisruptionBudget.minAvailable }}
   podDisruptionBudget:
