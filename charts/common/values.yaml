@@ -200,6 +200,8 @@ cloudArmor:
       # - name: Referrer-Policy
       #   value: no-referrer-when-downgrade
       # - name: Content-Security-Policy
+      # - name: X-Client-Geo-Location
+      #   value: {client.region_code}, {client.city}
   # By default we always use redirectToHttps in frontendConfig if you want to define overwrite consider including it
   frontendConfig:
     redirectToHttps:
