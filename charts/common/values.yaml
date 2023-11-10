@@ -293,6 +293,10 @@ apm:
   # Used to support imported workloads from legacy projects
   # DD_SERVICE_NAME will take the value from the app name in package.json.
   # datadogSkipServiceName: false
+  # The following vars are used in APM Code snippets in stack traces and Error Tracking: Suspect Commit
+  # They might get replace at deployment time by the CI/CD pipeline
+  commitSha: ""
+  repositoryUrl: ""
 
 # Default Logger and DD variables are defined here: https://github.com/dave-inc/charts/blob/master/common/templates/deployment.yaml
 # Custom env variables are defined here and will be populated via Deployment's ConfigMap

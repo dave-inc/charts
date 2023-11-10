@@ -211,6 +211,10 @@ spec:
             - name: DD_SERVICE_NAME
               value: {{ .Values.apm.datadogServiceName | default (include "common.name" .) }}
             {{- end }}
+            - name: DD_GIT_COMMIT_SHA
+              value: {{ .Values.apm.commitSha }}
+            - name: DD_GIT_REPOSITORY_URL
+              value: {{ .Values.apm.repositoryUrl }}
           {{- end }}
           envFrom:
             {{- if .Values.existingConfigMapName }}
