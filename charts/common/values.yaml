@@ -293,8 +293,8 @@ apm:
   # Used to support imported workloads from legacy projects
   # DD_SERVICE_NAME will take the value from the app name in package.json.
   # datadogSkipServiceName: false
-  # The following vars are used in APM Code snippets in stack traces and Error Tracking: Suspect Commit
-  # They might get replace at deployment time by the CI/CD pipeline
+  # The following variables are used in APM Code snippets in stack traces and Error Tracking: Suspect Commit
+  # They might get replace at deployment time by the CI/CD pipelines
   commitSha: ""
   repositoryUrl: ""
 
