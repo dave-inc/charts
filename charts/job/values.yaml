@@ -34,8 +34,9 @@ initContainer:
 imagePullSecrets: []
 
 ### The following variables only apply for cronjobs: schedule. suspend, failedJobsHistoryLimit, startingDeadlineSeconds, concurrencyPolicy
-# schedule timezone is UTC
 schedule: "* 0 * * *"
+# If timeZone is not set explicitly, the cronjob will default to UTC
+timeZone: null
 suspend: false
 failedJobsHistoryLimit: "1"
 successfulJobsHistoryLimit: "3"
