@@ -10,6 +10,9 @@ metadata:
     {{- end }}
 spec:
   schedule: "{{ .Values.schedule }}"
+  {{- if .Values.timeZone }}
+  timeZone: {{ .Values.timeZone }}
+  {{- end }}
   suspend: {{ .Values.suspend }}
   {{- if .Values.failedJobsHistoryLimit }}
   failedJobsHistoryLimit: {{ .Values.failedJobsHistoryLimit }}
