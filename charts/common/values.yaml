@@ -190,6 +190,18 @@ cloudArmor:
     #   enabled: true
     #   oauthclientCredentials:
     #     secretName: chart-iapsecret
+    customHeaders: []
+      # - name: X-Frame-Options
+      #   value: DENY
+      # - name: X-XSS-Protection
+      #   value: 1; mode=block
+      # - name: X-Content-Type-Options
+      #   value: nosniff
+      # - name: Referrer-Policy
+      #   value: no-referrer-when-downgrade
+      # - name: Content-Security-Policy
+      # - name: X-Client-Geo-Location
+      #   value: {client.region_code}, {client.city}
   # By default we always use redirectToHttps in frontendConfig if you want to define overwrite consider including it
   frontendConfig:
     redirectToHttps:
