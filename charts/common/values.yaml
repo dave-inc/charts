@@ -448,3 +448,26 @@ topologySpreadConstraints:
     maxSkew: 1
     topologyKey: kubernetes.io/hostname
     whenUnsatisfiable: ScheduleAnyway
+
+customVolumes:
+  enabled: false
+  # https://kubernetes.io/docs/concepts/storage/volumes/
+  # Specify volumes and volumeMounts
+  volumes: {}
+  #   - name: volume-1
+  #     emptyDir: {}
+  #   - name: volume-2
+  #     hostPath:
+  #       # directory location on host
+  #       path: /data
+  #       # this field is optional
+  #       type: Directory
+  volumeMounts: {}
+  #   - name: volume-1
+  #     mountPath: /home/someuser/
+  #     subPath: ""
+  #     readOnly: false
+  #   - name: volume-2
+  #     mountPath: /www/somepath/
+  #     subPath: ""
+  #     readOnly: true
