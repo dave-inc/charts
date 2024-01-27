@@ -2,6 +2,7 @@
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
+  name: resources
   labels:
     {{- include "kyverno-policies.labels" . | nindent 4 }}
   annotations:
@@ -16,11 +17,10 @@ metadata:
       limits per Pod, especially for memory and CPU. If a Namespace level request or limit is specified,
       This policy validates that all containers have something specified for memory and CPU
       requests and memory limits.
-  name: common-resources
 spec:
   validationFailureAction: {{ .Values.policySets.common.validationFailureAction }}
   rules:
-    - name: resources-set
+    - name: cpu-mem-requests
       match:
         any:
         - resources:
@@ -30,7 +30,28 @@ spec:
             - StatefulSet
             - Job
       validate:
-        message: "CPU and memory resource requests and limits are required"
+        message: "CPU and memory resource requests are required"
+        pattern:
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: "*"
+                    resources:
+                      requests:
+                        memory: "?*"
+                        cpu: "?*"
+    - name: mem-limits
+      match:
+        any:
+        - resources:
+            kinds:
+            - Deployment
+            - DaemonSet
+            - StatefulSet
+            - Job
+      validate:
+        message: "Memory resource limits are required"
         pattern:
           spec:
             template:
@@ -41,19 +62,35 @@ spec:
                       {{- if .Values.policySets.common.enforceLimits }}
                       limits:
                         memory: "?*"
-                        cpu: "?*"
                       {{- end }}
-                      requests:
-                        memory: "?*"
-                        cpu: "?*"
-    - name: cronjob-resources
+    - name: cron-cpu-mem-requests
       match:
         any:
           - resources:
               kinds:
               - CronJob
       validate:
-        message: "CPU and memory resource requests and limits are required"
+        message: "CPU and memory resource requests are required"
+        pattern:
+          spec:
+            jobTemplate:
+              spec:
+                template:
+                  spec:
+                    containers:
+                      - name: "*"
+                        resources:
+                          requests:
+                            memory: "?*"
+                            cpu: "?*"
+    - name: cron-cpu-mem-limits
+      match:
+        any:
+          - resources:
+              kinds:
+              - CronJob
+      validate:
+        message: "Memory resource limits are required"
         pattern:
           spec:
             jobTemplate:
@@ -68,7 +105,4 @@ spec:
                             memory: "?*"
                             cpu: "?*"
                           {{- end }}
-                          requests:
-                            memory: "?*"
-                            cpu: "?*"
 {{- end }}
