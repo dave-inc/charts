@@ -443,6 +443,26 @@ entries:
     version: 0.7.18-beta.1
   - apiVersion: v2
     appVersion: 1.17.0
+    created: "2021-11-03T04:58:22.897134346Z"
+    description: Standard Service Template
+    digest: c1cd167d17b11b567223afd4bd13c5a53b6a3e76d236e4e0ea70360d073a558b
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.7.18-beta/common-0.7.18-beta.tgz
+    version: 0.7.18-beta
+  - apiVersion: v2
+    appVersion: 1.17.0
+    created: "2021-11-03T04:12:34.518008678Z"
+    description: Standard Service Template
+    digest: 9be02a02dc9c06b1a1f36e4519a6005fe316e1e83267661946f5a8b61346ad57
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.7.18-beta/common-0.7.18-beta.tgz
+    version: 0.7.18-beta
+  - apiVersion: v2
+    appVersion: 1.17.0
     created: "2021-11-03T05:13:54.852989572Z"
     description: Standard Service Template
     digest: bbea04490b668cd1fc10fe2246647232ac7b25a936fef2c31d00a3a7b022c024
@@ -466,26 +486,6 @@ entries:
     created: "2021-11-03T04:21:50.363781516Z"
     description: Standard Service Template
     digest: b8f40a252aefde5d60e0aa81fa2b1a37e5d4377691491d7d7179a4ba3469167d
-    name: common
-    type: application
-    urls:
-    - https://github.com/dave-inc/charts/releases/download/common-0.7.18-beta/common-0.7.18-beta.tgz
-    version: 0.7.18-beta
-  - apiVersion: v2
-    appVersion: 1.17.0
-    created: "2021-11-03T04:58:22.897134346Z"
-    description: Standard Service Template
-    digest: c1cd167d17b11b567223afd4bd13c5a53b6a3e76d236e4e0ea70360d073a558b
-    name: common
-    type: application
-    urls:
-    - https://github.com/dave-inc/charts/releases/download/common-0.7.18-beta/common-0.7.18-beta.tgz
-    version: 0.7.18-beta
-  - apiVersion: v2
-    appVersion: 1.17.0
-    created: "2021-11-03T04:12:34.518008678Z"
-    description: Standard Service Template
-    digest: 9be02a02dc9c06b1a1f36e4519a6005fe316e1e83267661946f5a8b61346ad57
     name: common
     type: application
     urls:
@@ -985,9 +985,19 @@ entries:
   kyverno-policies:
   - apiVersion: v2
     appVersion: 0.0.1
-    created: "2024-01-27T01:16:23.119993339Z"
+    created: "2024-01-27T04:38:07.316693857Z"
     description: A Helm chart for deploying kyverno policies
-    digest: b4f13e2a3fe107ca51d2cb178b87406f77bf0e20b3b3643d65692b550c3f88fb
+    digest: cc2b6a89a005007e30ed9d88ce80d61c650d1fecd25133a01797948ff082f3cd
+    name: kyverno-policies
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/kyverno-policies-0.0.1-beta.6/kyverno-policies-0.0.1-beta.6.tgz
+    version: 0.0.1-beta.6
+  - apiVersion: v2
+    appVersion: 0.0.1
+    created: "2024-01-27T01:36:10.773255606Z"
+    description: A Helm chart for deploying kyverno policies
+    digest: 8ea7c80fa219958fe14fb4416a667ceb6f2f537da5ce47afdfe00a36beda850b
     name: kyverno-policies
     type: application
     urls:
@@ -995,9 +1005,9 @@ entries:
     version: 0.0.1-beta.5
   - apiVersion: v2
     appVersion: 0.0.1
-    created: "2024-01-27T01:36:10.773255606Z"
+    created: "2024-01-27T01:16:23.119993339Z"
     description: A Helm chart for deploying kyverno policies
-    digest: 8ea7c80fa219958fe14fb4416a667ceb6f2f537da5ce47afdfe00a36beda850b
+    digest: b4f13e2a3fe107ca51d2cb178b87406f77bf0e20b3b3643d65692b550c3f88fb
     name: kyverno-policies
     type: application
     urls:
@@ -1240,4 +1250,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2024-01-27T01:36:10.774023454Z"
+generated: "2024-01-27T04:38:07.317554508Z"
