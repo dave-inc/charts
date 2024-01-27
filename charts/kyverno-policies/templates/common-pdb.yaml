@@ -2,7 +2,7 @@
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: PodDisruptionBudget
+  name: poddisruptionbudget
   annotations:
     policies.kyverno.io/title: Check PodDisruptionBudget minAvailable
     policies.kyverno.io/category: Other

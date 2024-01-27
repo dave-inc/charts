@@ -2,7 +2,7 @@
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: securityContext
+  name: securitycontext
   annotations:
     policies.kyverno.io/title: Require runAsNonRoot
     policies.kyverno.io/category: Pod Security Standards (Restricted)
