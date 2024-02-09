@@ -15,6 +15,13 @@ spec:
         template:
           spec:
             serviceAccountName: {{ .Values.eventListener.serviceAccountName | default "tekton-pipelines" }}
+            nodeSelector:
+              production: "true"
+            tolerations:
+            - key: workload
+              operator: Equal
+              value: production
+              effect: NoExecute
             containers:
               - resources:
                   requests:

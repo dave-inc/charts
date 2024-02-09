@@ -34,8 +34,9 @@ initContainer:
 imagePullSecrets: []
 
 ### The following variables only apply for cronjobs: schedule. suspend, failedJobsHistoryLimit, startingDeadlineSeconds, concurrencyPolicy
-# schedule timezone is UTC
 schedule: "* 0 * * *"
+# If timeZone is not set explicitly, the cronjob will default to UTC
+timeZone: null
 suspend: false
 failedJobsHistoryLimit: "1"
 successfulJobsHistoryLimit: "3"
@@ -123,6 +124,8 @@ createSecret: false
 createSecretName: ""
 # Mutually exclusive with the two above
 existingSecretName: ""
+# existingSecretList is used instead of existingSecretName when multiple secrets need to be loaded to the env
+existingSecretList: []
 # existingSecretMount used for SSH keys or Tls certs and mounted as volume
 existingSecretMount:
   enabled: false
@@ -162,3 +165,8 @@ sideCar:
 
   # Inherit environment variables that are also defined for the main container (through configmaps, secrets, etc)
   envFromMainContainer: false
+
+#  This is used to apply additional labels to cronjobs and jobs
+#  and properly tag the team and environment
+
+additionalLabels: {}

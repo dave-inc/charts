@@ -5,6 +5,9 @@ metadata:
   name: {{ include "job.name" . }}
   labels:
     run: {{ include "job.name" . }}
+    {{- if .Values.additionalLabels }}
+      {{- .Values.additionalLabels | toYaml | nindent 4 }}
+    {{- end }}
 spec:
   {{- if .Values.backoffLimit }}
   backoffLimit: {{ .Values.backoffLimit }}
@@ -29,6 +32,9 @@ spec:
         run: {{ include "job.name" . }}
         tags.datadoghq.com/version: "{{ .Values.image.tag }}"
         {{- include "job.selectorLabels" . | nindent 8 }}
+        {{- if .Values.additionalLabels }}
+          {{- .Values.additionalLabels | toYaml | nindent 8 }}
+        {{- end }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -93,6 +99,11 @@ spec:
             {{- else if and (.Values.existingSecretName) (not .Values.createSecret) }}
             - secretRef:
                 name: {{ .Values.existingSecretName }}
+            {{- else if and (.Values.existingSecretList) (not .Values.createSecret) (not .Values.existingSecretName) }}
+            {{- range .Values.existingSecretList }}
+            - secretRef:
+                name: {{ . }}
+            {{- end }}
             {{- else }}
             {{- end }}
           {{- end }}
@@ -185,6 +196,11 @@ spec:
             {{- else if and (.Values.existingSecretName) (not .Values.createSecret) }}
             - secretRef:
                 name: {{ .Values.existingSecretName }}
+            {{- else if and (.Values.existingSecretList) (not .Values.createSecret) (not .Values.existingSecretName) }}
+            {{- range .Values.existingSecretList }}
+            - secretRef:
+                name: {{ . }}
+            {{- end }}
             {{- else }}
             {{- end }}
       volumes:

@@ -2,7 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-replicaCount: 1
+replicaCount: 2
 
 # Used for NODE_ENV and DD_ENV
 environment: staging
@@ -224,6 +224,27 @@ autoscaling:
   minReplicas: 1
   maxReplicas: 100
   metrics: []
+  
+hpaBehavior:
+  enabled: false
+  behavior: {}
+#   scaleDown:
+#     stabilizationWindowSeconds: 300
+#     policies:
+#     - type: Percent
+#       value: 100
+#       periodSeconds: 15
+#   scaleUp:
+#     stabilizationWindowSeconds: 0
+#     policies:
+#     - type: Percent
+#       value: 100
+#       periodSeconds: 15
+#     - type: Pods
+#       value: 4
+#       periodSeconds: 15
+#     selectPolicy: Max
+
 # Type Resource
 #
 #  metrics:
@@ -263,6 +284,7 @@ affinity: {}
 # Used for DD_TRACE_AGENT_HOSTNAME on DD APM/Node.js potentially can be used with logger vars too
 apm:
   enabled: false
+  otlp: false
   # If datadogEnvironment is not defined we use variable environment as default
   datadogEnvironment: ""
   # Optional override DD_SERVICE_NAME to a custon name instead of common.name
@@ -271,6 +293,10 @@ apm:
   # Used to support imported workloads from legacy projects
   # DD_SERVICE_NAME will take the value from the app name in package.json.
   # datadogSkipServiceName: false
+  # The following variables are used in APM Code snippets in stack traces and Error Tracking: Suspect Commit
+  # They might get replace at deployment time by the CI/CD pipelines
+  commitSha: ""
+  repositoryUrl: ""
 
 # Default Logger and DD variables are defined here: https://github.com/dave-inc/charts/blob/master/common/templates/deployment.yaml
 # Custom env variables are defined here and will be populated via Deployment's ConfigMap
@@ -341,6 +367,11 @@ cloudsqlProxy:
     #instanceConnectionName: project_name:region:instance_name
     port: 3306
     secretName: migration
+    # Setting up Time to live Strategy for the migration template workflow, if user don't specify any by default will be 2592000 secs or 30 days max
+    ttlStrategy:
+      secondsAfterCompletion: 2592000 # Time to live after workflow is completed, replaces ttlSecondsAfterFinished
+      secondsAfterSuccess: 2592000     # Time to live after workflow is successful
+      secondsAfterFailure: 2592000     # Time to live after workflow fails
 
 # Generic mechanism to introduce arbitrary config files backed by a k8s ConfigMap.
 # If the file already exists on the given `path`, this will overwrite it.
@@ -401,3 +432,42 @@ podSelectorLabelsOverride: {}
 #  to properly tag the team and environment
 
 additionalLabels: {}
+
+# This section enables by default the topologySpreadConstraits to spread same deployment pods to multiple nodes
+# and multiple AZ when possible, rules are soft enforced by default.
+# The next are the only values that can be edited, labelSelector are set by the template.
+
+topologySpreadConstraints:
+  zone:
+    enabled: true
+    maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: ScheduleAnyway
+  node:
+    enabled: true
+    maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
+
+customVolumes:
+  enabled: false
+  # https://kubernetes.io/docs/concepts/storage/volumes/
+  # Specify volumes and volumeMounts
+  volumes: {}
+  #   - name: volume-1
+  #     emptyDir: {}
+  #   - name: volume-2
+  #     hostPath:
+  #       # directory location on host
+  #       path: /data
+  #       # this field is optional
+  #       type: Directory
+  volumeMounts: {}
+  #   - name: volume-1
+  #     mountPath: /home/someuser/
+  #     subPath: ""
+  #     readOnly: false
+  #   - name: volume-2
+  #     mountPath: /www/somepath/
+  #     subPath: ""
+  #     readOnly: true

@@ -5,6 +5,7 @@
 .Values.existingSecretMount.enabled
 .Values.existingConfigMapMount.enabled
 .Values.customConfig.enabled
+.Values.customVolumes.enabled
 ) -}}
 apiVersion: apps/v1
 kind: Deployment
@@ -59,6 +60,25 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- if or (.Values.topologySpreadConstraints.zone.enabled) (.Values.topologySpreadConstraints.node.enabled) }}
+      topologySpreadConstraints:
+        {{- if .Values.topologySpreadConstraints.zone.enabled }}
+        - topologyKey: {{ .Values.topologySpreadConstraints.zone.topologyKey }}
+          maxSkew: {{ .Values.topologySpreadConstraints.zone.maxSkew }}
+          whenUnsatisfiable: {{ .Values.topologySpreadConstraints.zone.whenUnsatisfiable }}
+          labelSelector:
+            matchLabels:
+              {{- include "common.selectorLabels" . | nindent 14 }}
+        {{- end }}
+        {{- if .Values.topologySpreadConstraints.node.enabled }}
+        - topologyKey: {{ .Values.topologySpreadConstraints.node.topologyKey }}
+          maxSkew: {{ .Values.topologySpreadConstraints.node.maxSkew }}
+          whenUnsatisfiable: {{ .Values.topologySpreadConstraints.node.whenUnsatisfiable }}
+          labelSelector:
+            matchLabels:
+              {{- include "common.selectorLabels" . | nindent 14 }}
+        {{- end }}
+      {{- end }}
       {{- if .Values.initContainer.enabled }}
       initContainers:
         - name: {{ .Values.initContainer.name }}
@@ -175,6 +195,12 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
+            {{- if .Values.apm.otlp }}
+            - name: OTEL_TRACES_EXPORTER
+              value: "otlp"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://$(DD_TRACE_AGENT_HOSTNAME):4318"
+            {{- end }}
             {{/*
             Used by hot-shots package as default StatsD host
             */}}
@@ -186,6 +212,10 @@ spec:
             - name: DD_SERVICE_NAME
               value: {{ .Values.apm.datadogServiceName | default (include "common.name" .) }}
             {{- end }}
+            - name: DD_GIT_COMMIT_SHA
+              value: {{ .Values.apm.commitSha }}
+            - name: DD_GIT_REPOSITORY_URL
+              value: {{ .Values.apm.repositoryUrl }}
           {{- end }}
           envFrom:
             {{- if .Values.existingConfigMapName }}
@@ -246,6 +276,9 @@ spec:
               readOnly: true
             {{- end }}
           {{- end }}
+          {{- if .Values.customVolumes.enabled }}
+            {{- toYaml .Values.customVolumes.volumeMounts | nindent 12 }}
+          {{- end }}
           {{- end }}{{/* end volumeMounts */}}
 
           {{- if .Values.cloudsqlProxy.enabled }}
@@ -302,6 +335,9 @@ spec:
         - name: customconfig-vol
           configMap:
             name: {{ include "common.customConfig.name" . }}
+      {{- end }}
+      {{- if .Values.customVolumes.enabled }}
+        {{- toYaml .Values.customVolumes.volumes | nindent 8 }}
       {{- end }}
       {{- end }}{{/* end volumes */}}
 

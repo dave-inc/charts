@@ -12,12 +12,16 @@ spec:
       value: "{{ .Values.image.tag }}"
     - name: args
       value: "{{ .Values.args }}"
+  ttlStrategy:
+    secondsAfterCompletion: {{ int .Values.ttlStrategy.secondsAfterCompletion }}
+    secondsAfterSuccess: {{ int .Values.ttlStrategy.secondsAfterSuccess }}
+    secondsAfterFailure: {{ int .Values.ttlStrategy.secondsAfterFailure }}
   entrypoint: main-runner
   {{- if .Values.podDisruptionBudget.minAvailable }}
   podDisruptionBudget:
     minAvailable: "{{ .Values.podDisruptionBudget.minAvailable }}"
   {{- end }}
-  serviceAccountName: "{{ .Values.serviceAccount.name }}"
+  serviceAccountName: {{ include "common.serviceAccountName" . }}
   {{- with .Values.nodeSelector }}
   nodeSelector:
     {{- toYaml . | nindent 4 }}
@@ -99,6 +103,19 @@ spec:
       {{- else }}
       {{- end }}
       env:
+      - name: NAMESPACE
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.namespace
+      - name: POD_NAME
+        valueFrom:
+          fieldRef:
+            apiVersion: v1
+            fieldPath: metadata.name
+      - name: NODE_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: spec.nodeName
       - name: NODE_ENV
         value: {{ .Values.environment }}
       {{- if .Values.cloudsqlProxy.enabled }}

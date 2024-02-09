@@ -1,12 +1,18 @@
 {{- if .Values.cronjob -}}
-apiVersion: batch/v1beta1
+apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: {{ include "job.name" . }}
   labels:
     run: {{ include "job.name" . }}
+    {{- if .Values.additionalLabels }}
+      {{- .Values.additionalLabels | toYaml | nindent 4 }}
+    {{- end }}
 spec:
   schedule: "{{ .Values.schedule }}"
+  {{- if .Values.timeZone }}
+  timeZone: {{ .Values.timeZone }}
+  {{- end }}
   suspend: {{ .Values.suspend }}
   {{- if .Values.failedJobsHistoryLimit }}
   failedJobsHistoryLimit: {{ .Values.failedJobsHistoryLimit }}
@@ -45,6 +51,9 @@ spec:
             run: {{ include "job.name" . }}
             tags.datadoghq.com/version: "{{ .Values.image.tag }}"
             {{- include "job.selectorLabels" . | nindent 12 }}
+            {{- if .Values.additionalLabels }}
+              {{- .Values.additionalLabels | toYaml | nindent 12 }}
+            {{- end }}
         spec:
           {{- with .Values.imagePullSecrets }}
           imagePullSecrets:
@@ -109,6 +118,11 @@ spec:
                 {{- else if and (.Values.existingSecretName) (not .Values.createSecret) }}
                 - secretRef:
                     name: {{ .Values.existingSecretName }}
+                {{- else if and (.Values.existingSecretList) (not .Values.createSecret) (not .Values.existingSecretName) }}
+                {{- range .Values.existingSecretList }}
+                - secretRef:
+                    name: {{ . }}
+                {{- end }}
                 {{- else }}
                 {{- end }}
               {{- end }}
@@ -201,6 +215,11 @@ spec:
                 {{- else if and (.Values.existingSecretName) (not .Values.createSecret) }}
                 - secretRef:
                     name: {{ .Values.existingSecretName }}
+                {{- else if and (.Values.existingSecretList) (not .Values.createSecret) (not .Values.existingSecretName) }}
+                {{- range .Values.existingSecretList }}
+                - secretRef:
+                    name: {{ . }}
+                {{- end }}
                 {{- else }}
                 {{- end }}
           volumes:

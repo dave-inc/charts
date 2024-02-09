@@ -13,6 +13,10 @@ spec:
       value: "{{ .Values.cloudsqlProxy.migrationTemplate.tag }}"
     - name: command
       value: "{{ .Values.cloudsqlProxy.migrationTemplate.command }}"
+  ttlStrategy:
+    secondsAfterCompletion: {{ int .Values.cloudsqlProxy.migrationTemplate.ttlStrategy.secondsAfterCompletion }}
+    secondsAfterSuccess: {{ int .Values.cloudsqlProxy.migrationTemplate.ttlStrategy.secondsAfterSuccess }}
+    secondsAfterFailure: {{ int .Values.cloudsqlProxy.migrationTemplate.ttlStrategy.secondsAfterFailure }}
   entrypoint: migrate
   serviceAccountName: workflows
   templates:
