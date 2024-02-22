@@ -60,7 +60,7 @@ spec:
                 containers:
                   - name: "*"
                     resources:
-                      {{- if .Values.policySets.common.enforceLimits }}
+                      {{- if .Values.policySets.common.checkLimits }}
                       limits:
                         memory: "?*"
                       {{- end }}
@@ -101,7 +101,7 @@ spec:
                     containers:
                       - name: "*"
                         resources:
-                          {{- if .Values.policySets.common.enforceLimits }}
+                          {{- if .Values.policySets.common.checkLimits }}
                           limits:
                             memory: "?*"
                           {{- end }}
