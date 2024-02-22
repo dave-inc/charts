@@ -1,0 +1,31 @@
+{{- if .Values.policySets.common.enabled }}
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: replicas
+  namespace: {{ .Values.policySets.common.namespace }}
+  labels:
+    {{- include "kyverno-policies.labels" . | nindent 4 }}
+  annotations:
+    policies.kyverno.io/title: Minimum Replica Count
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Deployment
+    policies.kyverno.io/minversion: 1.6.0
+    policies.kyverno.io/description: >-
+      Replica count for a Deployment must be greater than or equal to 2.
+spec:
+  validationFailureAction: {{ .Values.policySets.common.validationFailureAction }}
+  rules:
+    - name: min-replica-count
+      match:
+        any:
+        - resources:
+            kinds:
+            - Deployment
+      validate:
+        message: "Replica count for a Deployment must be greater than or equal to 2."
+        pattern:
+          spec:
+            replicas: ">=2"
+{{- end }}
