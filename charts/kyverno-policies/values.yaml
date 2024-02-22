@@ -14,11 +14,13 @@ fullnameOverride: ""
 policySets:
   common:
     enabled: true
-    # by default run the common policy set as audit mode
-    validationFailureAction: audit
-    # enforceLimits if set to false policy will only apply for resource request.
-    # set it to true to make the policy enforce request and limits.
-    enforceLimits: false
+    # namespace where the policies will be deployed
+    namespace: policy
+    # validationFailureAction can be Audit|Enforce by default run the common policy set as audit mode
+    validationFailureAction: Audit
+    # checkLimits if set to false policy will only apply for resource request.
+    # set it to true to make the policy checks limits.
+    checkLimits: true
   # bellow is and example on how to add extra policy sets for other envs.
   # dev:
   #   enabled: true
