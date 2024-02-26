@@ -23,26 +23,6 @@ entries:
     version: 0.8.6-beta.2
   - apiVersion: v2
     appVersion: 1.17.0
-    created: "2023-11-13T21:08:56.003465354Z"
-    description: Standard Service Template
-    digest: 62667f8cc273b007c2817ca7b61750c64080ed9417aa341d455d6f0e2e7e8089
-    name: common
-    type: application
-    urls:
-    - https://github.com/dave-inc/charts/releases/download/common-0.8.6-beta.2/common-0.8.6-beta.2.tgz
-    version: 0.8.6-beta.2
-  - apiVersion: v2
-    appVersion: 1.17.0
-    created: "2023-10-30T18:50:06.789364935Z"
-    description: Standard Service Template
-    digest: 15037170466853be9adf4c8cc6407164992fa3032b37920e2b74e9d39b0d2f73
-    name: common
-    type: application
-    urls:
-    - https://github.com/dave-inc/charts/releases/download/common-0.8.6-beta.1/common-0.8.6-beta.1.tgz
-    version: 0.8.6-beta.1
-  - apiVersion: v2
-    appVersion: 1.17.0
     created: "2023-11-03T17:36:53.773761556Z"
     description: Standard Service Template
     digest: f24597e264ef9724a6eb79121d1084cda4a08571a5dc6d4e92cbc43d3c157073
@@ -223,16 +203,6 @@ entries:
     version: 0.8.2-beta
   - apiVersion: v2
     appVersion: 1.17.0
-    created: "2023-01-12T00:49:16.898566042Z"
-    description: Standard Service Template
-    digest: 34c15b68c8c3736a38902e5bde6f8866eeb16cfb27119c40bde7ad1cbea1df35
-    name: common
-    type: application
-    urls:
-    - https://github.com/dave-inc/charts/releases/download/common-0.8.2-beta/common-0.8.2-beta.tgz
-    version: 0.8.2-beta
-  - apiVersion: v2
-    appVersion: 1.17.0
     created: "2022-07-20T22:33:45.737783391Z"
     description: Standard Service Template
     digest: b69fc02e77c163aeda3395b18d30232a85c707b0e2ca9613122d1d16f5fb5f7c
@@ -383,16 +353,6 @@ entries:
     version: 0.7.19-beta.1
   - apiVersion: v2
     appVersion: 1.17.0
-    created: "2022-01-10T22:24:06.182499451Z"
-    description: Standard Service Template
-    digest: 7473a6288becdb611886d2d8fd764c251684ac332ff6c31a7b1c65dcc6f5f2f0
-    name: common
-    type: application
-    urls:
-    - https://github.com/dave-inc/charts/releases/download/common-0.7.19-beta.1/common-0.7.19-beta.1.tgz
-    version: 0.7.19-beta.1
-  - apiVersion: v2
-    appVersion: 1.17.0
     created: "2022-01-05T01:11:48.353124594Z"
     description: Standard Service Template
     digest: 558780e1f3c1aa79e30e63eba4db78f7f512cbfd98872827ff08268ab977c513
@@ -443,49 +403,9 @@ entries:
     version: 0.7.18-beta.1
   - apiVersion: v2
     appVersion: 1.17.0
-    created: "2021-11-03T04:21:50.363781516Z"
-    description: Standard Service Template
-    digest: b8f40a252aefde5d60e0aa81fa2b1a37e5d4377691491d7d7179a4ba3469167d
-    name: common
-    type: application
-    urls:
-    - https://github.com/dave-inc/charts/releases/download/common-0.7.18-beta/common-0.7.18-beta.tgz
-    version: 0.7.18-beta
-  - apiVersion: v2
-    appVersion: 1.17.0
-    created: "2021-11-03T04:58:22.897134346Z"
-    description: Standard Service Template
-    digest: c1cd167d17b11b567223afd4bd13c5a53b6a3e76d236e4e0ea70360d073a558b
-    name: common
-    type: application
-    urls:
-    - https://github.com/dave-inc/charts/releases/download/common-0.7.18-beta/common-0.7.18-beta.tgz
-    version: 0.7.18-beta
-  - apiVersion: v2
-    appVersion: 1.17.0
-    created: "2021-11-03T04:12:34.518008678Z"
-    description: Standard Service Template
-    digest: 9be02a02dc9c06b1a1f36e4519a6005fe316e1e83267661946f5a8b61346ad57
-    name: common
-    type: application
-    urls:
-    - https://github.com/dave-inc/charts/releases/download/common-0.7.18-beta/common-0.7.18-beta.tgz
-    version: 0.7.18-beta
-  - apiVersion: v2
-    appVersion: 1.17.0
     created: "2021-11-03T05:13:54.852989572Z"
     description: Standard Service Template
     digest: bbea04490b668cd1fc10fe2246647232ac7b25a936fef2c31d00a3a7b022c024
-    name: common
-    type: application
-    urls:
-    - https://github.com/dave-inc/charts/releases/download/common-0.7.18-beta/common-0.7.18-beta.tgz
-    version: 0.7.18-beta
-  - apiVersion: v2
-    appVersion: 1.17.0
-    created: "2021-11-03T04:53:49.669639547Z"
-    description: Standard Service Template
-    digest: 0a0258499ef1bd817060ff0fd0a8a08cd8a6b0085161df135de6ccd2149f6f5b
     name: common
     type: application
     urls:
