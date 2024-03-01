@@ -280,7 +280,10 @@ spec:
             {{- toYaml .Values.customVolumes.volumeMounts | nindent 12 }}
           {{- end }}
           {{- end }}{{/* end volumeMounts */}}
-
+        {{- if .Values.deploymentContainer.lifecycle }}
+          lifecycle:
+            {{- toYaml .Values.deploymentContainer.lifecycle | nindent 12 }}
+        {{- end}}{{/* end lifecycle */}}
           {{- if .Values.cloudsqlProxy.enabled }}
         - name: {{ .Values.cloudsqlProxy.name }}
           securityContext:

@@ -86,6 +86,13 @@ deploymentContainer:
 
   terminationGracePeriodSeconds: 30
 
+  ## If you want to add a preStop hooks, or any other lifecycles to your
+  ## deployment, you can define them here:
+  #lifecycle:
+  #preStop:
+  #  exec:
+  #    command: ["/bin/sh", "-c", "echo 'PreStop hook'"]
+
 image:
   repository: nginx
   pullPolicy: Always
