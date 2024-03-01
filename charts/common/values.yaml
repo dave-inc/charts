@@ -350,7 +350,10 @@ cloudsqlProxy:
   # command: ['/cloud_sql_proxy','--dir=/cloudsql','-instances=project_name:region:instance_name']
   resources:
     requests:
-      cpu: '100m'
+      cpu: 50m
+      memory: 25Mi
+    limits:
+      memory: 256Mi
   lifecycle:
     preStop:
       exec:
