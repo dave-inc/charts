@@ -3,6 +3,16 @@ entries:
   common:
   - apiVersion: v2
     appVersion: 1.17.0
+    created: "2024-03-04T20:54:11.942581458Z"
+    description: Standard Service Template
+    digest: a295c9f194162ede17fab6d1c6068454322cd674f29d7da71f46135eee569d9e
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.8.6-beta.5/common-0.8.6-beta.5.tgz
+    version: 0.8.6-beta.5
+  - apiVersion: v2
+    appVersion: 1.17.0
     created: "2024-03-04T20:38:11.053409866Z"
     description: Standard Service Template
     digest: d465d979fee58036a9673fc56d09b66346d70e64e6e0515b8974802916c7b5aa
@@ -1180,4 +1190,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2024-03-04T20:38:11.054411461Z"
+generated: "2024-03-04T20:54:11.943423964Z"
