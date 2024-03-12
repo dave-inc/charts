@@ -22,7 +22,7 @@ spec:
   validationFailureAction: {{ .Values.policySets.common.validationFailureAction }}
   background: true
   rules:
-  - name: liveness
+  - name: liveness-required
     match:
       any:
       - resources:
@@ -45,7 +45,7 @@ spec:
             - key: livenessProbe
               operator: AllNotIn
               value: "{{`{{ element.keys(@)[] }}`}}"
-  - name: readiness
+  - name: readiness-required
     match:
       any:
       - resources:
