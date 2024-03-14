@@ -11,7 +11,9 @@ metadata:
     policies.kyverno.io/subject: Deployment
     policies.kyverno.io/minversion: 1.6.0
     policies.kyverno.io/description: >-
-      Replica count for a Deployment must be greater than or equal to 2.
+      This policy ensures that Deployments have a required label `team` defined. 
+      Assigning a `team` label to Deployments is a best practice for organizational clarity and resource management. 
+      It helps in categorizing and identifying resources belonging to specific teams or departments within a Kubernetes cluster.
 spec:
   validationFailureAction: {{ .Values.policySets.common.validationFailureAction }}
   rules:

@@ -1,0 +1,40 @@
+{{- if .Values.policySets.common.enabled }}
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: hpa
+  namespace: {{ .Values.policySets.common.namespace }}
+  labels:
+    {{- include "kyverno-policies.labels" . | nindent 4 }}
+  annotations:
+    policies.kyverno.io/title: Require Limits and Requests
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Deployment
+    policies.kyverno.io/minversion: 1.6.0
+    policies.kyverno.io/description: >-
+      This policy ensures that every Deployment in your cluster is associated with a Horizontal Pod Autoscaler (HPA) to enable automatic scaling based on resource utilization. 
+      Horizontal Pod Autoscalers are essential for ensuring that your applications can handle varying levels of traffic and workload demand effectively.
+spec:
+  validationFailureAction: {{ .Values.policySets.common.validationFailureAction }}
+  rules:
+    - name: hpa-required
+      match:
+        any:
+          - resources:
+              kinds:
+              - Deployment
+      context:
+        - name: existing_hpa
+          apiCall:
+            urlPath: "/apis/autoscaling/v2/namespaces/{{`{{request.namespace}}`}}/horizontalpodautoscalers" 
+            jmesPath: "items[?label_match(metadata.labels, `{{`{{request.object.metadata.labels}}`}}`)] | length(@)"
+      validate:
+        message: "There is no corresponding HorizontalPodAutoscalers(HPA) found for this Deployment."
+        deny:
+          conditions:
+            any:
+            - key: "{{`{{existing_hpa}}`}}"
+              operator: LessThan
+              value: 1
+{{- end }}
