@@ -3,25 +3,52 @@ name: Release Charts
 on:
   push:
     branches:
-      - master
+      - SRE-4495/chart-validation
 
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
+      - name: Index checkout
+        uses: actions/checkout@v2
+        with:
+          ref: gh-pages
+          path: index
+          sparse-checkout: |
+            index.yaml
+          sparse-checkout-cone-mode: false
+
+      - uses: fabasoad/data-format-converter-action@main
+        id: yaml2json
+        with:
+          input: "index/index.yaml"
+          from: yaml
+          to: json
+
+      - name: Print index
+        run: echo "${{ steps.yaml2json.outputs.output }}"
+
+      - name: Print python
+        shell: python -u {0}
+        run: |
+          print("hello world!")
+
       - name: Checkout
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
-      - name: Configure Git
-        run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+      - run: |
+          git diff --name-only master
 
-      - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.4.0
-        with:
-          charts_repo_url: https://dave-inc.github.io/charts
-        env:
-          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+#      - name: Configure Git
+#        run: |
+#          git config user.name "$GITHUB_ACTOR"
+#          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+#
+#      - name: Run chart-releaser
+#        uses: helm/chart-releaser-action@v1.4.0
+#        with:
+#          charts_repo_url: https://dave-inc.github.io/charts
+#        env:
+#          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
