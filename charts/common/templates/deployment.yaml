@@ -95,6 +95,9 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           command: {{ toYaml .Values.failOnMissingLocalSecrets.secretsFetch.command | nindent 12}}
           args: {{ toYaml .Values.failOnMissingLocalSecrets.secretsFetch.args | nindent 12}}
+          env:
+            - name: NODE_ENV
+              value: {{ .Values.environment }}
         {{- end }}
       {{- end }}
       containers:
