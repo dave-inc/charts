@@ -170,3 +170,19 @@ sideCar:
 #  and properly tag the team and environment
 
 additionalLabels: {}
+
+# If `failOnMissingLocalSecrets` is enabled, an initContainer will try to
+# fetch the secrets.
+#
+# If `local-secrets`, which is what powers the `secrets:fetch` target returns
+# an error status, the rollout of a new pod will halt and that will
+# buy us time to either define the missing secret or remove it as a
+# requirement.
+#
+# Since not all the `service-template` derived jobs use the same command
+# to fetch secrets, that field is customizable to fit the needs of all.
+failOnMissingLocalSecrets:
+  enabled: false
+  secretsFetch:
+    command: ["yarn"]
+    args: ["secrets:fetch"]
