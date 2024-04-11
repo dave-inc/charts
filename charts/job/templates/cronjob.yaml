@@ -65,14 +65,26 @@ spec:
           securityContext:
             {{- toYaml .Values.podSecurityContext | nindent 12 }}         
           {{- end }}
-          {{- if .Values.initContainer.enabled }}
+          {{- if (or .Values.initContainer.enabled .Values.failOnMissingLocalSecrets.enabled) }}
           initContainers:
+            {{- if .Values.initContainer.enabled }}
             - name: {{ .Values.initContainer.name }}
               image: {{ .Values.initContainer.image }}
               command: {{ toYaml .Values.initContainer.command | nindent 14 }}
               volumeMounts:
                 - name: tmp
                   mountPath: /tmp
+            {{- end }}
+            {{- if .Values.failOnMissingLocalSecrets.enabled }}
+            - name: check-local-secrets
+              {{/* Reusing the main container's image is done on purpose */}}
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+              command: {{ toYaml .Values.failOnMissingLocalSecrets.secretsFetch.command | nindent 16 }}
+              args: {{ toYaml .Values.failOnMissingLocalSecrets.secretsFetch.args | nindent 16 }}
+              env:
+                - name: NODE_ENV
+                  value: {{ .Values.environment }}
+            {{- end }}
           {{- end }}
           containers:
             {{- if .Values.sideCar.enabled }}
