@@ -175,11 +175,11 @@ additionalLabels: {}
 # fetch the secrets.
 #
 # If `local-secrets`, which is what powers the `secrets:fetch` target returns
-# an error status, the rollout of a new replicaset will halt and that will
+# an error status, the rollout of a new pod will halt and that will
 # buy us time to either define the missing secret or remove it as a
-# requirement without bringing the whole deployment down in the process.
+# requirement.
 #
-# Since not all the `service-template` derived deployments use the same command
+# Since not all the `service-template` derived jobs use the same command
 # to fetch secrets, that field is customizable to fit the needs of all.
 failOnMissingLocalSecrets:
   enabled: false
