@@ -40,7 +40,7 @@ spec:
         - CREATE
         - UPDATE
     validate:
-      message: "Liveness probes are required for all containers."
+      message: "`livenessProbe` is required."
       foreach:
       - list: request.object.spec.template.spec.containers[0]
         deny:
@@ -70,7 +70,7 @@ spec:
         - CREATE
         - UPDATE
     validate:
-      message: "Readiness probes are required for all containers."
+      message: "`readinessProbe` is required."
       foreach:
       - list: request.object.spec.template.spec.containers[0]
         deny:

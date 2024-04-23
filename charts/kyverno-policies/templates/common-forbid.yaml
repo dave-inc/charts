@@ -35,7 +35,7 @@ spec:
           operator: Equals
           value: Forbid
       validate:
-        message: "If `policy` is `Forbidden` in Cronjobs validate `startingDeadlineSeconds` should be set"
+        message: "If `policy` is `Forbidden` in Cronjobs validate `startingDeadlineSeconds` should be set."
         pattern:
           spec:
             startingDeadlineSeconds: "?*"

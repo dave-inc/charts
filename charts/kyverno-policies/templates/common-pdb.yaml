@@ -44,7 +44,7 @@ spec:
             jmesPath: "items[?label_match(spec.selector.matchLabels, `{{`{{request.object.spec.template.metadata.labels}}`}}`)] | [0] | spec.minAvailable || `0`"
       validate:
         message: >-
-          Replicas field has a value equals to the minAvailable in PodDisruptionBudget.
+          `replicas` field has a value equals to the `minAvailable` in PodDisruptionBudget.
         deny:
           conditions:
             any:

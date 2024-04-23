@@ -7,7 +7,7 @@ metadata:
   labels:
     {{- include "kyverno-policies.labels" . | nindent 4 }}
   annotations:
-    policies.kyverno.io/title: Require Limits and Requests
+    policies.kyverno.io/title: Require Requests and Limits
     policies.kyverno.io/category: Best Practices
     policies.kyverno.io/severity: high
     policies.kyverno.io/subject: Deployment, DaemonSet, Statefulset, Cronjob
@@ -29,7 +29,7 @@ spec:
             - DaemonSet
             - StatefulSet
       validate:
-        message: "CPU and Memory resource requests are required"
+        message: "CPU and Memory resources.requests are required."
         pattern:
           spec:
             template:
@@ -49,7 +49,7 @@ spec:
             - DaemonSet
             - StatefulSet
       validate:
-        message: "Memory resource limits is required"
+        message: "Memory resources.limits is required."
         pattern:
           spec:
             template:
