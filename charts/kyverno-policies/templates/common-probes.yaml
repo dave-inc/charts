@@ -5,11 +5,10 @@ metadata:
   name: probes
   namespace: {{ .Values.policySets.common.namespace }}
   annotations:
-    pod-policies.kyverno.io/autogen-controllers: DaemonSet,Deployment,StatefulSet
-    policies.kyverno.io/title: Require Pod Probes
+    policies.kyverno.io/title: Require Probes
     policies.kyverno.io/category: Best Practices
     policies.kyverno.io/severity: medium
-    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/subject: Deployment
     policies.kyverno.io/description: >-
       Liveness and readiness probes need to be configured to correctly manage a Pod's
       lifecycle during deployments, restarts, and upgrades. For each Pod, a periodic
@@ -25,7 +24,14 @@ spec:
       any:
       - resources:
           kinds:
-          - Pod
+          - Deployment
+    exclude:
+      any:
+      - resources:
+          namespaces:
+          - policy
+          - sys
+          - workflows
     preconditions:
       all:
       - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
@@ -36,7 +42,7 @@ spec:
     validate:
       message: "Liveness probes are required for all containers."
       foreach:
-      - list: request.object.spec.containers[]
+      - list: request.object.spec.template.spec.containers[0]
         deny:
           conditions:
             all:
@@ -48,7 +54,14 @@ spec:
       any:
       - resources:
           kinds:
-          - Pod
+          - Deployment
+    exclude:
+      any:
+      - resources:
+          namespaces:
+          - policy
+          - sys
+          - workflows
     preconditions:
       all:
       - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
@@ -59,7 +72,7 @@ spec:
     validate:
       message: "Readiness probes are required for all containers."
       foreach:
-      - list: request.object.spec.containers[]
+      - list: request.object.spec.template.spec.containers[0]
         deny:
           conditions:
             all:

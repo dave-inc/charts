@@ -24,14 +24,18 @@ spec:
           - resources:
               kinds:
               - CronJob
-      validate:
+      exclude:
+        any:
+        - resources:
+            namespaces:
+            - policy
       preconditions:
         all:
         - key: "{{`{{ request.object.spec.concurrencyPolicy }}`}}"
           operator: Equals
           value: Forbid
       validate:
-        message: "If policy Forbidden validate there is a startingDeadlineSeconds."
+        message: "If `policy` is `Forbidden` in Cronjobs validate `startingDeadlineSeconds` should be set"
         pattern:
           spec:
             startingDeadlineSeconds: "?*"
