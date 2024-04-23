@@ -7,10 +7,10 @@ metadata:
   labels:
     {{- include "kyverno-policies.labels" . | nindent 4 }}
   annotations:
-    policies.kyverno.io/title: Require Limits and Requests
+    policies.kyverno.io/title: Require Requests and Limits
     policies.kyverno.io/category: Best Practices
     policies.kyverno.io/severity: high
-    policies.kyverno.io/subject: Deployment, DaemonSet, Statefulset, Job, Cronjob
+    policies.kyverno.io/subject: Deployment, DaemonSet, Statefulset, Cronjob
     policies.kyverno.io/minversion: 1.6.0
     policies.kyverno.io/description: >-
       As application workloads share cluster resources, it is important to define resources
@@ -28,9 +28,8 @@ spec:
             - Deployment
             - DaemonSet
             - StatefulSet
-            - Job
       validate:
-        message: "CPU and Memory resource requests are required"
+        message: "CPU and Memory resources.requests are required."
         pattern:
           spec:
             template:
@@ -49,9 +48,8 @@ spec:
             - Deployment
             - DaemonSet
             - StatefulSet
-            - Job
       validate:
-        message: "Memory resource limits is required"
+        message: "Memory resources.limits is required."
         pattern:
           spec:
             template:

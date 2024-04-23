@@ -24,7 +24,7 @@ spec:
             kinds:
             - Deployment
       validate:
-        message: "The label `team` is required."
+        message: "Label `team` is required."
         pattern:
           spec:
             template:
