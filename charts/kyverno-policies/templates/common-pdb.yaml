@@ -24,9 +24,17 @@ spec:
     - name: check-minAvailable
       match:
         any:
-          - resources:
-              kinds:
-                - Deployment
+        - resources:
+            kinds:
+              - Deployment
+      exclude:
+        any:
+        - resources:
+            kinds:
+            - Deployment
+            selector:
+              matchLabels:
+                app.kubernetes.io/instance: '*staging*'                
       preconditions:
         all:
         - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
