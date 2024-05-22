@@ -21,9 +21,9 @@ spec:
     - name: cronjob-forbid-startingdeadlineseconds
       match:
         any:
-          - resources:
-              kinds:
-              - CronJob
+        - resources:
+            kinds:
+            - CronJob
       exclude:
         any:
         - resources:

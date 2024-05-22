@@ -21,9 +21,9 @@ spec:
     - name: hpa-required
       match:
         any:
-          - resources:
-              kinds:
-              - Deployment
+        - resources:
+            kinds:
+            - Deployment
       exclude:
         any:
         - resources:
@@ -31,6 +31,12 @@ spec:
             - policy
             - sys
             - workflows
+        - resources:              
+            kinds:
+            - Deployment
+            selector:
+              matchLabels:
+                app.kubernetes.io/instance: '*staging*'
       context:
         - name: existing_hpa
           apiCall:
