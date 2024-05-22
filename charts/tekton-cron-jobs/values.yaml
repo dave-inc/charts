@@ -1,1 +1,4 @@
 eventListener: {}
+ingress:
+  enabled: false
+  host: tekton-cron.gen1.trydave.com
