@@ -2,7 +2,7 @@ apiVersion: v2
 name: dave-npd
 description: Dave's Node Problem Detector
 type: application
-version: 0.1.0-beta.0
+version: 0.1.0-beta.1
 appVersion: 0.1.0
 dependencies:
 - name: node-problem-detector
