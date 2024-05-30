@@ -1,0 +1,44 @@
+npd:
+  image:
+    repository: ""
+    tag: latest
+
+  priorityClassName: ""
+
+  securityContext:
+    privileged: false
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+  settings:
+    log_monitors:
+      # noop monitor. This needs to be defined because the chart needs at
+      # least one log monitor.
+      - /custom-config/dev-null.json
+    custom_monitor_definitions:
+      # noop monitor. This needs to be defined because the chart needs at
+      # least one log monitor.
+      dev-null.json: |
+        {
+          "plugin": "filelog",
+          "pluginConfig": {
+            "timestamp": "^time=\"(\\S*)\"",
+            "message": "msg=\"([^\n]*)\"",
+            "timestampFormat": "2006-01-02T15:04:05.999999999-07:00"
+          },
+          "logPath": "/dev/null",
+          "lookback": "5m",
+          "bufferSize": 10,
+          "source": "devnull",
+          "conditions": [],
+          "rules": [
+            {
+              "type": "temporary",
+              "reason": "DaveDevNullOutput",
+              "pattern": "Found something in /dev/null (impossible)"
+            }
+          ]
+        }
