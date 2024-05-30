@@ -824,6 +824,21 @@ entries:
   dave-npd:
   - apiVersion: v2
     appVersion: 0.1.0
+    created: "2024-05-30T19:52:59.584703032Z"
+    dependencies:
+    - alias: npd
+      name: node-problem-detector
+      repository: https://charts.deliveryhero.io
+      version: 2.3.13
+    description: Dave's Node Problem Detector
+    digest: 97c26f51933b303157da8dcb33a726af8e53fff8f9d95b8a845e8532839efd45
+    name: dave-npd
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/dave-npd-0.1.0-beta.1/dave-npd-0.1.0-beta.1.tgz
+    version: 0.1.0-beta.1
+  - apiVersion: v2
+    appVersion: 0.1.0
     created: "2024-05-30T17:26:18.460464716Z"
     dependencies:
     - alias: npd
@@ -1286,4 +1301,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2024-05-30T17:26:18.461238494Z"
+generated: "2024-05-30T19:52:59.585516359Z"
