@@ -37,7 +37,7 @@ npd:
           "rules": [
             {
               "type": "temporary",
-              "reason": "DevNullOutput",
+              "reason": "DaveDevNullOutput",
               "pattern": "Found something in /dev/null (impossible)"
             }
           ]
