@@ -13,6 +13,11 @@ npd:
       cpu: 50m
       memory: 64Mi
 
+  labels:
+    team: sre
+    # override this for the couple of environments that are not production
+    env: production
+
   settings:
     log_monitors:
       # noop monitor. This needs to be defined because the chart needs at
