@@ -15,11 +15,13 @@ metadata:
       `livenessProbe` is performed by the kubelet to determine if the Pod's containers
       are running or need to be restarted. A `readinessProbe` is used by Services
       and Deployments to determine if the Pod is ready to receive network traffic.
+      A `startupProbe` is used to determine if a container is ready to accept traffic
+      before the container is added to the service's endpoints.
 spec:
   validationFailureAction: {{ .Values.policySets.common.validationFailureAction }}
   background: true
   rules:
-  - name: liveness-required
+  - name: livenessprobe-required
     match:
       any:
       - resources:
@@ -49,7 +51,7 @@ spec:
             - key: livenessProbe
               operator: AllNotIn
               value: "{{`{{ element.keys(@)[] }}`}}"
-  - name: readiness-required
+  - name: readinessprobe-required
     match:
       any:
       - resources:
@@ -77,6 +79,36 @@ spec:
           conditions:
             all:
             - key: readinessProbe
+              operator: AllNotIn
+              value: "{{`{{ element.keys(@)[] }}`}}"
+  - name: startupprobe-required
+    match:
+      any:
+      - resources:
+          kinds:
+          - Deployment
+    exclude:
+      any:
+      - resources:
+          namespaces:
+          - policy
+          - sys
+          - workflows
+    preconditions:
+      all:
+      - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
+        operator: AnyIn
+        value:
+        - CREATE
+        - UPDATE
+    validate:
+      message: "`startupProbe` is required."
+      foreach:
+      - list: request.object.spec.template.spec.containers[0]
+        deny:
+          conditions:
+            all:
+            - key: startupProbe
               operator: AllNotIn
               value: "{{`{{ element.keys(@)[] }}`}}"
 {{- end }}
