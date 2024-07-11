@@ -310,7 +310,7 @@ spec:
             {{- toYaml .Values.cloudsqlProxy.readinessProbe | nindent 12 }}
           startupProbe:
             {{- toYaml .Values.cloudsqlProxy.startupProbe | nindent 12 }}
-          livecycle:
+          lifecycle:
             {{- toYaml .Values.cloudsqlProxy.lifecycle | nindent 12 }}
           resources:
             {{- toYaml .Values.cloudsqlProxy.resources | nindent 12 }}
@@ -318,7 +318,6 @@ spec:
             {{- toYaml .Values.cloudsqlProxy.command | nindent 12 }}
           {{- if .Values.cloudsqlProxy.instanceConnectionName }}
           args:
-            - "--structured-logs"
             - "--private-ip"
             - "{{ .Values.cloudsqlProxy.instanceConnectionName }}?unix-socket-path=/cloudsql/{{ .Values.cloudsqlProxy.instanceConnectionName }}"
           {{- else }}
