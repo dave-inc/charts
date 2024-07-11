@@ -302,22 +302,34 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.cloudsqlProxy.image.repository }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            {{- toYaml .Values.cloudsqlProxy.ports | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.cloudsqlProxy.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.cloudsqlProxy.readinessProbe | nindent 12 }}
+          startupProbe:
+            {{- toYaml .Values.cloudsqlProxy.startupProbe | nindent 12 }}
+          livecycle:
+            {{- toYaml .Values.cloudsqlProxy.lifecycle | nindent 12 }}
           resources:
             {{- toYaml .Values.cloudsqlProxy.resources | nindent 12 }}
-          {{- if .Values.cloudsqlProxy.command }}
           command:
             {{- toYaml .Values.cloudsqlProxy.command | nindent 12 }}
+          {{- if .Values.cloudsqlProxy.instanceConnectionName }}
+          args:
+            - "--structured-logs"
+            - "--private-ip"
+            - "{{ .Values.cloudsqlProxy.instanceConnectionName }}?unix-socket-path=/cloudsql/{{ .Values.cloudsqlProxy.instanceConnectionName }}"
+          {{- else }}
+          args:
+            {{- toYaml .Values.cloudsqlProxy.args | nindent 12 }}
           {{- end }}
+          env:
+            {{- toYaml .Values.cloudsqlProxy.env | nindent 12 }}
           volumeMounts:
             - name: {{ .Values.cloudsqlProxy.volume }}
               mountPath: /{{ .Values.cloudsqlProxy.volume }}
-          lifecycle:
-            preStop:
-              exec:
-                command:
-                  - /bin/sh
-                  - '-c'
-                  - /bin/sleep 30
           {{- end }}
 
       {{- if $hasVolumes }}{{/* begin volumes */}}

@@ -352,20 +352,118 @@ cloudsqlProxy:
   enabled: false
   name: cloudsql-proxy
   image:
-    repository: gcr.io/cloudsql-docker/gce-proxy:1.31.1-alpine
+    repository: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.11.4-alpine
+  # instanceConnectionName only available after common-chart 0.8.8*
+  # Takes precedence over args and command
+  # instanceConnectionName: project_name:region:instance_name
+  # Args is only available for version gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.*
+  # args:
+  #   - "--structured-logs"
+  #   - "--private-ip"
+  #   - "project_name:region:instance_name?unix-socket-path=/cloudsql/project_name:region:instance_name"
+  # Deprecated: The following option is available to avoid breaking changes to version gcr.io/cloudsql-docker/gce-proxy:gce-proxy:1.*
   # Command should be defined with the command and custom values of your CloudSQL instance
   # command: ['/cloud_sql_proxy','--dir=/cloudsql','-instances=project_name:region:instance_name']
+
   resources:
     requests:
       cpu: 50m
       memory: 25Mi
     limits:
       memory: 256Mi
+  volume: cloudsql
+  env:
+    # Enable HTTP healthchecks on port 9801. This enables /liveness,
+    # /readiness and /startup health check endpoints. Allow connections
+    # listen for connections on any interface (0.0.0.0) so that the
+    # k8s management components can reach these endpoints.
+    - name: CSQL_PROXY_HEALTH_CHECK
+      value: "true"
+    - name: CSQL_PROXY_HTTP_PORT
+      value: "9801"
+    - name: CSQL_PROXY_HTTP_ADDRESS
+      value: 0.0.0.0
+    # Configure the proxy to exit gracefully when sent a k8s configuration
+    # file.
+    - name: CSQL_PROXY_EXIT_ZERO_ON_SIGTERM
+      value: "true"
+    # Enable the admin api server (which only listens for local connections)
+    # and enable the /quitquitquit endpoint. This allows other pods
+    # to shut down the proxy gracefully when they are ready to exit.
+    - name: CSQL_PROXY_QUITQUITQUIT
+      value: "true"
+    - name: CSQL_PROXY_ADMIN_PORT
+      value: "9092"
+    # Enable structured logging with LogEntry format
+    - name: CSQL_PROXY_STRUCTURED_LOGS
+      value: "true"
+  # Configure kubernetes to call the /quitquitquit endpoint on the
+  # admin server before sending SIGTERM to the proxy before stopping
+  # the pod. This will give the proxy more time to gracefully exit.
   lifecycle:
     preStop:
-      exec:
-        command: ['/bin/sh','-c','/bin/sleep 30']
-  volume: cloudsql
+      httpGet:
+        path: /quitquitquit
+        port: 9092
+        scheme: HTTP
+  # The /startup probe returns OK when the proxy is ready to receive
+  # connections from the application. In this example, k8s will check
+  # once a second for 60 seconds.
+  # We strongly recommend adding a startup probe to the proxy sidecar
+  # container. This will ensure that service traffic will be routed to
+  # the pod only after the proxy has successfully started.
+  startupProbe:
+    failureThreshold: 60
+    httpGet:
+      path: /startup
+      port: 9801
+      scheme: HTTP
+    periodSeconds: 1
+    successThreshold: 1
+    timeoutSeconds: 10
+  # The /liveness probe returns OK as soon as the proxy application has
+  # begun its startup process and continues to return OK until the
+  # process stops.
+  # We recommend adding a liveness probe to the proxy sidecar container.
+  livenessProbe:
+    failureThreshold: 3
+    httpGet:
+      path: /liveness
+      port: 9801
+      scheme: HTTP
+    # The probe will be checked every 10 seconds.
+    periodSeconds: 10
+    # Number of times the probe is allowed to fail before the transition
+    # from healthy to failure state.
+    # If periodSeconds = 60, 5 tries will result in five minutes of
+    # checks. The proxy starts to refresh a certificate five minutes
+    # before its expiration. If those five minutes lapse without a
+    # successful refresh, the liveness probe will fail and the pod will be
+    # restarted.
+    successThreshold: 1
+    # The probe will fail if it does not respond in 10 seconds
+    timeoutSeconds: 10
+  # The /readiness probe returns OK when the proxy can establish
+  # a new connections to its databases.
+  # Please use the readiness probe to the proxy sidecar with caution.
+  # An improperly configured readiness probe can cause unnecessary
+  # interruption to the application. See README.md for more detail.
+  readinessProbe:
+    httpGet:
+      path: /readiness
+      port: 9801
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 10
+    # Number of times the probe must report success to transition from failure to healthy state.
+    # Defaults to 1 for readiness probe.
+    successThreshold: 1
+    failureThreshold: 6
+  # Declare the HTTP Port so that k8s components can reach the
+  # metrics and health check endpoints.
+  ports:
+  - containerPort: 9801
+    protocol: TCP
   # This section creates a template in Argo Workflows that is used for sql migrations
   migrationTemplate:
     enabled: false
