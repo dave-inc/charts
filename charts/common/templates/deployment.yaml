@@ -7,6 +7,7 @@
 .Values.customConfig.enabled
 .Values.customVolumes.enabled
 ) -}}
+{{- $sqlProxyVersion := include "common.cloudsqlProxyVersion" . -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -302,6 +303,7 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.cloudsqlProxy.image.repository }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if ( eq $sqlProxyVersion "v2" ) }}
           ports:
             {{- toYaml .Values.cloudsqlProxy.ports | nindent 12 }}
           livenessProbe:
@@ -312,20 +314,33 @@ spec:
             {{- toYaml .Values.cloudsqlProxy.startupProbe | nindent 12 }}
           lifecycle:
             {{- toYaml .Values.cloudsqlProxy.lifecycle | nindent 12 }}
+          {{- end }}
           resources:
             {{- toYaml .Values.cloudsqlProxy.resources | nindent 12 }}
+          {{- if and ( eq $sqlProxyVersion "v1" ) ( .Values.cloudsqlProxy.instanceConnectionName ) ( not .Values.cloudsqlProxy.command ) }}
+          command:
+            - "/cloud_sql_proxy"
+            - "--dir=/cloudsql"
+            - "-log_debug_stdout=true"
+            - "-verbose=false"
+            - "-ip_address_types=PRIVATE"
+            - "-instances={{ .Values.cloudsqlProxy.instanceConnectionName }}"
+          {{- else if and ( eq $sqlProxyVersion "v1" ) (.Values.cloudsqlProxy.command) }}
           command:
             {{- toYaml .Values.cloudsqlProxy.command | nindent 12 }}
-          {{- if .Values.cloudsqlProxy.instanceConnectionName }}
+          {{- end }}
+          {{- if and (eq $sqlProxyVersion "v2") (.Values.cloudsqlProxy.instanceConnectionName) (not .Values.cloudsqlProxy.args) }}
           args:
             - "--private-ip"
             - "{{ .Values.cloudsqlProxy.instanceConnectionName }}?unix-socket-path=/cloudsql/{{ .Values.cloudsqlProxy.instanceConnectionName }}"
-          {{- else }}
+          {{- else if and ( eq $sqlProxyVersion "v2" ) (.Values.cloudsqlProxy.args) }}
           args:
             {{- toYaml .Values.cloudsqlProxy.args | nindent 12 }}
           {{- end }}
+          {{ if and ( eq $sqlProxyVersion "v2" ) (.Values.cloudsqlProxy.env) }}
           env:
             {{- toYaml .Values.cloudsqlProxy.env | nindent 12 }}
+          {{- end }}
           volumeMounts:
             - name: {{ .Values.cloudsqlProxy.volume }}
               mountPath: /{{ .Values.cloudsqlProxy.volume }}

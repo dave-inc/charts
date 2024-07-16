@@ -84,14 +84,18 @@ deploymentContainer:
   # customStartupProbe that overrides the default one
   customStartupProbe: {}
 
-  terminationGracePeriodSeconds: 30
-
   ## If you want to add a preStop hooks, or any other lifecycles to your
   ## deployment, you can define them here:
   #lifecycle:
-  #preStop:
-  #  exec:
-  #    command: ["/bin/sh", "-c", "echo 'PreStop hook'"]
+  # preStop:
+  #   exec:
+  #     command: ["/bin/sh", "-c", "echo 'PreStop hook'"]
+
+# terminationGracePeriodSeconds is the time to wait before forcefully terminating a pod
+# after a SIGTERM signal is sent to the container. If the preStop hook is used, this
+# value should be set to a higher value than the preStop hook timeout.
+# Setting default 1 second higher than the preStop most Dave's apps have 30 seconds
+terminationGracePeriodSeconds: 31
 
 image:
   repository: nginx
@@ -357,8 +361,8 @@ cloudsqlProxy:
   # Takes precedence over args and command
   # instanceConnectionName: project_name:region:instance_name
   # Args is only available for version gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.*
+  # The following args are used by default if you don't define them
   # args:
-  #   - "--structured-logs"
   #   - "--private-ip"
   #   - "project_name:region:instance_name?unix-socket-path=/cloudsql/project_name:region:instance_name"
   # Deprecated: The following option is available to avoid breaking changes to version gcr.io/cloudsql-docker/gce-proxy:gce-proxy:1.*
@@ -383,29 +387,25 @@ cloudsqlProxy:
       value: "9801"
     - name: CSQL_PROXY_HTTP_ADDRESS
       value: 0.0.0.0
-    # Configure the proxy to exit gracefully when sent a k8s configuration
-    # file.
-    - name: CSQL_PROXY_EXIT_ZERO_ON_SIGTERM
-      value: "true"
+    - name: CSQL_PROXY_ADMIN_PORT
+      value: "9092"
     # Enable the admin api server (which only listens for local connections)
     # and enable the /quitquitquit endpoint. This allows other pods
     # to shut down the proxy gracefully when they are ready to exit.
     - name: CSQL_PROXY_QUITQUITQUIT
       value: "true"
-    - name: CSQL_PROXY_ADMIN_PORT
-      value: "9092"
-    # Enable structured logging with LogEntry format
     - name: CSQL_PROXY_STRUCTURED_LOGS
       value: "true"
-  # Configure kubernetes to call the /quitquitquit endpoint on the
-  # admin server before sending SIGTERM to the proxy before stopping
-  # the pod. This will give the proxy more time to gracefully exit.
+  # The lifecycle.preStop is used to delay the pod termination to allow the
+  # remaining connections from main container to exit gracefully.
   lifecycle:
     preStop:
-      httpGet:
-        path: /quitquitquit
-        port: 9092
-        scheme: HTTP
+      exec:
+        command:
+          - /bin/sh
+          - -c
+          - /bin/sleep 30
+
   # The /startup probe returns OK when the proxy is ready to receive
   # connections from the application. In this example, k8s will check
   # once a second for 60 seconds.
@@ -471,7 +471,7 @@ cloudsqlProxy:
     command: /opt/app/node_modules/.bin/knex --knexfile knexfile.js migrate:latest
     # Image tag used for migration template along with image.repository. This can always be replaced at runtime in Argo Workflows
     tag: latest
-    # Instance connection name should be defined with custom values of your CloudSQL instance
+    # Deprecated: We use cloudsqlProxy.instanceConnectionName instead, no need to define it at the migrationTemplate level
     #instanceConnectionName: project_name:region:instance_name
     port: 3306
     secretName: migration

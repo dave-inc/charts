@@ -80,3 +80,18 @@ Name for the custom config configmap.
 {{- define "common.customConfig.name" -}}
 {{ .Values.customConfig.name | default (print (include "common.name" .) "-customconfig") }}
 {{- end -}}
+
+
+{{/*
+Create common.cloudsqlProxyVersion depending on .Values.cloudsqlProxy.image.repository depending on the image used.
+Either gcr.io/cloudsql-docker/gce-proxy:1.* or with gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.*
+*/}}
+{{- define "common.cloudsqlProxyVersion" -}}
+{{- if hasPrefix "gcr.io/cloudsql-docker/gce-proxy:1" .Values.cloudsqlProxy.image.repository }}
+{{- printf "v1" }}
+{{- else if hasPrefix "gcr.io/cloud-sql-connectors/cloud-sql-proxy:2" .Values.cloudsqlProxy.image.repository }}
+{{- printf "v2" }}
+{{- else }}
+{{- fail "cloudsqlProxyVersion is not supported" }}
+{{- end }}
+{{- end }}
