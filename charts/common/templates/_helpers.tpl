@@ -95,3 +95,17 @@ Either gcr.io/cloudsql-docker/gce-proxy:1.* or with gcr.io/cloud-sql-connectors/
 {{- fail "cloudsqlProxyVersion is not supported" }}
 {{- end }}
 {{- end }}
+
+{{/*
+Create common.instanceConnectionName depending on .Values.cloudsqlProxy.instanceConnectionName
+or .Values.cloudsqlProxy.migrationTemplate.instanceConnectionName
+*/}}
+{{- define "common.instanceConnectionName" -}}
+{{- if .Values.cloudsqlProxy.instanceConnectionName }}
+{{- printf .Values.cloudsqlProxy.instanceConnectionName }}
+{{- else if .Values.cloudsqlProxy.migrationTemplate.instanceConnectionName }}
+{{- printf .Values.cloudsqlProxy.migrationTemplate.instanceConnectionName }}
+{{- else }}
+{{- fail "instanceConnectionName is not set" }}
+{{- end }}
+{{- end }}
