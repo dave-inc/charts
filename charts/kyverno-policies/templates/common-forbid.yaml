@@ -2,7 +2,7 @@
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: forbid
+  name: forbid-test003
   namespace: {{ .Values.policySets.common.namespace }}
   labels:
     {{- include "kyverno-policies.labels" . | nindent 4 }}
@@ -29,6 +29,12 @@ spec:
         - resources:
             namespaces:
             - policy
+        - resources:
+            kinds:
+            - CronJob
+            selector:
+              matchLabels:
+                kyverno: skip-forbid-policy
       preconditions:
         all:
         - key: "{{`{{ request.object.spec.concurrencyPolicy }}`}}"

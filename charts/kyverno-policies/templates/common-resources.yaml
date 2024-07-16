@@ -2,7 +2,7 @@
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: resources
+  name: resources-test003
   namespace: {{ .Values.policySets.common.namespace }}
   labels:
     {{- include "kyverno-policies.labels" . | nindent 4 }}
@@ -28,8 +28,18 @@ spec:
             - Deployment
             - DaemonSet
             - StatefulSet
+      exclude:
+        any:
+        - resources:
+            kinds:
+            - Deployment
+            - DaemonSet
+            - StatefulSet
+            selector:
+              matchLabels:
+                kyverno: skip-resources-policy
       validate:
-        message: "CPU and Memory resources.requests are required."
+        message: "CPU and Memory resources.requests are required for all containers."
         pattern:
           spec:
             template:
@@ -48,6 +58,16 @@ spec:
             - Deployment
             - DaemonSet
             - StatefulSet
+      exclude:
+        any:
+        - resources:
+            kinds:
+            - Deployment
+            - DaemonSet
+            - StatefulSet
+            selector:
+              matchLabels:
+                kyverno: skip-resources-policy
       validate:
         message: "Memory resources.limits is required."
         pattern:
@@ -67,6 +87,16 @@ spec:
           - resources:
               kinds:
               - CronJob
+      exclude:
+        any:
+        - resources:
+            kinds:
+            - Deployment
+            - DaemonSet
+            - StatefulSet
+            selector:
+              matchLabels:
+                kyverno: skip-resources-policy
       validate:
         message: "CPU and Memory resource requests are required"
         pattern:
@@ -87,6 +117,16 @@ spec:
           - resources:
               kinds:
               - CronJob
+      exclude:
+        any:
+        - resources:
+            kinds:
+            - Deployment
+            - DaemonSet
+            - StatefulSet
+            selector:
+              matchLabels:
+                kyverno: skip-resources-policy
       validate:
         message: "Memory resource limits is required"
         pattern:

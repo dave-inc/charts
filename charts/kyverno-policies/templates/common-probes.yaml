@@ -2,7 +2,7 @@
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: probes
+  name: probes-test003
   namespace: {{ .Values.policySets.common.namespace }}
   annotations:
     policies.kyverno.io/title: Require Probes
@@ -34,6 +34,12 @@ spec:
           - policy
           - sys
           - workflows
+      - resources:
+          kinds:
+          - Deployment
+          selector:
+            matchLabels:
+              kyverno: skip-probes-policy
     preconditions:
       all:
       - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
@@ -42,9 +48,9 @@ spec:
         - CREATE
         - UPDATE
     validate:
-      message: "`livenessProbe` is required."
+      message: "`livenessProbe` is required for all containers."
       foreach:
-      - list: request.object.spec.template.spec.containers[0]
+      - list: request.object.spec.template.spec.containers[]
         deny:
           conditions:
             all:
@@ -72,9 +78,9 @@ spec:
         - CREATE
         - UPDATE
     validate:
-      message: "`readinessProbe` is required."
+      message: "`readinessProbe` is required for all containers."
       foreach:
-      - list: request.object.spec.template.spec.containers[0]
+      - list: request.object.spec.template.spec.containers[]
         deny:
           conditions:
             all:
@@ -102,9 +108,9 @@ spec:
         - CREATE
         - UPDATE
     validate:
-      message: "`startupProbe` is required."
+      message: "`startupProbe` is required for all containers."
       foreach:
-      - list: request.object.spec.template.spec.containers[0]
+      - list: request.object.spec.template.spec.containers[]
         deny:
           conditions:
             all:

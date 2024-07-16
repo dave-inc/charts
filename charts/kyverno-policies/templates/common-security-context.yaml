@@ -2,7 +2,7 @@
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: security-context
+  name: security-context-test003
   namespace: {{ .Values.policySets.common.namespace }}
   annotations:
     policies.kyverno.io/title: Require Run As Non-Root User
@@ -31,6 +31,12 @@ spec:
             - policy
             - sys
             - workflows
+        - resources:
+            kinds:
+            - Deployment
+            selector:
+              matchLabels:
+                kyverno: skip-security-context-policy
       validate:
         message: >-
           Running as root is not allowed. The fields spec.securityContext.runAsUser,
