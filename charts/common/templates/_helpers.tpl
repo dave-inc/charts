@@ -130,6 +130,6 @@ Once all apps are using cloud sql proxy v2 this can be simplified.
     {{- end -}}
     {{- $instanceArg | regexFind "^[^?]+" | trim -}}
   {{- else -}}
-    {{- fail ".Values.cloudsqlProxy.instanceConnectionName|command|args are not set" -}}
+    {{- fail "Can't get instanceConnectionName in .Values.cloudsqlProxy.instanceConnectionName|command|args or properties not set" -}}
   {{- end -}}
 {{- end -}}
