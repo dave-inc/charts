@@ -364,6 +364,7 @@ cloudsqlProxy:
   # The following args are used by default if you don't define them
   # args:
   #   - "--private-ip"
+  #   - "--quiet"
   #   - "project_name:region:instance_name?unix-socket-path=/cloudsql/project_name:region:instance_name"
   # Deprecated: The following option is available to avoid breaking changes to version gcr.io/cloudsql-docker/gce-proxy:gce-proxy:1.*
   # Command should be defined with the command and custom values of your CloudSQL instance

@@ -98,14 +98,37 @@ Either gcr.io/cloudsql-docker/gce-proxy:1.* or with gcr.io/cloud-sql-connectors/
 
 {{/*
 Create common.instanceConnectionName depending on .Values.cloudsqlProxy.instanceConnectionName
-or .Values.cloudsqlProxy.migrationTemplate.instanceConnectionName
+else if .Values.cloudsqlProxy.migrationTemplate.instanceConnectionName
+else if try to extract it from the .Values.cloudsqlProxy.command list
+else if try to extract it from the .Values.cloudsqlProxy.args list
+else fail.
+This variable will be used in deployment.yaml and workflowtemplate.yaml and can be removed once all charts are on 0.8.8 or higher.
 */}}
 {{- define "common.instanceConnectionName" -}}
-{{- if .Values.cloudsqlProxy.instanceConnectionName }}
-{{- printf .Values.cloudsqlProxy.instanceConnectionName }}
-{{- else if .Values.cloudsqlProxy.migrationTemplate.instanceConnectionName }}
-{{- printf .Values.cloudsqlProxy.migrationTemplate.instanceConnectionName }}
-{{- else }}
-{{- fail "instanceConnectionName is not set" }}
-{{- end }}
-{{- end }}
+  {{- if .Values.cloudsqlProxy.instanceConnectionName -}}
+    {{- .Values.cloudsqlProxy.instanceConnectionName  -}}
+  {{- else if .Values.cloudsqlProxy.migrationTemplate.instanceConnectionName -}}
+    {{- .Values.cloudsqlProxy.migrationTemplate.instanceConnectionName  -}}
+  {{- else if .Values.cloudsqlProxy.command -}}
+    {{- $commandList := .Values.cloudsqlProxy.command -}}
+    {{- $instanceArg := "" -}}
+    {{- range $cmd := $commandList -}}
+      {{- if hasPrefix "-instances=" $cmd -}}
+        {{- $instanceArg = $cmd -}}
+      {{- end -}}
+    {{- end -}}
+    {{- trimPrefix "-instances=" $instanceArg }}
+  {{- else if .Values.cloudsqlProxy.args -}}
+    {{- $argsList := .Values.cloudsqlProxy.args -}}
+    {{- $instanceArg := "" -}}
+    {{- range $arg := $argsList -}}
+      {{- if not (hasPrefix "-" $arg) -}}
+        {{- $instanceArg = $arg -}}
+        {{- break -}}
+      {{- end -}}
+    {{- end -}}
+    {{- $instanceArg | regexFind "^[^?]+" | trim -}}
+  {{- else -}}
+    {{- fail ".Values.cloudsqlProxy.instanceConnectionName|command|args are not set" -}}
+  {{- end -}}
+{{- end -}}
