@@ -333,6 +333,7 @@ spec:
           {{- if and (eq $sqlProxyVersion "v2") ( $sqlinstanceConnectionName ) (not .Values.cloudsqlProxy.args) }}
           args:
             - "--private-ip"
+            - "--quiet"
             - "{{ $sqlinstanceConnectionName }}?unix-socket-path=/cloudsql/{{ $sqlinstanceConnectionName }}"
           {{- else if and ( eq $sqlProxyVersion "v2" ) (.Values.cloudsqlProxy.args) }}
           args:
