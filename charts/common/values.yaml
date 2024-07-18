@@ -356,16 +356,19 @@ cloudsqlProxy:
   enabled: false
   name: cloudsql-proxy
   image:
+    # As of 0.8.8* we are using CloudSQL Proxy v2 by default notice is a different repository
+    # Deprecated: repository: gcr.io/cloudsql-docker/gce-proxy:1.36.0-alpine
     repository: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.11.4-alpine
   # instanceConnectionName only available after common-chart 0.8.8*
   # Takes precedence over args and command
   # instanceConnectionName: project_name:region:instance_name
-  # Args is only available for version gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.*
+  # args is only available for CloudSQL Proxy v2
   # The following args are used by default if you don't define them
   # args:
   #   - "--private-ip"
+  #   - "--quiet"
   #   - "project_name:region:instance_name?unix-socket-path=/cloudsql/project_name:region:instance_name"
-  # Deprecated: The following option is available to avoid breaking changes to version gcr.io/cloudsql-docker/gce-proxy:gce-proxy:1.*
+  # Deprecated: The following option is available to avoid breaking changes in case you need to run CloudSQL Proxy v1 with custom command
   # Command should be defined with the command and custom values of your CloudSQL instance
   # command: ['/cloud_sql_proxy','--dir=/cloudsql','-instances=project_name:region:instance_name']
 
@@ -396,16 +399,6 @@ cloudsqlProxy:
       value: "true"
     - name: CSQL_PROXY_STRUCTURED_LOGS
       value: "true"
-  # The lifecycle.preStop is used to delay the pod termination to allow the
-  # remaining connections from main container to exit gracefully.
-  lifecycle:
-    preStop:
-      exec:
-        command:
-          - /bin/sh
-          - -c
-          - /bin/sleep 30
-
   # The /startup probe returns OK when the proxy is ready to receive
   # connections from the application. In this example, k8s will check
   # once a second for 60 seconds.
