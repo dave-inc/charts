@@ -397,16 +397,6 @@ cloudsqlProxy:
       value: "true"
     - name: CSQL_PROXY_STRUCTURED_LOGS
       value: "true"
-  # The lifecycle.preStop is used to delay the pod termination to allow the
-  # remaining connections from main container to exit gracefully.
-  lifecycle:
-    preStop:
-      exec:
-        command:
-          - /bin/sh
-          - -c
-          - /bin/sleep 30
-
   # The /startup probe returns OK when the proxy is ready to receive
   # connections from the application. In this example, k8s will check
   # once a second for 60 seconds.
