@@ -102,7 +102,8 @@ else if .Values.cloudsqlProxy.migrationTemplate.instanceConnectionName
 else if try to extract it from the .Values.cloudsqlProxy.command list
 else if try to extract it from the .Values.cloudsqlProxy.args list
 else fail.
-This variable will be used in deployment.yaml and workflowtemplate.yaml and can be removed once all charts are on 0.8.8 or higher.
+This variable will be used in deployment.yaml and workflowtemplate.yaml it's a safer way to get the instanceConnectionName.
+Once all apps are using cloud sql proxy v2 this can be simplified.
 */}}
 {{- define "common.instanceConnectionName" -}}
   {{- if .Values.cloudsqlProxy.instanceConnectionName -}}
