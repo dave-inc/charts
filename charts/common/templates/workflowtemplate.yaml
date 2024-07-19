@@ -1,5 +1,5 @@
-{{- $sqlinstanceConnectionName := include "common.instanceConnectionName" . -}}
 {{- if .Values.cloudsqlProxy.migrationTemplate.enabled -}}
+{{- $sqlinstanceConnectionName := include "common.instanceConnectionName" . -}}
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:

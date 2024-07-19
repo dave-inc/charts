@@ -106,6 +106,7 @@ This variable will be used in deployment.yaml and workflowtemplate.yaml it's a s
 Once all apps are using cloud sql proxy v2 this can be simplified.
 */}}
 {{- define "common.instanceConnectionName" -}}
+{{- if .Values.cloudsqlProxy.enabled -}}
   {{- if .Values.cloudsqlProxy.instanceConnectionName -}}
     {{- .Values.cloudsqlProxy.instanceConnectionName  -}}
   {{- else if .Values.cloudsqlProxy.migrationTemplate.instanceConnectionName -}}
@@ -132,4 +133,5 @@ Once all apps are using cloud sql proxy v2 this can be simplified.
   {{- else -}}
     {{- fail "Can't get instanceConnectionName in .Values.cloudsqlProxy.instanceConnectionName|command|args or properties not set" -}}
   {{- end -}}
+{{- end -}}
 {{- end -}}
