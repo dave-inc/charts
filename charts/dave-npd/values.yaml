@@ -18,6 +18,10 @@ npd:
     # override this for the couple of environments that are not production
     env: production
 
+  # let node problem detector tolerate all taints
+  tolerations:
+    - operator: Exists
+
   settings:
     log_monitors:
       # noop monitor. This needs to be defined because the chart needs at
