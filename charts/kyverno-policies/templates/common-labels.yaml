@@ -30,7 +30,7 @@ spec:
             - Deployment
             selector:
               matchLabels:
-                kyverno: skip-labels-policy
+                kyverno-labels-policy: skip
       validate:
         message: "Label `team` is required."
         pattern:

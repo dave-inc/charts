@@ -42,7 +42,7 @@ spec:
             - Deployment
             selector:
               matchLabels:
-                kyverno: skip-hpa-policy
+                kyverno-forbid-policy: skip
       context:
         - name: existing_hpa
           apiCall:

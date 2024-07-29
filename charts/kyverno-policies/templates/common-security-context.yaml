@@ -36,7 +36,7 @@ spec:
             - Deployment
             selector:
               matchLabels:
-                kyverno: skip-security-context-policy
+                kyverno-security-context-policy: skip
       validate:
         message: >-
           Running as root is not allowed. The fields spec.securityContext.runAsUser,

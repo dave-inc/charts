@@ -37,7 +37,7 @@ spec:
             - StatefulSet
             selector:
               matchLabels:
-                kyverno: skip-resources-policy
+                kyverno-resources-policy: skip
       validate:
         message: "CPU and Memory resources.requests are required for all containers."
         pattern:
@@ -67,7 +67,7 @@ spec:
             - StatefulSet
             selector:
               matchLabels:
-                kyverno: skip-resources-policy
+                kyverno-resources-policy: skip
       validate:
         message: "Memory resources.limits is required."
         pattern:
@@ -96,7 +96,7 @@ spec:
             - StatefulSet
             selector:
               matchLabels:
-                kyverno: skip-resources-policy
+                kyverno-resources-policy: skip
       validate:
         message: "CPU and Memory resource requests are required"
         pattern:
@@ -126,7 +126,7 @@ spec:
             - StatefulSet
             selector:
               matchLabels:
-                kyverno: skip-resources-policy
+                kyverno-resources-policy: skip
       validate:
         message: "Memory resource limits is required"
         pattern:
