@@ -2,7 +2,7 @@
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: security-context-test003
+  name: security-context
   namespace: {{ .Values.policySets.common.namespace }}
   annotations:
     policies.kyverno.io/title: Require Run As Non-Root User

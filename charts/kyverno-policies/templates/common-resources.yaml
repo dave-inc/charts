@@ -2,7 +2,7 @@
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: resources-test003
+  name: resources
   namespace: {{ .Values.policySets.common.namespace }}
   labels:
     {{- include "kyverno-policies.labels" . | nindent 4 }}
