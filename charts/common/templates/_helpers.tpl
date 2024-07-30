@@ -80,3 +80,58 @@ Name for the custom config configmap.
 {{- define "common.customConfig.name" -}}
 {{ .Values.customConfig.name | default (print (include "common.name" .) "-customconfig") }}
 {{- end -}}
+
+
+{{/*
+Create common.cloudsqlProxyVersion depending on .Values.cloudsqlProxy.image.repository depending on the image used.
+Either gcr.io/cloudsql-docker/gce-proxy:1.* or with gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.*
+*/}}
+{{- define "common.cloudsqlProxyVersion" -}}
+{{- if hasPrefix "gcr.io/cloudsql-docker/gce-proxy:1" .Values.cloudsqlProxy.image.repository }}
+{{- printf "v1" }}
+{{- else if hasPrefix "gcr.io/cloud-sql-connectors/cloud-sql-proxy:2" .Values.cloudsqlProxy.image.repository }}
+{{- printf "v2" }}
+{{- else }}
+{{- fail "cloudsqlProxyVersion is not supported" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Create common.instanceConnectionName depending on .Values.cloudsqlProxy.instanceConnectionName
+else if .Values.cloudsqlProxy.migrationTemplate.instanceConnectionName
+else if try to extract it from the .Values.cloudsqlProxy.command list
+else if try to extract it from the .Values.cloudsqlProxy.args list
+else fail.
+This variable will be used in deployment.yaml and workflowtemplate.yaml it's a safer way to get the instanceConnectionName.
+Once all apps are using cloud sql proxy v2 this can be simplified.
+*/}}
+{{- define "common.instanceConnectionName" -}}
+{{- if .Values.cloudsqlProxy.enabled -}}
+  {{- if .Values.cloudsqlProxy.instanceConnectionName -}}
+    {{- .Values.cloudsqlProxy.instanceConnectionName  -}}
+  {{- else if .Values.cloudsqlProxy.migrationTemplate.instanceConnectionName -}}
+    {{- .Values.cloudsqlProxy.migrationTemplate.instanceConnectionName  -}}
+  {{- else if .Values.cloudsqlProxy.command -}}
+    {{- $commandList := .Values.cloudsqlProxy.command -}}
+    {{- $instanceArg := "" -}}
+    {{- range $cmd := $commandList -}}
+      {{- if hasPrefix "-instances=" $cmd -}}
+        {{- $instanceArg = $cmd -}}
+      {{- end -}}
+    {{- end -}}
+    {{- trimPrefix "-instances=" $instanceArg }}
+  {{- else if .Values.cloudsqlProxy.args -}}
+    {{- $argsList := .Values.cloudsqlProxy.args -}}
+    {{- $instanceArg := "" -}}
+    {{- range $arg := $argsList -}}
+      {{- if not (hasPrefix "-" $arg) -}}
+        {{- $instanceArg = $arg -}}
+        {{- break -}}
+      {{- end -}}
+    {{- end -}}
+    {{- $instanceArg | regexFind "^[^?]+" | trim -}}
+  {{- else -}}
+    {{- fail "Can't get instanceConnectionName in .Values.cloudsqlProxy.instanceConnectionName|command|args or properties not set" -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}

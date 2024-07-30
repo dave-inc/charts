@@ -1,4 +1,5 @@
 {{- if .Values.cloudsqlProxy.migrationTemplate.enabled -}}
+{{- $sqlinstanceConnectionName := include "common.instanceConnectionName" . -}}
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
@@ -45,7 +46,7 @@ spec:
       limit: 3
     container:
       image: gcr.io/cloudsql-docker/gce-proxy:latest
-      command: ["/cloud_sql_proxy","-instances={{ required `"A valid instanceUrl is required!"` .Values.cloudsqlProxy.migrationTemplate.instanceConnectionName }}=tcp:0.0.0.0:{{ .Values.cloudsqlProxy.migrationTemplate.port }}"]
+      command: ["/cloud_sql_proxy","-instances={{ $sqlinstanceConnectionName }}=tcp:0.0.0.0:{{ .Values.cloudsqlProxy.migrationTemplate.port }}"]
       readinessProbe:
         tcpSocket:
           port: {{ .Values.cloudsqlProxy.migrationTemplate.port }}
