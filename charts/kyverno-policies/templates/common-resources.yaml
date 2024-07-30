@@ -84,16 +84,14 @@ spec:
     - name: cron-cpu-mem-requests
       match:
         any:
-          - resources:
-              kinds:
-              - CronJob
+        - resources:
+            kinds:
+            - CronJob
       exclude:
         any:
         - resources:
             kinds:
-            - Deployment
-            - DaemonSet
-            - StatefulSet
+            - CronJob
             selector:
               matchLabels:
                 kyverno-resources-policy: skip
@@ -121,9 +119,7 @@ spec:
         any:
         - resources:
             kinds:
-            - Deployment
-            - DaemonSet
-            - StatefulSet
+              - CronJob
             selector:
               matchLabels:
                 kyverno-resources-policy: skip
