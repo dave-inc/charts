@@ -23,13 +23,11 @@ spec:
         - resources:
             kinds:
             - Deployment
-            - CronJob
       exclude:
         any:
         - resources:
             kinds:
             - Deployment
-            - Cronjob
             selector:
               matchLabels:
                 kyverno-labels-policy: skip
@@ -41,4 +39,24 @@ spec:
               metadata:
                 labels:
                   team: "?*"
+    - name: cron-label-team-required
+      match:
+        any:
+          - resources:
+              kinds:
+              - CronJob
+      exclude:
+        any:
+        - resources:
+            kinds:
+              - CronJob
+            selector:
+              matchLabels:
+                kyverno-labels-policy: skip
+      validate:
+        message: "Label `team` is required."
+        pattern:
+          metadata:
+            labels:
+              team: "?*"
 {{- end }}

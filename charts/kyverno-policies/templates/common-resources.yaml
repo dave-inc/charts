@@ -39,7 +39,7 @@ spec:
               matchLabels:
                 kyverno-resources-policy: skip
       validate:
-        message: "CPU and Memory resources.requests are required for all containers."
+        message: "CPU and Memory resources.requests are required."
         pattern:
           spec:
             template:
@@ -69,7 +69,7 @@ spec:
               matchLabels:
                 kyverno-resources-policy: skip
       validate:
-        message: "Memory resources.limits is required."
+        message: "Memory resources.limits are required."
         pattern:
           spec:
             template:
@@ -96,7 +96,7 @@ spec:
               matchLabels:
                 kyverno-resources-policy: skip
       validate:
-        message: "CPU and Memory resource requests are required"
+        message: "CPU and Memory resource.requests are required."
         pattern:
           spec:
             jobTemplate:
@@ -124,7 +124,7 @@ spec:
               matchLabels:
                 kyverno-resources-policy: skip
       validate:
-        message: "Memory resource limits is required"
+        message: "Memory resource.limits are required."
         pattern:
           spec:
             jobTemplate:
