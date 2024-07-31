@@ -18,7 +18,7 @@ metadata:
 spec:
   validationFailureAction: {{ .Values.policySets.common.validationFailureAction }}
   rules:
-    - name: cronjob-forbid-startingdeadlineseconds
+    - name: cron-forbid-startingdeadlineseconds
       match:
         any:
         - resources:
@@ -29,6 +29,12 @@ spec:
         - resources:
             namespaces:
             - policy
+        - resources:
+            kinds:
+            - CronJob
+            selector:
+              matchLabels:
+                kyverno-forbid-policy: skip
       preconditions:
         all:
         - key: "{{`{{ request.object.spec.concurrencyPolicy }}`}}"

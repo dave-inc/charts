@@ -8,7 +8,7 @@ metadata:
     policies.kyverno.io/title: Require Run As Non-Root User
     policies.kyverno.io/category: Security Best Practices
     policies.kyverno.io/severity: high
-    policies.kyverno.io/subject: Deployment
+    policies.kyverno.io/subject: Deployment, Cronjob
     kyverno.io/kyverno-version: 1.6.0
     kyverno.io/kubernetes-version: "1.22-1.23"
     policies.kyverno.io/description: >-
@@ -31,6 +31,12 @@ spec:
             - policy
             - sys
             - workflows
+        - resources:
+            kinds:
+            - Deployment
+            selector:
+              matchLabels:
+                kyverno-security-context-policy: skip
       validate:
         message: >-
           Running as root is not allowed. The fields spec.securityContext.runAsUser,
@@ -45,4 +51,39 @@ spec:
                 containers:
                 - =(securityContext):
                     =(runAsUser): ">0"
+    - name: cron-run-as-user-non-root
+      match:
+        any:
+        - resources:
+            kinds:
+            - CronJob
+      exclude:
+        any:
+        - resources:
+            namespaces:
+            - policy
+            - sys
+            - workflows
+        - resources:
+            kinds:
+            - CronJob
+            selector:
+              matchLabels:
+                kyverno-security-context-policy: skip
+      validate:
+        message: >-
+          Running as root is not allowed. The fields spec.securityContext.runAsUser,
+          spec.containers[*].securityContext.runAsUser must be unset or
+          set to a number greater than zero.
+        pattern:
+          spec:
+            jobTemplate:
+              spec:
+                template:
+                  spec:
+                    =(securityContext):
+                      =(runAsUser): ">0"
+                    containers:
+                    - =(securityContext):
+                        =(runAsUser): ">0"
 {{- end }}

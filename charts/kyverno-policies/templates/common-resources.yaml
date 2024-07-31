@@ -28,8 +28,18 @@ spec:
             - Deployment
             - DaemonSet
             - StatefulSet
+      exclude:
+        any:
+        - resources:
+            kinds:
+            - Deployment
+            - DaemonSet
+            - StatefulSet
+            selector:
+              matchLabels:
+                kyverno-resources-policy: skip
       validate:
-        message: "CPU and Memory resources.requests are required."
+        message: "CPU and Memory resources.requests is required."
         pattern:
           spec:
             template:
@@ -48,6 +58,16 @@ spec:
             - Deployment
             - DaemonSet
             - StatefulSet
+      exclude:
+        any:
+        - resources:
+            kinds:
+            - Deployment
+            - DaemonSet
+            - StatefulSet
+            selector:
+              matchLabels:
+                kyverno-resources-policy: skip
       validate:
         message: "Memory resources.limits is required."
         pattern:
@@ -64,11 +84,19 @@ spec:
     - name: cron-cpu-mem-requests
       match:
         any:
-          - resources:
-              kinds:
-              - CronJob
+        - resources:
+            kinds:
+            - CronJob
+      exclude:
+        any:
+        - resources:
+            kinds:
+            - CronJob
+            selector:
+              matchLabels:
+                kyverno-resources-policy: skip
       validate:
-        message: "CPU and Memory resource requests are required"
+        message: "CPU and Memory resource.requests is required."
         pattern:
           spec:
             jobTemplate:
@@ -87,8 +115,16 @@ spec:
           - resources:
               kinds:
               - CronJob
+      exclude:
+        any:
+        - resources:
+            kinds:
+              - CronJob
+            selector:
+              matchLabels:
+                kyverno-resources-policy: skip
       validate:
-        message: "Memory resource limits is required"
+        message: "Memory resource.limits is required."
         pattern:
           spec:
             jobTemplate:

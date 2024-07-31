@@ -34,6 +34,12 @@ spec:
           - policy
           - sys
           - workflows
+      - resources:
+          kinds:
+          - Deployment
+          selector:
+            matchLabels:
+              kyverno-probes-policy: skip
     preconditions:
       all:
       - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
@@ -42,9 +48,9 @@ spec:
         - CREATE
         - UPDATE
     validate:
-      message: "`livenessProbe` is required."
+      message: "`livenessProbe` is required for main application container and sidecar."
       foreach:
-      - list: request.object.spec.template.spec.containers[0]
+      - list: request.object.spec.template.spec.containers[]
         deny:
           conditions:
             all:
@@ -64,6 +70,12 @@ spec:
           - policy
           - sys
           - workflows
+      - resources:
+          kinds:
+          - Deployment
+          selector:
+            matchLabels:
+              kyverno-probes-policy: skip
     preconditions:
       all:
       - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
@@ -72,9 +84,9 @@ spec:
         - CREATE
         - UPDATE
     validate:
-      message: "`readinessProbe` is required."
+      message: "`readinessProbe` is required for main application container and sidecar."
       foreach:
-      - list: request.object.spec.template.spec.containers[0]
+      - list: request.object.spec.template.spec.containers[]
         deny:
           conditions:
             all:
@@ -94,6 +106,12 @@ spec:
           - policy
           - sys
           - workflows
+      - resources:
+          kinds:
+          - Deployment
+          selector:
+            matchLabels:
+              kyverno-probes-policy: skip
     preconditions:
       all:
       - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
@@ -102,9 +120,9 @@ spec:
         - CREATE
         - UPDATE
     validate:
-      message: "`startupProbe` is required."
+      message: "`startupProbe` is required for main application container and sidecar."
       foreach:
-      - list: request.object.spec.template.spec.containers[0]
+      - list: request.object.spec.template.spec.containers[]
         deny:
           conditions:
             all:

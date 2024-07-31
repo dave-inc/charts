@@ -37,6 +37,12 @@ spec:
             selector:
               matchLabels:
                 app.kubernetes.io/instance: '*staging*'
+        - resources:
+            kinds:
+            - Deployment
+            selector:
+              matchLabels:
+                kyverno-hpa-policy: skip
       context:
         - name: existing_hpa
           apiCall:
