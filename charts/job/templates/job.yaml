@@ -144,7 +144,7 @@ spec:
                   fieldPath: metadata.name
           {{- if .Values.cloudsqlProxy.enabled }}
             - name: DB_SOCKETPATH
-              value: /cloudsql/{{ .Values.cloudsqlProxy.database }}
+              value: /cloudsql/{{ .Values.cloudsqlProxy.instanceConnectionName }}
           {{- end }}
           {{- if .Values.apm.enabled }}
             - name: DD_ENV
@@ -202,7 +202,7 @@ spec:
               --private-ip \
               --quiet \
               --unix-socket /cloudsql \
-              -instances={{ required "Must specify a database if using cloudsqlProxy" .database }} &
+              -instances={{ required "Must specify an instanceConnectionName if using cloudsqlProxy" .instanceConnectionName }} &
 
             CHILD_PID=$!
 

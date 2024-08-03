@@ -21,20 +21,27 @@ command: []
 args: []
 
 # entrypointScript will run via sh with an additional wrapper to handle graceful sidecar shutdown
-# If you're using the standard cloudsql-proxy sidecar, you should use this option over command+args
+# If you're using the standard cloudsql-proxy sidecar, you should use this option over command+args.
+#
+# You can use any shell syntax you want here (/bin/sh). The chart runs the shell script,
+# then triggers the cloudsql-proxy sidecar to shut down.
+#
+# For standard NodeJS crons with a bootstrap for secrets, this should be:
+# ./bootstrap-and-run.sh node dist/crons/your-cron-job.js
 entrypointScript: ""
 
 # if you need a cloudsql-proxy sidecar, enable this and specify your database connection string
 cloudsqlProxy:
   enabled: false
   # this should be your GCP database as project:location:instance, e.g. internal-1-4825:us-central1:staging-2
-  database: ""
+  instanceConnectionName: ""
   proxyImageTag: 2.11.4-alpine
   resources:
     requests:
-      cpu: "100m"
+      cpu: 50m
+      memory: 25Mi
     limits:
-      memory: "256Mi"
+      memory: 256Mi
 
 
 # Init container must have a name, image and command to run before
