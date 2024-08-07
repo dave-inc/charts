@@ -44,7 +44,7 @@ spec:
       serviceAccountName: {{ include "job.serviceAccountName" . }}
       {{- if .Values.podSecurityContext }}
       securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}         
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       {{- end }}
       {{- if (or .Values.initContainer.enabled .Values.failOnMissingLocalSecrets.enabled) }}
       initContainers:
@@ -68,6 +68,181 @@ spec:
         {{- end }}
       {{- end }}
       containers:
+        - name: {{ include "job.name" . }}
+          {{- if .Values.securityContext }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.command }}
+          {{- if .Values.entrypointScript }}
+          {{- fail "Cannot specify entrypointScript alongside command" }}
+          {{- end }}
+          command:
+            {{- toYaml .Values.command | nindent 10 }}
+          {{- end }}
+          {{- if .Values.args }}
+          {{- if .Values.entrypointScript }}
+          {{- fail "Cannot specify entrypointScript alongside args" }}
+          {{- end }}
+          args:
+            {{- toYaml .Values.args | nindent 10 }}
+          {{- end }}
+          {{- if .Values.entrypointScript }}
+          command: [ "/bin/sh", "-c" ]
+          args:
+            - |-
+              # if the main script exits with a 0 status code,
+              # touch a file to cause the cloudsql-proxy sidecar to terminate
+              # otherwise, the proxy will continue running so that a container restart works
+              set -e
+{{ .Values.entrypointScript | indent 14 }}
+              touch /tmp/main-terminated
+          {{- end }}
+          {{- if .Values.resources }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          {{- if .Values.cloudsqlProxy.enabled }}
+            - name: cloudsql
+              mountPath: /cloudsql
+          {{- end }}
+          {{- if .Values.sideCar.enabled }}
+            - name: {{ .Values.sideCar.volumeName }}
+              mountPath: /{{ .Values.sideCar.volumeName }}
+          {{- end }}
+          {{- if .Values.existingSecretMount.enabled }}
+            {{- range .Values.existingSecretMount.secrets }}
+            - name: {{ .name }}-vol
+              mountPath: {{ .mountPath }}
+              readOnly: true
+            {{- end }}
+          {{- end }}
+          {{- if .Values.lifecycle }}
+          lifecycle:
+            {{- toYaml .Values.lifecycle | nindent 12 }}
+          {{- end }}
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: NODE_ENV
+              value: {{ .Values.environment }}
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+          {{- if .Values.cloudsqlProxy.enabled }}
+            - name: DB_SOCKETPATH
+              value: /cloudsql/{{ .Values.cloudsqlProxy.instanceConnectionName }}
+          {{- end }}
+          {{- if .Values.apm.enabled }}
+            - name: DD_ENV
+              value: {{ .Values.apm.datadogEnvironment | default .Values.environment }}
+            - name: DD_TRACE_AGENT_HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            {{/*
+            Used by hot-shots package as default StatsD host
+            */}}
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: DD_SERVICE_NAME
+              value: {{ include "job.name" . }}
+          {{- end }}
+          envFrom:
+            {{- if .Values.existingConfigMapName }}
+            - configMapRef:
+                name: {{ .Values.existingConfigMapName }}
+            {{- end }}
+            {{- if .Values.env }}
+            - configMapRef:
+                name: {{ .Values.configMapName | default (include "job.name" .) }}
+            {{- end}}
+            {{- if and (.Values.createSecret) (not .Values.createSecretName) }}
+            - secretRef:
+                name: {{ include "job.name" . }}
+            {{- else if and (.Values.createSecret) (.Values.createSecretName) }}
+            - secretRef:
+                name: {{ .Values.createSecretName }}
+            {{- else if and (.Values.existingSecretName) (not .Values.createSecret) }}
+            - secretRef:
+                name: {{ .Values.existingSecretName }}
+            {{- else if and (.Values.existingSecretList) (not .Values.createSecret) (not .Values.existingSecretName) }}
+            {{- range .Values.existingSecretList }}
+            - secretRef:
+                name: {{ . }}
+            {{- end }}
+            {{- else }}
+            {{- end }}
+        {{/* end job container */}}
+
+        {{- if .Values.cloudsqlProxy.enabled }}
+        {{- with .Values.cloudsqlProxy }}
+        - name: cloudsql-proxy
+          image: "gcr.io/cloud-sql-connectors/cloud-sql-proxy:{{ .proxyImageTag }}"
+          imagePullPolicy: Always
+          command: [ "/bin/sh", "-c" ]
+          args:
+          - |-
+            # start the proxy in the background
+            /cloud-sql-proxy \
+              --private-ip \
+              --quiet \
+              --unix-socket /cloudsql \
+              {{ required "Must specify an instanceConnectionName if using cloudsqlProxy" .instanceConnectionName }} &
+
+            CHILD_PID=$!
+
+            # this loop polls for a file indicating the main app has terminated successfully
+            # which writes a file to a shared volume
+            # if that file exists, the proxy is stopped so the job can complete
+            (while true;
+              do if [[ -f "/tmp/main-terminated" ]]; then
+                kill $CHILD_PID;
+                echo "Killed $CHILD_PID as the main container terminated.";
+                # breaks the outer "while true" loop
+                break 2;
+              fi;
+
+            sleep 1;
+            done) &
+
+            wait $CHILD_PID
+            PROXY_EXIT=$?
+
+            # detect if we're exiting due to the main job exiting, in which case we can also exit this cleanly
+            if [[ -f "/tmp/main-terminated" ]]; then
+              echo "Job completed. Exiting..."; exit 0;
+            else
+              # the proxy exited on its own. Use its exit code for the pod
+              echo "Proxy exited on its own. code $PROXY_EXIT"
+              exit $PROXY_EXIT
+            fi
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+              readOnly: true
+            - name: cloudsql
+              mountPath: /cloudsql
+          resources:
+            {{- toYaml .resources | nindent 16 }}
+        {{- end }}{{/* end with cloudSqlProxy */}}
+        {{- end }}{{/* end cloudSqlProxy.enabled */}}
+
         {{- if .Values.sideCar.enabled }}
         - name: {{ .Values.sideCar.name }}
           image: "{{ .Values.sideCar.image.repository }}"
@@ -119,105 +294,14 @@ spec:
             {{- else }}
             {{- end }}
           {{- end }}
-        {{- end }}
-        - name: {{ include "job.name" . }}
-          {{- if .Values.securityContext }}
-          securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
-          {{- end }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- if .Values.command }}
-          command:
-            {{- toYaml .Values.command | nindent 10 }}
-          {{- end }}
-          {{- if .Values.args }}
-          args:
-            {{- toYaml .Values.args | nindent 10 }}
-          {{- end }}
-          {{- if .Values.resources }}
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
-          {{- end }}                  
-          volumeMounts:
-            - name: tmp
-              mountPath: /tmp
-          {{- if .Values.sideCar.enabled }}
-            - name: {{ .Values.sideCar.volumeName }}
-              mountPath: /{{ .Values.sideCar.volumeName }}
-          {{- end }}
-          {{- if .Values.existingSecretMount.enabled }}
-            {{- range .Values.existingSecretMount.secrets }}
-            - name: {{ .name }}-vol
-              mountPath: {{ .mountPath }}
-              readOnly: true
-            {{- end }}
-          {{- end }}
-          {{- if .Values.lifecycle }}
-          lifecycle:
-            {{- toYaml .Values.lifecycle | nindent 12 }}
-          {{- end }}
-          env:
-            - name: NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: NODE_ENV
-              value: {{ .Values.environment }}
-            - name: NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  apiVersion: v1
-                  fieldPath: metadata.name
-          {{- if .Values.apm.enabled }}
-            - name: DD_ENV
-              value: {{ .Values.apm.datadogEnvironment | default .Values.environment }}
-            - name: DD_TRACE_AGENT_HOSTNAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.hostIP
-            {{/*
-            Used by hot-shots package as default StatsD host
-            */}}
-            - name: DD_AGENT_HOST
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.hostIP
-            - name: DD_SERVICE_NAME
-              value: {{ include "job.name" . }}
-          {{- end }}
-          envFrom:
-            {{- if .Values.existingConfigMapName }}
-            - configMapRef:
-                name: {{ .Values.existingConfigMapName }}
-            {{- end }}
-            {{- if .Values.env }}
-            - configMapRef:
-                name: {{ .Values.configMapName | default (include "job.name" .) }}
-            {{- end}}
-            {{- if and (.Values.createSecret) (not .Values.createSecretName) }}
-            - secretRef:
-                name: {{ include "job.name" . }}
-            {{- else if and (.Values.createSecret) (.Values.createSecretName) }}
-            - secretRef:
-                name: {{ .Values.createSecretName }}
-            {{- else if and (.Values.existingSecretName) (not .Values.createSecret) }}
-            - secretRef:
-                name: {{ .Values.existingSecretName }}
-            {{- else if and (.Values.existingSecretList) (not .Values.createSecret) (not .Values.existingSecretName) }}
-            {{- range .Values.existingSecretList }}
-            - secretRef:
-                name: {{ . }}
-            {{- end }}
-            {{- else }}
-            {{- end }}
+        {{- end }}{{/* end sidecar */}}
       volumes:
         - name: tmp
           emptyDir: {}
+      {{- if .Values.cloudsqlProxy.enabled }}
+        - name: cloudsql
+          emptyDir: {}
+      {{- end }}
       {{- if .Values.sideCar.enabled }}
         - name: {{ .Values.sideCar.volumeName }}
           emptyDir: {}

@@ -16,9 +16,33 @@ image:
   # Overrides the image tag whose default is the chart appVersion.
   tag: latest
 
+# Use Kubernetes command and args for fine-grained control
 command: []
 args: []
-port: 8080
+
+# entrypointScript will run via sh with an additional wrapper to handle graceful sidecar shutdown
+# If you're using the standard cloudsql-proxy sidecar, you should use this option over command+args.
+#
+# You can use any shell syntax you want here (/bin/sh). The chart runs the shell script,
+# then triggers the cloudsql-proxy sidecar to shut down.
+#
+# For standard NodeJS crons with a bootstrap for secrets, this should be:
+# ./bootstrap-and-run.sh node dist/crons/your-cron-job.js
+entrypointScript: ""
+
+# if you need a cloudsql-proxy sidecar, enable this and specify your database connection string
+cloudsqlProxy:
+  enabled: false
+  # this should be your GCP database as project:location:instance, e.g. internal-1-4825:us-central1:staging-2
+  instanceConnectionName: ""
+  proxyImageTag: 2.11.4-alpine
+  resources:
+    requests:
+      cpu: 50m
+      memory: 25Mi
+    limits:
+      memory: 256Mi
+
 
 # Init container must have a name, image and command to run before
 # deployContainer initializes.  Both containers share a /tmp volume mount.
@@ -40,7 +64,7 @@ timeZone: null
 suspend: false
 failedJobsHistoryLimit: "1"
 successfulJobsHistoryLimit: "3"
-# The optional startingDeadlineSeconds field indicates the maximum number of seconds 
+# The optional startingDeadlineSeconds field indicates the maximum number of seconds
 # the CronJob can take to start if it misses its scheduled time for any reason. Missed CronJobs are considered failures.
 startingDeadlineSeconds: "600"
 # The optional spec.concurrencyPolicy field specifies how to treat concurrent executions of a Job created by the CronJob controller.
