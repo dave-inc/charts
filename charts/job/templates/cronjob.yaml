@@ -214,13 +214,14 @@ spec:
               image: "gcr.io/cloud-sql-connectors/cloud-sql-proxy:{{ .proxyImageTag }}"
               imagePullPolicy: Always
               command: [ "/bin/sh", "-c" ]
-              args: |-
+              args:
+              - |-
                 # start the proxy in the background
-                /cloud_sql_proxy \
+                /cloud-sql-proxy \
                   --private-ip \
                   --quiet \
                   --unix-socket /cloudsql \
-                  -instances={{ required "Must specify an instanceConnectionName if using cloudsqlProxy" .instanceConnectionName }} &
+                  {{ required "Must specify an instanceConnectionName if using cloudsqlProxy" .instanceConnectionName }} &
 
                 CHILD_PID=$!
 
