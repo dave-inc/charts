@@ -38,7 +38,7 @@ spec:
               matchLabels:
                 kyverno-ingress-policy: skip
       validate:
-        message: "Public ingress detected. Remove Public Ingress and switch to Cloud Armor."
+        message: "Ingress nginx-public detected, switch to Cloud Armor."
         pattern:
           metadata:
             annotations:
