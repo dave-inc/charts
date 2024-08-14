@@ -13,14 +13,14 @@ metadata:
     policies.kyverno.io/subject: Ingress
     policies.kyverno.io/minversion: 1.6.0
     policies.kyverno.io/description: >-
-      This policy alerts on ingress configurations within the cluster that are public using nginx. Public exposure
+      This policy alerts on ingress configurations within the cluster that are using nginx-public. Public exposure
       of applications without proper security measures poses significant risks. It is recommended
       to use Cloud Armor instead of public nginx for enhanced protection,
       customizable security rules, and improved control over incoming traffic.
 spec:
   validationFailureAction: {{ .Values.policySets.common.validationFailureAction }}
   rules:
-    - name: public-ingress
+    - name: nginx-public
       match:
         any:
         - resources:
