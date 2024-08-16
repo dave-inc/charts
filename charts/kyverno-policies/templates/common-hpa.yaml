@@ -47,7 +47,7 @@ spec:
         - name: existing_hpa
           apiCall:
             urlPath: "/apis/autoscaling/v2/namespaces/{{`{{request.namespace}}`}}/horizontalpodautoscalers"
-            jmesPath: "items[?metadata.labels.\"app.kubernetes.io/name\" == '{{`{{request.object.metadata.labels.\"app.kubernetes.io/name\"}}`}}'] | length(@)"
+            jmesPath: "items[?metadata.name == '{{`{{request.object.metadata.name}}`}}'] | length(@)"
       validate:
         message: "There is no corresponding HorizontalPodAutoscalers(HPA) found for this Deployment."
         deny:
