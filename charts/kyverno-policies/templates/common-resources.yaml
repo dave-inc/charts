@@ -29,15 +29,7 @@ spec:
             - DaemonSet
             - StatefulSet
       exclude:
-        any:
-        - resources:
-            kinds:
-            - Deployment
-            - DaemonSet
-            - StatefulSet
-            selector:
-              matchLabels:
-                kyverno-resources-policy: skip
+        {{ .Values.policySets.common.resources.exclude | toYaml | nindent 8 }}
       validate:
         message: "CPU and Memory resources.requests is required."
         pattern:
@@ -59,15 +51,7 @@ spec:
             - DaemonSet
             - StatefulSet
       exclude:
-        any:
-        - resources:
-            kinds:
-            - Deployment
-            - DaemonSet
-            - StatefulSet
-            selector:
-              matchLabels:
-                kyverno-resources-policy: skip
+        {{ .Values.policySets.common.resources.exclude | toYaml | nindent 8 }}
       validate:
         message: "Memory resources.limits is required."
         pattern:
@@ -88,13 +72,7 @@ spec:
             kinds:
             - CronJob
       exclude:
-        any:
-        - resources:
-            kinds:
-            - CronJob
-            selector:
-              matchLabels:
-                kyverno-resources-policy: skip
+        {{ .Values.policySets.common.resources.exclude | toYaml | nindent 8 }}
       validate:
         message: "CPU and Memory resource.requests is required."
         pattern:
@@ -116,13 +94,7 @@ spec:
               kinds:
               - CronJob
       exclude:
-        any:
-        - resources:
-            kinds:
-              - CronJob
-            selector:
-              matchLabels:
-                kyverno-resources-policy: skip
+        {{ .Values.policySets.common.resources.exclude | toYaml | nindent 8 }}
       validate:
         message: "Memory resource.limits is required."
         pattern:

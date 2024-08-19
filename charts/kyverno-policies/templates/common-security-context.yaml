@@ -6,7 +6,7 @@ metadata:
   namespace: {{ .Values.policySets.common.namespace }}
   annotations:
     policies.kyverno.io/title: Require Run As Non-Root User
-    policies.kyverno.io/category: Security Best Practices
+    policies.kyverno.io/category: Best Practices
     policies.kyverno.io/severity: high
     policies.kyverno.io/subject: Deployment, Cronjob
     kyverno.io/kyverno-version: 1.6.0
@@ -25,18 +25,7 @@ spec:
             kinds:
             - Deployment
       exclude:
-        any:
-        - resources:
-            namespaces:
-            - policy
-            - sys
-            - workflows
-        - resources:
-            kinds:
-            - Deployment
-            selector:
-              matchLabels:
-                kyverno-security-context-policy: skip
+        {{ .Values.policySets.common.securityContext.exclude | toYaml | nindent 8 }}
       validate:
         message: >-
           Running as root is not allowed. The fields spec.securityContext.runAsUser,

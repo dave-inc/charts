@@ -25,16 +25,7 @@ spec:
             kinds:
             - CronJob
       exclude:
-        any:
-        - resources:
-            namespaces:
-            - policy
-        - resources:
-            kinds:
-            - CronJob
-            selector:
-              matchLabels:
-                kyverno-forbid-policy: skip
+        {{ .Values.policySets.common.forbid.exclude | toYaml | nindent 8 }}
       preconditions:
         all:
         - key: "{{`{{ request.object.spec.concurrencyPolicy }}`}}"
