@@ -21,112 +21,222 @@ spec:
   validationFailureAction: {{ .Values.policySets.common.validationFailureAction }}
   background: true
   rules:
-  - name: livenessprobe-required
-    match:
-      any:
-      - resources:
-          kinds:
-          - Deployment
-    exclude:
-      any:
-      - resources:
-          namespaces:
-          - policy
-          - sys
-          - workflows
-      - resources:
-          kinds:
-          - Deployment
-          selector:
-            matchLabels:
-              kyverno-probes-policy: skip
-    preconditions:
-      all:
-      - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
-        operator: AnyIn
-        value:
-        - CREATE
-        - UPDATE
-    validate:
-      message: "`livenessProbe` is required for main application container and sidecar."
-      foreach:
-      - list: request.object.spec.template.spec.containers[]
-        deny:
-          conditions:
-            all:
-            - key: livenessProbe
-              operator: AllNotIn
-              value: "{{`{{ element.keys(@)[] }}`}}"
-  - name: readinessprobe-required
-    match:
-      any:
-      - resources:
-          kinds:
-          - Deployment
-    exclude:
-      any:
-      - resources:
-          namespaces:
-          - policy
-          - sys
-          - workflows
-      - resources:
-          kinds:
-          - Deployment
-          selector:
-            matchLabels:
-              kyverno-probes-policy: skip
-    preconditions:
-      all:
-      - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
-        operator: AnyIn
-        value:
-        - CREATE
-        - UPDATE
-    validate:
-      message: "`readinessProbe` is required for main application container and sidecar."
-      foreach:
-      - list: request.object.spec.template.spec.containers[]
-        deny:
-          conditions:
-            all:
-            - key: readinessProbe
-              operator: AllNotIn
-              value: "{{`{{ element.keys(@)[] }}`}}"
-  - name: startupprobe-required
-    match:
-      any:
-      - resources:
-          kinds:
-          - Deployment
-    exclude:
-      any:
-      - resources:
-          namespaces:
-          - policy
-          - sys
-          - workflows
-      - resources:
-          kinds:
-          - Deployment
-          selector:
-            matchLabels:
-              kyverno-probes-policy: skip
-    preconditions:
-      all:
-      - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
-        operator: AnyIn
-        value:
-        - CREATE
-        - UPDATE
-    validate:
-      message: "`startupProbe` is required for main application container and sidecar."
-      foreach:
-      - list: request.object.spec.template.spec.containers[]
-        deny:
-          conditions:
-            all:
-            - key: startupProbe
-              operator: AllNotIn
-              value: "{{`{{ element.keys(@)[] }}`}}"
+    - name: livenessprobe-required-application
+      match:
+        any:
+        - resources:
+            kinds:
+            - Deployment
+      exclude:
+        any:
+        - resources:
+            namespaces:
+            - policy
+            - sys
+            - workflows
+        - resources:
+            kinds:
+            - Deployment
+            selector:
+              matchLabels:
+                kyverno-probes-policy: skip
+      preconditions:
+        all:
+        - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
+          operator: AnyIn
+          value:
+          - CREATE
+          - UPDATE
+      validate:
+        message: "`livenessProbe` is required for application container"
+        foreach:
+        - list: "request.object.spec.template.spec.containers[?name != 'cloudsql-proxy']"
+          deny:
+            conditions:
+              all:
+              - key: livenessProbe
+                operator: AllNotIn
+                value: "{{`{{ element.keys(@)[] }}`}}"
+    - name: livenessprobe-required-cloudsqlproxy
+      match:
+        any:
+        - resources:
+            kinds:
+            - Deployment
+      exclude:
+        any:
+        - resources:
+            namespaces:
+            - policy
+            - sys
+            - workflows
+        - resources:
+            kinds:
+            - Deployment
+            selector:
+              matchLabels:
+                kyverno-probes-policy: skip
+      preconditions:
+        all:
+        - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
+          operator: AnyIn
+          value:
+          - CREATE
+          - UPDATE
+      validate:
+        message: "`livenessProbe` is required for cloudsql-proxy container"
+        foreach:
+        - list: "request.object.spec.template.spec.containers[?name == 'cloudsql-proxy']"
+          deny:
+            conditions:
+              all:
+              - key: livenessProbe
+                operator: AllNotIn
+                value: "{{`{{ element.keys(@)[] }}`}}"
+
+    - name: readinessprobe-required-application
+      match:
+        any:
+        - resources:
+            kinds:
+            - Deployment
+      exclude:
+        any:
+        - resources:
+            namespaces:
+            - policy
+            - sys
+            - workflows
+        - resources:
+            kinds:
+            - Deployment
+            selector:
+              matchLabels:
+                kyverno-probes-policy: skip
+      preconditions:
+        all:
+        - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
+          operator: AnyIn
+          value:
+          - CREATE
+          - UPDATE
+      validate:
+        message: "`readinessProbe` is required for application container"
+        foreach:
+        - list: "request.object.spec.template.spec.containers[?name != 'cloudsql-proxy']"
+          deny:
+            conditions:
+              all:
+              - key: readinessProbe
+                operator: AllNotIn
+                value: "{{`{{ element.keys(@)[] }}`}}"
+    - name: readinessprobe-required-cloudsqlproxy
+      match:
+        any:
+        - resources:
+            kinds:
+            - Deployment
+      exclude:
+        any:
+        - resources:
+            namespaces:
+            - policy
+            - sys
+            - workflows
+        - resources:
+            kinds:
+            - Deployment
+            selector:
+              matchLabels:
+                kyverno-probes-policy: skip
+      preconditions:
+        all:
+        - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
+          operator: AnyIn
+          value:
+          - CREATE
+          - UPDATE
+      validate:
+        message: "`readinessProbe` is required for cloudsql-proxy container"
+        foreach:
+        - list: "request.object.spec.template.spec.containers[?name == 'cloudsql-proxy']"
+          deny:
+            conditions:
+              all:
+              - key: readinessProbe
+                operator: AllNotIn
+                value: "{{`{{ element.keys(@)[] }}`}}"
+
+    - name: startupprobe-required-application
+      match:
+        any:
+        - resources:
+            kinds:
+            - Deployment
+      exclude:
+        any:
+        - resources:
+            namespaces:
+            - policy
+            - sys
+            - workflows
+        - resources:
+            kinds:
+            - Deployment
+            selector:
+              matchLabels:
+                kyverno-probes-policy: skip
+      preconditions:
+        all:
+        - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
+          operator: AnyIn
+          value:
+          - CREATE
+          - UPDATE
+      validate:
+        message: "`startupProbe` is required for application container"
+        foreach:
+        - list: "request.object.spec.template.spec.containers[?name != 'cloudsql-proxy']"
+          deny:
+            conditions:
+              all:
+              - key: startupProbe
+                operator: AllNotIn
+                value: "{{`{{ element.keys(@)[] }}`}}"
+    - name: startupprobe-required-cloudsqlproxy
+      match:
+        any:
+        - resources:
+            kinds:
+            - Deployment
+      exclude:
+        any:
+        - resources:
+            namespaces:
+            - policy
+            - sys
+            - workflows
+        - resources:
+            kinds:
+            - Deployment
+            selector:
+              matchLabels:
+                kyverno-probes-policy: skip
+      preconditions:
+        all:
+        - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
+          operator: AnyIn
+          value:
+          - CREATE
+          - UPDATE
+      validate:
+        message: "`startupProbe` is required for cloudsql-proxy container"
+        foreach:
+        - list: "request.object.spec.template.spec.containers[?name == 'cloudsql-proxy']"
+          deny:
+            conditions:
+              all:
+              - key: startupProbe
+                operator: AllNotIn
+                value: "{{`{{ element.keys(@)[] }}`}}"
 {{- end }}
