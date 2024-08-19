@@ -25,24 +25,7 @@ spec:
             kinds:
             - Deployment
       exclude:
-        any:
-        - resources:
-            namespaces:
-            - policy
-            - sys
-            - workflows
-        - resources:              
-            kinds:
-            - Deployment
-            selector:
-              matchLabels:
-                app.kubernetes.io/instance: '*staging*'
-        - resources:
-            kinds:
-            - Deployment
-            selector:
-              matchLabels:
-                kyverno-hpa-policy: skip
+        {{ .Values.policySets.common.hpa.exclude | toYaml | nindent 8 }}
       context:
         - name: existing_hpa
           apiCall:

@@ -27,16 +27,7 @@ spec:
             kinds:
             - Ingress
       exclude:
-        any:
-        - resources:
-            namespaces:
-            - sys
-        - resources:
-            kinds:
-            - Ingress
-            selector:
-              matchLabels:
-                kyverno-ingress-policy: skip
+        {{ .Values.policySets.common.ingress.exclude | toYaml | nindent 8 }}
       validate:
         message: "Ingress nginx-public detected, switch to Cloud Armor."
         anyPattern:

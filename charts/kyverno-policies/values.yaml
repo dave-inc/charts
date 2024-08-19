@@ -21,6 +21,100 @@ policySets:
     # checkLimits if set to false policy will only apply for resource request.
     # set it to true to make the policy checks limits.
     checkLimits: true
+    forbid:
+      exclude:
+        any:
+        - resources:
+            namespaces:
+            - policy
+        - resources:
+            kinds:
+            - CronJob
+            selector:
+              matchLabels:
+                kyverno-forbid-policy: skip
+    hpa:
+      exclude:
+        any:
+        - resources:
+            namespaces:
+            - policy
+            - sys
+            - workflows
+        - resources:
+            kinds:
+            - Deployment
+            selector:
+              matchLabels:
+                app.kubernetes.io/instance: '*staging*'
+        - resources:
+            kinds:
+            - Deployment
+            selector:
+              matchLabels:
+                kyverno-hpa-policy: skip
+    ingress:
+      exclude:
+        any:
+        - resources:
+            namespaces:
+            - sys
+        - resources:
+            kinds:
+            - Ingress
+            selector:
+              matchLabels:
+                kyverno-ingress-policy: skip
+    labels:
+      exclude:
+        any:
+        - resources:
+            kinds:
+            - Deployment
+            - DaemonSet
+            - StatefulSet
+            selector:
+              matchLabels:
+                kyverno-resources-policy: skip
+    probes:
+      exclude:
+        any:
+        - resources:
+            namespaces:
+            - policy
+            - sys
+            - workflows
+        - resources:
+            kinds:
+            - Deployment
+            selector:
+              matchLabels:
+                kyverno-probes-policy: skip
+    resources:
+      exclude:
+        any:
+        - resources:
+            kinds:
+            - Deployment
+            - DaemonSet
+            - StatefulSet
+            selector:
+              matchLabels:
+                kyverno-resources-policy: skip
+    securityContext:
+      exclude:
+        any:
+        - resources:
+            namespaces:
+            - policy
+            - sys
+            - workflows
+        - resources:
+            kinds:
+            - Deployment
+            selector:
+              matchLabels:
+                kyverno-security-context-policy: skip
   # bellow is and example on how to add extra policy sets for other envs.
   # dev:
   #   enabled: true

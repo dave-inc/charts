@@ -28,18 +28,7 @@ spec:
             kinds:
             - Deployment
       exclude:
-        any:
-        - resources:
-            namespaces:
-            - policy
-            - sys
-            - workflows
-        - resources:
-            kinds:
-            - Deployment
-            selector:
-              matchLabels:
-                kyverno-probes-policy: skip
+        {{ .Values.policySets.common.probes.exclude | toYaml | nindent 8 }}
       preconditions:
         all:
         - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
@@ -64,18 +53,7 @@ spec:
             kinds:
             - Deployment
       exclude:
-        any:
-        - resources:
-            namespaces:
-            - policy
-            - sys
-            - workflows
-        - resources:
-            kinds:
-            - Deployment
-            selector:
-              matchLabels:
-                kyverno-probes-policy: skip
+        {{ .Values.policySets.common.probes.exclude | toYaml | nindent 8 }}
       preconditions:
         all:
         - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
@@ -101,18 +79,7 @@ spec:
             kinds:
             - Deployment
       exclude:
-        any:
-        - resources:
-            namespaces:
-            - policy
-            - sys
-            - workflows
-        - resources:
-            kinds:
-            - Deployment
-            selector:
-              matchLabels:
-                kyverno-probes-policy: skip
+        {{ .Values.policySets.common.probes.exclude | toYaml | nindent 8 }}
       preconditions:
         all:
         - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
@@ -137,18 +104,7 @@ spec:
             kinds:
             - Deployment
       exclude:
-        any:
-        - resources:
-            namespaces:
-            - policy
-            - sys
-            - workflows
-        - resources:
-            kinds:
-            - Deployment
-            selector:
-              matchLabels:
-                kyverno-probes-policy: skip
+        {{ .Values.policySets.common.probes.exclude | toYaml | nindent 8 }}
       preconditions:
         all:
         - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
@@ -174,18 +130,7 @@ spec:
             kinds:
             - Deployment
       exclude:
-        any:
-        - resources:
-            namespaces:
-            - policy
-            - sys
-            - workflows
-        - resources:
-            kinds:
-            - Deployment
-            selector:
-              matchLabels:
-                kyverno-probes-policy: skip
+        {{ .Values.policySets.common.probes.exclude | toYaml | nindent 8 }}
       preconditions:
         all:
         - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
@@ -210,18 +155,7 @@ spec:
             kinds:
             - Deployment
       exclude:
-        any:
-        - resources:
-            namespaces:
-            - policy
-            - sys
-            - workflows
-        - resources:
-            kinds:
-            - Deployment
-            selector:
-              matchLabels:
-                kyverno-probes-policy: skip
+        {{ .Values.policySets.common.probes.exclude | toYaml | nindent 8 }}
       preconditions:
         all:
         - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
