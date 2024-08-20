@@ -47,18 +47,7 @@ spec:
             kinds:
             - CronJob
       exclude:
-        any:
-        - resources:
-            namespaces:
-            - policy
-            - sys
-            - workflows
-        - resources:
-            kinds:
-            - CronJob
-            selector:
-              matchLabels:
-                kyverno-security-context-policy: skip
+        {{ .Values.policySets.common.securityContext.exclude | toYaml | nindent 8 }}
       validate:
         message: >-
           Running as root is not allowed. The fields spec.securityContext.runAsUser,
