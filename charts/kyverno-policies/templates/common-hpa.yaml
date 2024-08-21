@@ -25,29 +25,12 @@ spec:
             kinds:
             - Deployment
       exclude:
-        any:
-        - resources:
-            namespaces:
-            - policy
-            - sys
-            - workflows
-        - resources:              
-            kinds:
-            - Deployment
-            selector:
-              matchLabels:
-                app.kubernetes.io/instance: '*staging*'
-        - resources:
-            kinds:
-            - Deployment
-            selector:
-              matchLabels:
-                kyverno-hpa-policy: skip
+        {{ .Values.policySets.common.hpa.exclude | toYaml | nindent 8 }}
       context:
         - name: existing_hpa
           apiCall:
-            urlPath: "/apis/autoscaling/v2/namespaces/{{`{{request.namespace}}`}}/horizontalpodautoscalers" 
-            jmesPath: "items[?label_match(metadata.labels, `{{`{{request.object.metadata.labels}}`}}`)] | length(@)"
+            urlPath: "/apis/autoscaling/v2/namespaces/{{`{{request.namespace}}`}}/horizontalpodautoscalers"
+            jmesPath: "items[?metadata.name == '{{`{{request.object.metadata.name}}`}}'] | length(@)"
       validate:
         message: "There is no corresponding HorizontalPodAutoscalers(HPA) found for this Deployment."
         deny:

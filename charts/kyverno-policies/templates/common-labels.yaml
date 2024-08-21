@@ -24,13 +24,7 @@ spec:
             kinds:
             - Deployment
       exclude:
-        any:
-        - resources:
-            kinds:
-            - Deployment
-            selector:
-              matchLabels:
-                kyverno-labels-policy: skip
+        {{ .Values.policySets.common.labels.exclude | toYaml | nindent 8 }}
       validate:
         message: "Label `team` is required."
         pattern:
@@ -46,13 +40,7 @@ spec:
               kinds:
               - CronJob
       exclude:
-        any:
-        - resources:
-            kinds:
-              - CronJob
-            selector:
-              matchLabels:
-                kyverno-labels-policy: skip
+        {{ .Values.policySets.common.labels.exclude | toYaml | nindent 8 }}
       validate:
         message: "Label `team` is required."
         pattern:
