@@ -1,0 +1,194 @@
+{{- include "common.validateValues" . }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "common.name" . }}
+  labels:
+    tags.datadoghq.com/version: "{{ .Values.image.tag }}"
+    run: {{ include "common.name" . }}
+    {{- include "common.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "common.selectorLabels" . | nindent 6 }}
+  strategy:
+    {{- toYaml .Values.strategy | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{- /*
+        https://helm.sh/docs/howto/charts_tips_and_tricks/#automatically-roll-deployments
+        */}}
+        checksum/config: {{ .Values.env | toString | sha256sum }}
+        {{- if .Values.podAnnotations }}
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
+        {{- end }}
+      labels:
+        tags.datadoghq.com/version: "{{ .Values.image.tag }}"
+        run: {{ include "common.name" . }}
+        {{- include "common.selectorLabels" . | nindent 8 }}
+      {{- if .Values.additionalLabels }}
+        {{- .Values.additionalLabels | toYaml | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "common.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- if or (.Values.topologySpreadConstraints.zone.enabled) (.Values.topologySpreadConstraints.node.enabled) }}
+      topologySpreadConstraints:
+        {{- if .Values.topologySpreadConstraints.zone.enabled }}
+        - topologyKey: {{ .Values.topologySpreadConstraints.zone.topologyKey }}
+          maxSkew: {{ .Values.topologySpreadConstraints.zone.maxSkew }}
+          whenUnsatisfiable: {{ .Values.topologySpreadConstraints.zone.whenUnsatisfiable }}
+          labelSelector:
+            matchLabels:
+              {{- include "common.selectorLabels" . | nindent 14 }}
+        {{- end }}
+        {{- if .Values.topologySpreadConstraints.node.enabled }}
+        - topologyKey: {{ .Values.topologySpreadConstraints.node.topologyKey }}
+          maxSkew: {{ .Values.topologySpreadConstraints.node.maxSkew }}
+          whenUnsatisfiable: {{ .Values.topologySpreadConstraints.node.whenUnsatisfiable }}
+          labelSelector:
+            matchLabels:
+              {{- include "common.selectorLabels" . | nindent 14 }}
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: {{ include "common.name" . }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: {{ .Values.image.repository }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.deploymentContainer.ports.http.number }}
+              protocol: {{ .Values.deploymentContainer.ports.http.protocol }}
+            - name: mysql
+              containerPort: {{ .Values.deploymentContainer.ports.mysql.number }}
+              protocol: {{ .Values.deploymentContainer.ports.mysql.protocol }}
+          livenessProbe:
+            {{- toYaml .Values.deploymentContainer.LivenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.deploymentContainer.ReadinessProbe | nindent 12 }}
+          startupProbe:
+            {{- toYaml .Values.deploymentContainer.StartupProbe | nindent 12 }}
+          {{- if .Values.resources }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- end }}
+          {{- if .Values.deploymentContainer.instanceConnectionName }}
+          args:
+            - "--private-ip"
+            - "--quiet"
+            - "--address=0.0.0.0"
+            - "--port={{ .Values.deploymentContainer.ports.mysql.number }}"
+            - {{ .Values.deploymentContainer.instanceConnectionName }}
+          {{- end }}
+          env:
+            {{/*
+            Environment variables used by the common logger
+            https://github.com/dave-inc/logger/blob/6c69fe2cba9bb954494fe9c6b5297633c1a19aeb/README.md#L69
+            */}}
+            - name: DEPLOYMENT_NAME
+              value: {{ include "common.name" . }}
+            - name: DD_VERSION
+              value: "{{ .Values.image.tag }}"
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: NODE_ENV
+              value: {{ .Values.environment }}
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            # Enable HTTP healthchecks on port 9801. This enables /liveness,
+            # /readiness and /startup health check endpoints. Allow connections
+            # listen for connections on any interface (0.0.0.0) so that the
+            # k8s management components can reach these endpoints.
+            - name: CSQL_PROXY_HEALTH_CHECK
+              value: "true"
+            - name: CSQL_PROXY_HTTP_PORT
+              value: "9801"
+            - name: CSQL_PROXY_HTTP_ADDRESS
+              value: 0.0.0.0
+            - name: CSQL_PROXY_ADMIN_PORT
+              value: "9092"
+            # Enable the admin api server (which only listens for local connections)
+            # and enable the /quitquitquit endpoint. This allows other pods
+            # to shut down the proxy gracefully when they are ready to exit.
+            - name: CSQL_PROXY_QUITQUITQUIT
+              value: "true"
+            - name: CSQL_PROXY_STRUCTURED_LOGS
+              value: "true"
+          {{- if .Values.apm.enabled }}
+            - name: DD_ENV
+              value: {{ .Values.apm.datadogEnvironment | default .Values.environment }}
+            - name: DD_TRACE_AGENT_HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            {{- if .Values.apm.otlp }}
+            - name: OTEL_TRACES_EXPORTER
+              value: "otlp"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://$(DD_TRACE_AGENT_HOSTNAME):4318"
+            {{- end }}
+            {{/*
+            Used by hot-shots package as default StatsD host
+            */}}
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            {{- if not .Values.apm.datadogSkipServiceName }}
+            - name: DD_SERVICE_NAME
+              value: {{ .Values.apm.datadogServiceName | default (include "common.name" .) }}
+            {{- end }}
+          {{- end }}
+          envFrom:
+            {{- if .Values.existingConfigMapName }}
+            - configMapRef:
+                name: {{ .Values.existingConfigMapName }}
+            {{- end }}
+            {{- if .Values.env }}
+            - configMapRef:
+                name: {{ .Values.configMapName | default (include "common.name" .) }}
+            {{- end}}
+            {{- if and (.Values.createSecret) (not .Values.createSecretName) }}
+            - secretRef:
+                name: {{ include "common.name" . }}
+            {{- else if and (.Values.createSecret) (.Values.createSecretName) }}
+            - secretRef:
+                name: {{ .Values.createSecretName }}
+            {{- else if and (.Values.existingSecretName) (not .Values.createSecret) }}
+            - secretRef:
+                name: {{ .Values.existingSecretName }}
+            {{- else }}
+            {{- end }}
+          lifecycle:
+            {{- toYaml .Values.deploymentContainer.lifecycle | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,233 @@
+# Default values for cloudsql-proxy chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 2
+
+# Used for NODE_ENV and DD_ENV
+environment: staging
+# Required: GCP Project where this Release will be deployed
+project: ""
+
+deploymentContainer:
+  # instanceConnectionName is the connection name of the Cloud SQL instance
+  # instanceConnectionName: project_name:region:instance_name
+
+  ports:
+    http:
+      number: 9801
+      protocol: TCP
+    # The port number for the MySQL database and the protocol to use, these values are also used to expose the values.service
+    mysql:
+      number: 3306
+      protocol: TCP
+
+  # The /liveness probe returns OK as soon as the proxy application has
+  # begun its startup process and continues to return OK until the
+  # process stops.
+  # We recommend adding a liveness probe to the proxy sidecar container.
+  livenessProbe:
+    failureThreshold: 3
+    httpGet:
+      path: /liveness
+      port: 9801
+      scheme: HTTP
+    # The probe will be checked every 10 seconds.
+    periodSeconds: 10
+    # Number of times the probe is allowed to fail before the transition
+    # from healthy to failure state.
+    # If periodSeconds = 60, 5 tries will result in five minutes of
+    # checks. The proxy starts to refresh a certificate five minutes
+    # before its expiration. If those five minutes lapse without a
+    # successful refresh, the liveness probe will fail and the pod will be
+    # restarted.
+    successThreshold: 1
+    # The probe will fail if it does not respond in 10 seconds
+    timeoutSeconds: 10
+
+  # The /readiness probe returns OK when the proxy can establish
+  # a new connections to its databases.
+  # Please use the readiness probe to the proxy sidecar with caution.
+  # An improperly configured readiness probe can cause unnecessary
+  # interruption to the application. See README.md for more detail.
+  readinessProbe:
+    httpGet:
+      path: /readiness
+      port: 9801
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 10
+    # Number of times the probe must report success to transition from failure to healthy state.
+    # Defaults to 1 for readiness probe.
+    successThreshold: 1
+    failureThreshold: 6
+
+  # The /startup probe returns OK when the proxy is ready to receive
+  # connections from the application. In this example, k8s will check
+  # once a second for 60 seconds.
+  # We strongly recommend adding a startup probe to the proxy sidecar
+  # container. This will ensure that service traffic will be routed to
+  # the pod only after the proxy has successfully started.
+  startupProbe:
+    failureThreshold: 60
+    httpGet:
+      path: /startup
+      port: 9801
+      scheme: HTTP
+    periodSeconds: 1
+    successThreshold: 1
+    timeoutSeconds: 10
+
+  ## If you want to add a preStop hooks, or any other lifecycles to your
+  ## deployment, you can define them here:
+  lifecycle:
+    preStop:
+      exec:
+        command:
+          - /bin/sh
+          - -c
+          - /bin/sleep 30
+
+# terminationGracePeriodSeconds is the time to wait before forcefully terminating a pod
+# after a SIGTERM signal is sent to the container. If the preStop hook is used, this
+# value should be set to a higher value than the preStop hook timeout.
+# Setting default 1 second higher than the preStop most Dave's apps have 30 seconds
+terminationGracePeriodSeconds: 31
+
+image:
+  # This chart is only compatible with the Cloud SQL Proxy v2
+  repository: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.11.4-alpine
+  pullPolicy: Always
+
+imagePullSecrets: []
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using Release.Name
+  name: ""
+  # IAM workload idenitity binding name
+  # If not set and serviceAccount.create:true, a name is generated using Release.Name
+  # If Release.Name is bigger than 30 characteres use this variable to overwrite it with something shorter to identify this workload
+  workloadIdentitySA: ""
+  # Specifies whether an existing service account will be used
+  # Make sure you set serviceAccount.create:false when using this option
+  # Dynamic environments will use of this one
+  existingNameSA: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  
+securityContext:
+  allowPrivilegeEscalation: false
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  # The name of the service is optional, If not set, a name is generated using Release.Name
+  # A good practice is the use the database name as the service name for example: staging-1 or banking-1
+  # name: ""
+  enabled: true
+  type: ClusterIP
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 25Mi
+  limits:
+    memory: 256Mi
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+
+strategy: 
+  rollingUpdate:
+    maxSurge: 25%
+    maxUnavailable: 25%
+  type: RollingUpdate
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Used for DD_TRACE_AGENT_HOSTNAME on DD APM/Node.js potentially can be used with logger vars too
+apm:
+  enabled: false
+  otlp: false
+  # If datadogEnvironment is not defined we use variable environment as default
+  datadogEnvironment: ""
+  # Optional override DD_SERVICE_NAME to a custon name instead of common.name
+  datadogServiceName: ""
+  # Optional bool used to avoid definition of env DD_SERVICE_NAME
+  # Used to support imported workloads from legacy projects
+  # DD_SERVICE_NAME will take the value from the app name in package.json.
+  # datadogSkipServiceName: false
+  # The following variables are used in APM Code snippets in stack traces and Error Tracking: Suspect Commit
+  # They might get replace at deployment time by the CI/CD pipelines
+  commitSha: ""
+  repositoryUrl: ""
+
+# Default Logger and DD variables are defined here: https://github.com/dave-inc/charts/blob/master/common/templates/deployment.yaml
+# Custom env variables are defined here and will be populated via Deployment's ConfigMap
+env: {}
+
+# ConfigMap
+# The configMapName is optional, If not set, a name is generated using Release.Name
+configMapName: ""
+existingConfigMapName: ""
+
+# Secret
+createSecret: false
+createSecretName: ""
+# Mutually exclusive with the two above
+# existingSecretName will used as secretRef
+existingSecretName: ""
+
+# PodDisruptionBudget
+#
+# minAvailable and maxUnavailable are mutually exclusive, only one should be set.
+#
+# If podDisruptionBudget is enabled but no minAvailable or maxUnavailable fields
+# are set, the PodDisruptionTemplate template will default to `minAvailable: 15%`.
+#
+# The value for minAvailable and maxUnavailable should either be set to an integer
+# or a percentage.  For more information see the official documentation:
+#
+# https://kubernetes.io/docs/tasks/run-application/configure-pdb/
+podDisruptionBudget:
+  enabled: false
+  # minAvailable: "15%"
+  # maxUnavailable: 5
+
+#  This is used to apply additional labels on deployment, pods and services
+#  to properly tag the team and environment
+additionalLabels: {}
+
+# This section enables by default the topologySpreadConstraits to spread same deployment pods to multiple nodes
+# and multiple AZ when possible, rules are soft enforced by default.
+# The next are the only values that can be edited, labelSelector are set by the template.
+
+topologySpreadConstraints:
+  zone:
+    enabled: true
+    maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: ScheduleAnyway
+  node:
+    enabled: true
+    maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway

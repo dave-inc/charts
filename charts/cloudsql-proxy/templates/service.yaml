@@ -1,0 +1,23 @@
+{{- if .Values.service.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.service.name | default (include "common.name" .) }}
+  annotations:
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.deploymentContainer.ports.mysql.number }}
+      targetPort: {{ .Values.deploymentContainer.ports.mysql.number }}
+      protocol: {{ .Values.deploymentContainer.ports.mysql.protocol }}
+      name: mysql
+  selector:
+  {{- if not .Values.podSelectorLabelsOverride }}
+    {{- include "common.selectorLabels" . | nindent 4 }}
+  {{- end }}
+  {{- if .Values.podSelectorLabelsOverride }}
+    {{- .Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
+  {{- end }}
+{{- end }}
