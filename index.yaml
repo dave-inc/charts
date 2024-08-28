@@ -3,6 +3,20 @@ entries:
   cloudsql-proxy:
   - apiVersion: v2
     appVersion: 1.1.0
+    created: "2024-08-28T20:48:20.394695323Z"
+    description: Standard Service Template
+    digest: 4e75821d1ba9006e5629548fe032ff50a422205951e7182554994bb06b80f9f3
+    keywords:
+    - cloudsql
+    - proxy
+    - database
+    name: cloudsql-proxy
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/cloudsql-proxy-0.1.0-beta.1/cloudsql-proxy-0.1.0-beta.1.tgz
+    version: 0.1.0-beta.1
+  - apiVersion: v2
+    appVersion: 1.1.0
     created: "2024-08-28T16:54:09.111365923Z"
     description: Standard Service Template
     digest: 7643b353cf22c601441318d5f194005c8b0cdc9cc9120ba33cf66e3621759e0a
@@ -1471,4 +1485,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2024-08-28T16:54:09.112322456Z"
+generated: "2024-08-28T20:48:20.39569567Z"
