@@ -73,11 +73,11 @@ spec:
               containerPort: {{ .Values.deploymentContainer.ports.mysql.number }}
               protocol: {{ .Values.deploymentContainer.ports.mysql.protocol }}
           livenessProbe:
-            {{- toYaml .Values.deploymentContainer.LivenessProbe | nindent 12 }}
+            {{- toYaml .Values.deploymentContainer.livenessProbe | nindent 12 }}
           readinessProbe:
-            {{- toYaml .Values.deploymentContainer.ReadinessProbe | nindent 12 }}
+            {{- toYaml .Values.deploymentContainer.readinessProbe | nindent 12 }}
           startupProbe:
-            {{- toYaml .Values.deploymentContainer.StartupProbe | nindent 12 }}
+            {{- toYaml .Values.deploymentContainer.startupProbe | nindent 12 }}
           {{- if .Values.resources }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
