@@ -1,8 +1,0 @@
-{{- if and .Values.cloudArmor.enabled .Values.cloudArmor.frontendConfig -}}
-apiVersion: networking.gke.io/v1beta1
-kind: FrontendConfig
-metadata:
-  name: {{ include "common.name" . }}
-spec:
-  {{- toYaml .Values.cloudArmor.frontendConfig | nindent 2 }}
-{{- end }}

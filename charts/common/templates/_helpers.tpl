@@ -52,12 +52,12 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
-Create Cloud Armor name which will be used for Service and Ingress names.
+Create public ingress (Cloud Armor) name which will be used for Service and Ingress names.
 This is needed to avoid overlap with default Service and Ingress (the ones not used by Cloud Armor)
 */}}
-{{- define "common.cloudArmorName" -}}
-{{- if and (.Values.cloudArmor.enabled) (.Values.cloudArmor.name) }}
-{{- .Values.cloudArmor.name }}
+{{- define "common.publicIngressName" -}}
+{{- if and (.Values.publicIngress.enabled) (.Values.publicIngress.name) }}
+{{- .Values.publicIngress.name }}
 {{- else }}
 {{- printf "%s-%s" (include "common.name" .) "ca" }}
 {{- end }}
@@ -65,12 +65,12 @@ This is needed to avoid overlap with default Service and Ingress (the ones not u
 
 
 {{/*
-Create Cloud Armor tls secret name.
+Create public ingress (Cloud Armor) tls secret name.
 This is needed to avoid overlap with default Service and Ingress (the ones not used by Cloud Armor)
 */}}
-{{- define "common.cloudArmorTlsSecret" -}}
-{{- if .Values.cloudArmor.enabled }}
-{{- printf "%s-ca-tls" .Values.cloudArmor.certificate.host | replace "." "-" }}
+{{- define "common.publicIngressTlsSecret" -}}
+{{- if .Values.publicIngress.enabled }}
+{{- printf "%s-ca-tls" .Values.publicIngress.certificate.host | replace "." "-" }}
 {{- end }}
 {{- end }}
 

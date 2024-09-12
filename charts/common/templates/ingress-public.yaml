@@ -1,0 +1,99 @@
+{{- if .Values.publicIngress.enabled -}}
+{{- $labels := include "common.labels" . -}}
+{{- $svcport := .Values.service.port -}}
+{{- $staticipname :=  .Values.publicIngress.staticIpName -}}
+{{- $commonname :=  include "common.name" . -}}
+{{- $certificatesecretname := .Values.publicIngress.certificate.secretName -}}
+{{- $publicingresstlssecret := include "common.publicIngressTlsSecret" . -}}
+{{- range .Values.publicIngress.hosts }}
+{{- $hostwithdashes := printf "%s" .host | replace "." "-" -}}
+{{- $hostwithdashestls := printf "%s-tls" .host | replace "." "-" }}
+---
+# Ingress per host
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .name | default $hostwithdashes }}
+  labels:
+    {{- $labels | nindent 4 }}
+  annotations:
+    {{- with .annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    kubernetes.io/ingress.global-static-ip-name: {{ $staticipname | default $commonname }}
+    networking.gke.io/v1beta1.FrontendConfig: {{ $commonname }}
+spec:
+  rules:
+  - host: {{ .host | quote }}
+    http:
+      paths:
+      {{- range .paths }}
+      - backend:
+        {{- range $backend, $service := .backend }}
+          service:
+            name: {{ $service.name }}
+            port:
+              {{- if $service.port }}
+              number: {{ $service.port.number }}
+              {{- else }}
+              number: {{ default $svcport }}
+              {{- end }}
+        {{- end }}
+        path: {{ .path | default "/" }}
+        pathType: {{ .pathType | default "ImplementationSpecific" }}
+      {{- end }}
+  {{- if .tls }}
+  tls:
+    {{- range .tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ $certificatesecretname | default $publicingresstlssecret }}
+    {{- end -}}
+  {{- else }}
+  tls:
+    - hosts:
+        - {{ .host | quote }}
+      secretName: {{ $certificatesecretname | default $publicingresstlssecret }}
+  {{- end -}}
+{{- end }}
+
+---
+# A single certification for all Ingress 
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "common.name" . }}
+spec:
+  secretName: {{ .Values.publicIngress.certificate.secretName | default (include "common.publicIngressTlsSecret" .) }}
+  issuerRef:
+    kind: ClusterIssuer
+    name: {{ .Values.publicIngress.certificate.issuer }}
+  commonName: {{ .Values.publicIngress.certificate.host | quote }}
+  dnsNames:
+    - {{ .Values.publicIngress.certificate.host | quote }}
+{{- if .Values.publicIngress.certificate.alternativeDnsNames }}
+    {{- toYaml .Values.publicIngress.certificate.alternativeDnsNames | nindent 4 }}
+{{- end }}
+---
+# A single FrontendConfig for all Ingress
+{{- if and .Values.publicIngress.enabled .Values.publicIngress.frontendConfig -}}
+apiVersion: networking.gke.io/v1beta1
+kind: FrontendConfig
+metadata:
+  name: {{ include "common.name" . }}
+spec:
+  {{- toYaml .Values.publicIngress.frontendConfig | nindent 2 }}
+{{- end }}
+
+---
+# A single BackendConfig for all Ingress
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: {{ include "common.name" . }}
+spec:
+  {{- toYaml .Values.publicIngress.backendConfig | nindent 2 }}
+
+{{- end }}

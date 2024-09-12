@@ -1,18 +1,19 @@
-{{- if .Values.cloudArmor.enabled -}}
+
+{{- if .Values.publicIngress.enabled -}}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "common.cloudArmorName" . }}
+  name: {{ include "common.publicIngressName" . }}
   labels:
     {{- include "common.labels" . | nindent 4 }}
   annotations:
-    {{- if .Values.cloudArmor.backendConfig.iap }}
+    {{- if .Values.publicIngress.backendConfig.iap }}
     cloud.google.com/backend-config: '{"ports": {"80":"{{ include "common.name" . }}", "443":"{{ include "common.name" . }}"},"default": "{{ include "common.name" . }}"}'
     {{- else }}
     cloud.google.com/backend-config: '{"ports": {"80":"{{ include "common.name" . }}", "443":"{{ include "common.name" . }}"}}'
     {{- end }}
 spec:
-  type: {{ .Values.cloudArmor.service.type }}
+  type: {{ .Values.publicIngress.service.type }}
   ports:
     - port: {{ .Values.service.port }}
       targetPort: {{ .Values.deploymentContainer.port }}

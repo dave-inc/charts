@@ -1,7 +1,7 @@
-{{- if .Values.ingress.enabled -}}
+{{- if .Values.privateIngress.enabled -}}
 {{- $labels := include "common.labels" . -}}
 {{- $svcport := .Values.service.port -}}
-{{- range .Values.ingress.hosts }}
+{{- range .Values.privateIngress.hosts }}
 {{- $hostwithdashes := printf "%s" .host | replace "." "-" -}}
 {{- $hostwithdashestls := printf "%s-tls" .host | replace "." "-" }}
 ---
