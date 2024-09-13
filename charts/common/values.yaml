@@ -150,11 +150,6 @@ privateIngress:
     - host: chart-example.local
       # The name is optional, If not set, a name is generated using host
       # name: ""
-      annotations: 
-        cert-manager.io/cluster-issuer: letsencrypt
-        kubernetes.io/ingress.class: nginx-internal
-        kubernetes.io/tls-acme: "true"
-        nginx.ingress.kubernetes.io/ssl-redirect: "true"
       paths:
         - backend:
             service:
@@ -173,7 +168,6 @@ publicIngress:
   # The name of cloudArmor is optional, if not set, a name is generated using <Release.Name>-ca
   # If you overwrite <name> it should match <serviceName> under the paths section
   # name: ""
-  annotations: {}
   hosts:
     - host: chart-example.local
       paths:

@@ -17,9 +17,6 @@ metadata:
   labels:
     {{- $labels | nindent 4 }}
   annotations:
-    {{- with .annotations }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
     kubernetes.io/ingress.global-static-ip-name: {{ $staticipname | default $commonname }}
     networking.gke.io/v1beta1.FrontendConfig: {{ $commonname }}
 spec:

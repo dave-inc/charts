@@ -11,12 +11,11 @@ metadata:
   name: {{ .name | default $hostwithdashes }}
   labels:
     {{- $labels | nindent 4 }}
-  {{- if .annotations }}
-  annotations:
-    {{- with .annotations }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-  {{- end }}
+  annotations: 
+    cert-manager.io/cluster-issuer: letsencrypt
+    kubernetes.io/ingress.class: nginx-internal
+    kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   rules:
   - host: {{ .host | quote }}
