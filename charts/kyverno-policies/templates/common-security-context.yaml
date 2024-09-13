@@ -15,7 +15,7 @@ metadata:
       Containers must be required to run as non-root users. This policy ensures
       `runAsUser` is either unset or set to a number greater than zero.      
 spec:
-  validationFailureAction: {{ .Values.policySets.common.securityContext.validationFailureAction | default .Values.policySets.common.validationFailureAction }}
+  validationFailureAction: {{ .Values.policySets.common.securityContext.validationFailureAction }}
   background: true
   rules:
     - name: run-as-user-non-root
