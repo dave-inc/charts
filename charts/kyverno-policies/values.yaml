@@ -58,7 +58,6 @@ policySets:
             selector:
               matchLabels:
                 kyverno-hpa-policy: skip
-
     ingress:
       category: "Security Best Practices"
       severity: medium
