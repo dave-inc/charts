@@ -6,8 +6,8 @@ metadata:
   namespace: {{ .Values.policySets.common.namespace }}
   annotations:
     policies.kyverno.io/title: Require Run As Non-Root User
-    policies.kyverno.io/category: Best Practices
-    policies.kyverno.io/severity: high
+    policies.kyverno.io/category: {{ .Values.policySets.common.securityContext.category }}
+    policies.kyverno.io/severity: {{ .Values.policySets.common.securityContext.severity }}
     policies.kyverno.io/subject: Deployment, Cronjob
     kyverno.io/kyverno-version: 1.6.0
     kyverno.io/kubernetes-version: "1.22-1.23"
@@ -15,7 +15,7 @@ metadata:
       Containers must be required to run as non-root users. This policy ensures
       `runAsUser` is either unset or set to a number greater than zero.      
 spec:
-  validationFailureAction: {{ .Values.policySets.common.validationFailureAction }}
+  validationFailureAction: {{ .Values.policySets.common.securityContext.validationFailureAction }}
   background: true
   rules:
     - name: run-as-user-non-root

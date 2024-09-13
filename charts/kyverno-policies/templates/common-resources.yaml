@@ -8,8 +8,8 @@ metadata:
     {{- include "kyverno-policies.labels" . | nindent 4 }}
   annotations:
     policies.kyverno.io/title: Require Requests and Limits
-    policies.kyverno.io/category: Best Practices
-    policies.kyverno.io/severity: high
+    policies.kyverno.io/category: {{ .Values.policySets.common.resources.category }}
+    policies.kyverno.io/severity: {{ .Values.policySets.common.resources.severity }}
     policies.kyverno.io/subject: Deployment, DaemonSet, Statefulset, Cronjob
     policies.kyverno.io/minversion: 1.6.0
     policies.kyverno.io/description: >-
@@ -18,7 +18,7 @@ metadata:
       MEM limits per Pod. This policy validates that all containers have something specified for CPU/MEM
       requests and MEM limits.
 spec:
-  validationFailureAction: {{ .Values.policySets.common.validationFailureAction }}
+  validationFailureAction: {{ .Values.policySets.common.resources.validationFailureAction }}
   rules:
     - name: cpu-mem-requests
       match:
