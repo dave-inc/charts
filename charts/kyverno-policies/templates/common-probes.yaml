@@ -6,8 +6,8 @@ metadata:
   namespace: {{ .Values.policySets.common.namespace }}
   annotations:
     policies.kyverno.io/title: Require Probes
-    policies.kyverno.io/category: Best Practices
-    policies.kyverno.io/severity: medium
+    policies.kyverno.io/category: {{ .Values.policySets.common.probes.category }}
+    policies.kyverno.io/severity: {{ .Values.policySets.common.probes.severity }}
     policies.kyverno.io/subject: Deployment
     policies.kyverno.io/description: >-
       Liveness and readiness probes need to be configured to correctly manage a Pod's
@@ -18,7 +18,7 @@ metadata:
       A `startupProbe` is used to determine if a container is ready to accept traffic
       before the container is added to the service's endpoints.
 spec:
-  validationFailureAction: {{ .Values.policySets.common.validationFailureAction }}
+  validationFailureAction: {{ .Values.policySets.common.probes.validationFailureAction }}
   background: true
   rules:
     - name: livenessprobe-application-required
@@ -54,13 +54,6 @@ spec:
             - Deployment
       exclude:
         {{ .Values.policySets.common.probes.exclude | toYaml | nindent 8 }}
-      preconditions:
-        all:
-        - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
-          operator: AnyIn
-          value:
-          - CREATE
-          - UPDATE
       validate:
         message: "`livenessProbe` is required for cloudsql-proxy container"
         foreach:
@@ -80,13 +73,6 @@ spec:
             - Deployment
       exclude:
         {{ .Values.policySets.common.probes.exclude | toYaml | nindent 8 }}
-      preconditions:
-        all:
-        - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
-          operator: AnyIn
-          value:
-          - CREATE
-          - UPDATE
       validate:
         message: "`readinessProbe` is required for application container"
         foreach:
@@ -105,13 +91,6 @@ spec:
             - Deployment
       exclude:
         {{ .Values.policySets.common.probes.exclude | toYaml | nindent 8 }}
-      preconditions:
-        all:
-        - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
-          operator: AnyIn
-          value:
-          - CREATE
-          - UPDATE
       validate:
         message: "`readinessProbe` is required for cloudsql-proxy container"
         foreach:
@@ -131,13 +110,6 @@ spec:
             - Deployment
       exclude:
         {{ .Values.policySets.common.probes.exclude | toYaml | nindent 8 }}
-      preconditions:
-        all:
-        - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
-          operator: AnyIn
-          value:
-          - CREATE
-          - UPDATE
       validate:
         message: "`startupProbe` is required for application container"
         foreach:
@@ -156,13 +128,6 @@ spec:
             - Deployment
       exclude:
         {{ .Values.policySets.common.probes.exclude | toYaml | nindent 8 }}
-      preconditions:
-        all:
-        - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
-          operator: AnyIn
-          value:
-          - CREATE
-          - UPDATE
       validate:
         message: "`startupProbe` is required for cloudsql-proxy container"
         foreach:

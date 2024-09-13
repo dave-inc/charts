@@ -8,15 +8,15 @@ metadata:
     {{- include "kyverno-policies.labels" . | nindent 4 }}
   annotations:
     policies.kyverno.io/title: Require Limits and Requests
-    policies.kyverno.io/category: Best Practices
-    policies.kyverno.io/severity: medium
+    policies.kyverno.io/category: {{ .Values.policySets.common.forbid.category }}
+    policies.kyverno.io/severity: {{ .Values.policySets.common.forbid.severity }}
     policies.kyverno.io/subject: Cronjob
     policies.kyverno.io/minversion: 1.6.0
     policies.kyverno.io/description: >-
       This policy ensures that when the `Forbidden` concurrency policy is applied to CronJobs, there is a `startingDeadlineSeconds` defined. 
       This validation is crucial to prevent blocking future executions of the CronJob in case the current execution gets blocked or delayed. 
 spec:
-  validationFailureAction: {{ .Values.policySets.common.validationFailureAction }}
+  validationFailureAction: {{ .Values.policySets.common.forbid.validationFailureAction }}
   rules:
     - name: cron-forbid-startingdeadlineseconds
       match:

@@ -6,8 +6,8 @@ metadata:
   namespace: {{ .Values.policySets.common.namespace }}
   annotations:
     policies.kyverno.io/title: Label `team` is required
-    policies.kyverno.io/category: Best Practices
-    policies.kyverno.io/severity: medium
+    policies.kyverno.io/category: {{ .Values.policySets.common.labels.category }}
+    policies.kyverno.io/severity: {{ .Values.policySets.common.labels.severity }}
     policies.kyverno.io/subject: Deployment, Cronjob
     policies.kyverno.io/minversion: 1.6.0
     policies.kyverno.io/description: >-
@@ -15,7 +15,7 @@ metadata:
       Assigning a `team` label to Deployments is a best practice for organizational clarity and resource management. 
       It helps in categorizing and identifying resources belonging to specific teams or departments within a Kubernetes cluster.
 spec:
-  validationFailureAction: {{ .Values.policySets.common.validationFailureAction }}
+  validationFailureAction: {{ .Values.policySets.common.labels.validationFailureAction }}
   rules:
     - name: label-team-required
       match:

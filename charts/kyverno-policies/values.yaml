@@ -16,12 +16,14 @@ policySets:
     enabled: true
     # namespace where the policies will be deployed
     namespace: policy
-    # validationFailureAction can be Audit|Enforce by default run the common policy set as audit mode
-    validationFailureAction: Audit
+    # validationFailureAction can be Audit|Enforce by default run the common policy set as audit mode, variable moved to the policy level
     # checkLimits if set to false policy will only apply for resource request.
     # set it to true to make the policy checks limits.
     checkLimits: true
     forbid:
+      category: "SRE Best Practices"
+      severity: medium
+      validationFailureAction: Audit
       exclude:
         any:
         - resources:
@@ -34,6 +36,9 @@ policySets:
               matchLabels:
                 kyverno-forbid-policy: skip
     hpa:
+      category: "SRE Best Practices"
+      severity: medium
+      validationFailureAction: Audit
       exclude:
         any:
         - resources:
@@ -53,7 +58,11 @@ policySets:
             selector:
               matchLabels:
                 kyverno-hpa-policy: skip
+
     ingress:
+      category: "Security Best Practices"
+      severity: medium
+      validationFailureAction: Audit
       exclude:
         any:
         - resources:
@@ -66,6 +75,9 @@ policySets:
               matchLabels:
                 kyverno-ingress-policy: skip
     labels:
+      category: "SRE Best Practices"
+      severity: medium
+      validationFailureAction: Audit
       exclude:
         any:
         - resources:
@@ -77,6 +89,9 @@ policySets:
               matchLabels:
                 kyverno-resources-policy: skip
     probes:
+      category: "SRE Best Practices"
+      severity: medium
+      validationFailureAction: Audit
       exclude:
         any:
         - resources:
@@ -91,6 +106,9 @@ policySets:
               matchLabels:
                 kyverno-probes-policy: skip
     resources:
+      category: "SRE Best Practices"
+      severity: high
+      validationFailureAction: Audit
       exclude:
         any:
         - resources:
@@ -102,6 +120,9 @@ policySets:
               matchLabels:
                 kyverno-resources-policy: skip
     securityContext:
+      category: "Security Best Practices"
+      severity: high
+      validationFailureAction: Audit
       exclude:
         any:
         - resources:

@@ -8,8 +8,8 @@ metadata:
     {{- include "kyverno-policies.labels" . | nindent 4 }}
   annotations:
     policies.kyverno.io/title: Require Requests and Limits
-    policies.kyverno.io/category: Best Practices
-    policies.kyverno.io/severity: medium
+    policies.kyverno.io/category: {{ .Values.policySets.common.ingress.category }}
+    policies.kyverno.io/severity: {{ .Values.policySets.common.ingress.severity }}
     policies.kyverno.io/subject: Ingress
     policies.kyverno.io/minversion: 1.6.0
     policies.kyverno.io/description: >-
@@ -18,7 +18,7 @@ metadata:
       to use Cloud Armor instead of public nginx for enhanced protection,
       customizable security rules, and improved control over incoming traffic.
 spec:
-  validationFailureAction: {{ .Values.policySets.common.validationFailureAction }}
+  validationFailureAction: {{ .Values.policySets.common.ingress.validationFailureAction }}
   rules:
     - name: nginx-public
       match:
