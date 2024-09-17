@@ -1,5 +1,49 @@
 {{- if .Values.cloudArmor.enabled -}}
 {{- $svcport := .Values.service.port -}}
+{{- if hasKey .Values.cloudArmor "hosts" -}}
+{{- $commonname := include "common.name" . -}}
+{{- $labels := include "common.labels" . -}}
+{{- $secretname := .Values.cloudArmor.certificate.secretName | default (include "common.cloudArmorTlsSecret" .) -}}
+{{- $staticipname := .Values.cloudArmor.staticIpName | default (include "common.name" .) -}}
+{{- range .Values.cloudArmor.hosts }}
+{{- $hostwithdashes := printf "%s-ca" .host | replace "." "-" -}}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .name | default $hostwithdashes }}
+  labels:
+    {{- $labels | nindent 4 }}
+  annotations:
+    {{- with .annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    kubernetes.io/ingress.global-static-ip-name: {{ $staticipname }}
+    networking.gke.io/v1beta1.FrontendConfig: {{ $commonname }}
+spec:
+  rules:
+  - host: {{ .host | quote }}
+    http:
+      paths:
+      {{- range .paths }}
+      - backend:
+        {{- range $backend, $service := .backend }}
+          service:
+            name: {{ $service.name }}
+            port:
+              {{- if $service.port }}
+              number: {{ $service.port.number }}
+              {{- else }}
+              number: {{ default $svcport }}
+              {{- end }}
+        {{- end }}
+        path: {{ .path | default "/*" }}
+        pathType: {{ .pathType | default "ImplementationSpecific" }}
+      {{- end }}
+  tls:
+    - secretName: {{ $secretname }}
+{{- end }}
+{{- else if hasKey .Values.cloudArmor "paths" -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -33,4 +77,5 @@ spec:
       {{- end }}
   tls:
     - secretName: {{ .Values.cloudArmor.certificate.secretName | default (include "common.cloudArmorTlsSecret" .) }}
+{{- end }}
 {{- end }}

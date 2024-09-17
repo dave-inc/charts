@@ -180,6 +180,22 @@ cloudArmor:
             number: 80
       path: /*
       pathType: ImplementationSpecific
+  # adding hosts but keeping paths above as default for backward compatibility with previous versions of this chart
+  # hosts:
+  #   - host: chart-example.local
+  #     # The name is optional, If not set, a name is generated using host
+  #     # name: ""
+  #     annotations: {}
+  #       # kubernetes.io/ingress.class: (nginx-internal or nginx-public)
+  #       # kubernetes.io/tls-acme: "true"
+  #     paths:
+  #       - backend:
+  #           service:
+  #             name: chart-service
+  #             port:
+  #               number: 80
+  #         path: /
+  #         pathType: ImplementationSpecific
   certificate:
     host: chart-example.local
     # secretName is optional, if not set, a name is generated using <host> will be converted to chart-example-local-ca-tls
