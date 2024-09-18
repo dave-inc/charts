@@ -6,7 +6,7 @@
 {{- $secretname := .Values.cloudArmor.certificate.secretName | default (include "common.cloudArmorTlsSecret" .) -}}
 {{- $staticipname := .Values.cloudArmor.staticIpName | default (include "common.name" .) -}}
 {{- range .Values.cloudArmor.hosts }}
-{{- $hostwithdashes := printf "%s-ca" .host | replace "." "-" -}}
+{{- $hostwithdashes := printf "%s-ca" .host | replace "." "-" }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
