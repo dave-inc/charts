@@ -4,7 +4,6 @@
 {{- $commonname := include "common.name" . -}}
 {{- $labels := include "common.labels" . -}}
 {{- $secretname := .Values.cloudArmor.certificate.secretName | default (include "common.cloudArmorTlsSecret" .) -}}
-{{- $staticipname := .Values.cloudArmor.staticIpName | default (include "common.name" .) -}}
 {{- range .Values.cloudArmor.hosts }}
 {{- $hostwithdashes := printf "%s-ca" .host | replace "." "-" }}
 ---
@@ -18,6 +17,7 @@ metadata:
     {{- with .annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
+    kubernetes.io/ingress.global-static-ip-name: {{ .staticIpName }}
     networking.gke.io/v1beta1.FrontendConfig: {{ $commonname }}
 spec:
   rules:

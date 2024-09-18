@@ -185,6 +185,7 @@ cloudArmor:
   #   - host: chart-example.local
   #     # The name is optional, If not set, a name is generated using host
   #     # name: ""
+  #     staticIpName: ""
   #     annotations: {}
   #       # kubernetes.io/ingress.class: (nginx-internal or nginx-public)
   #       # kubernetes.io/tls-acme: "true"
