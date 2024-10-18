@@ -58,7 +58,7 @@ policySets:
             selector:
               matchLabels:
                 kyverno-hpa-policy: skip
-    ingress:
+    publicAccess:
       category: "Security Best Practices"
       severity: medium
       validationFailureAction: Audit
@@ -69,10 +69,16 @@ policySets:
             - sys
         - resources:
             kinds:
+            - Deployment
+            selector:
+              matchLabels:
+                app.kubernetes.io/instance: '*staging*'
+        - resources:
+            kinds:
             - Ingress
             selector:
               matchLabels:
-                kyverno-ingress-policy: skip
+                kyverno-public-access-policy: skip
     labels:
       category: "SRE Best Practices"
       severity: medium
