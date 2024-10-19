@@ -29,13 +29,6 @@ spec:
             - Deployment
       exclude:
         {{ .Values.policySets.common.probes.exclude | toYaml | nindent 8 }}
-      preconditions:
-        all:
-        - key: "{{`{{request.operation || 'BACKGROUND'}}`}}"
-          operator: AnyIn
-          value:
-          - CREATE
-          - UPDATE
       validate:
         message: "`livenessProbe` is required for application container"
         foreach:
