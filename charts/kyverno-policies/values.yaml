@@ -69,12 +69,6 @@ policySets:
             - sys
         - resources:
             kinds:
-            - Deployment
-            selector:
-              matchLabels:
-                app.kubernetes.io/instance: '*staging*'
-        - resources:
-            kinds:
             - Ingress
             selector:
               matchLabels:

@@ -13,7 +13,7 @@ metadata:
     policies.kyverno.io/subject: Ingress, Service
     policies.kyverno.io/minversion: 1.6.0
     policies.kyverno.io/description: >-
-      This policy alerts on ingress or service configurations within the cluster using nginx-public, global-static-ip-name and LoadBalancer services. 
+      This policy alerts on ingress or service configurations within the cluster using nginx-public, global-static-ip-name and public LoadBalancer services.
       Public exposure of applications without proper security measures poses significant risks. It is recommended to use Cloud Armor.
 spec:
   validationFailureAction: {{ .Values.policySets.common.publicAccess.validationFailureAction }}
@@ -43,15 +43,17 @@ spec:
         - resources:
             kinds:
             - Service
+      exclude:
+        {{ .Values.policySets.common.publicAccess.exclude | toYaml | nindent 8 }}
+      preconditions:
+        all:
+        - key: "{{`{{ request.object.spec.type }}`}}"
+          operator: Equals
+          value: LoadBalancer
       validate:
-        message: "Service Type:LoadBalancer detected, switch to Type:ClusterIP or use Cloud Armor."
-        deny:
-          conditions:
-            all:
-            - key: "{{`{{ request.object.spec.type }}`}}"
-              operator: Equals
-              value: LoadBalancer
-            - key: "{{`{{ request.object.metadata.annotations.\"networking.gke.io/load-balancer-type\" }}`}}"
-              operator: NotEquals
-              value: Internal
+        message: "Service Type:LoadBalancer detected, add annotation networking.gke.io/load-balancer-type: Internal, or switch to Type:ClusterIP or use Cloud Armor."
+        pattern:
+          metadata:
+            annotations:
+              networking.gke.io/load-balancer-type: "Internal"
 {{- end }}
