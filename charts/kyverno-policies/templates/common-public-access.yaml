@@ -1,0 +1,59 @@
+{{- if .Values.policySets.common.enabled }}
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: public-access
+  namespace: {{ .Values.policySets.common.namespace }}
+  labels:
+    {{- include "kyverno-policies.labels" . | nindent 4 }}
+  annotations:
+    policies.kyverno.io/title: Require Requests and Limits
+    policies.kyverno.io/category: {{ .Values.policySets.common.publicAccess.category }}
+    policies.kyverno.io/severity: {{ .Values.policySets.common.publicAccess.severity }}
+    policies.kyverno.io/subject: Ingress, Service
+    policies.kyverno.io/minversion: 1.6.0
+    policies.kyverno.io/description: >-
+      This policy alerts on ingress or service configurations within the cluster using nginx-public, global-static-ip-name and public LoadBalancer services.
+      Public exposure of applications without proper security measures poses significant risks. It is recommended to use Cloud Armor.
+spec:
+  validationFailureAction: {{ .Values.policySets.common.publicAccess.validationFailureAction }}
+  rules:
+    - name: ingress-public
+      match:
+        any:
+        - resources:
+            kinds:
+            - Ingress
+      exclude:
+        {{ .Values.policySets.common.publicAccess.exclude | toYaml | nindent 8 }}
+      validate:
+        message: "Ingress nginx-public detected, switch to nginx internal or use Cloud Armor."
+        anyPattern:
+        - metadata:
+            annotations:
+              kubernetes.io/ingress.class: '!nginx-public'
+        - spec:
+            ingressClassName: '!nginx-public'
+        - metadata:
+            annotations:
+              kubernetes.io/ingress.global-static-ip-name: '?*'
+    - name: service-public
+      match:
+        any:
+        - resources:
+            kinds:
+            - Service
+      exclude:
+        {{ .Values.policySets.common.publicAccess.exclude | toYaml | nindent 8 }}
+      preconditions:
+        all:
+        - key: "{{`{{ request.object.spec.type }}`}}"
+          operator: Equals
+          value: LoadBalancer
+      validate:
+        message: "Service Type:LoadBalancer detected, add annotation networking.gke.io/load-balancer-type: Internal, or switch to Type:ClusterIP or use Cloud Armor."
+        pattern:
+          metadata:
+            annotations:
+              networking.gke.io/load-balancer-type: "Internal"
+{{- end }}

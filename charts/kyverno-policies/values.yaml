@@ -58,7 +58,7 @@ policySets:
             selector:
               matchLabels:
                 kyverno-hpa-policy: skip
-    ingress:
+    publicAccess:
       category: "Security Best Practices"
       severity: medium
       validationFailureAction: Audit
@@ -72,7 +72,7 @@ policySets:
             - Ingress
             selector:
               matchLabels:
-                kyverno-ingress-policy: skip
+                kyverno-public-access-policy: skip
     labels:
       category: "SRE Best Practices"
       severity: medium
