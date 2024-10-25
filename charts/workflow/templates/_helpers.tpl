@@ -24,6 +24,10 @@ helm.sh/chart: {{ include "common.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- if .Values.additionalLabels }}
+  {{- println "" }}
+  {{- toYaml .Values.additionalLabels }}
+{{- end }}
 {{- end }}
 
 {{/*
