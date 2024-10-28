@@ -84,6 +84,11 @@ nodeSelector: {}
 # nodeSelector:
 #   node_pool: default
 
+#  This is used to apply additional labels on deployment, pods and services
+#  to properly tag the team and environment
+
+additionalLabels: {}
+
 tolerations: []
 # tolerations:
 #   - effect: NoExecute
