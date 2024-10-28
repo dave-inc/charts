@@ -84,8 +84,8 @@ nodeSelector: {}
 # nodeSelector:
 #   node_pool: default
 
-#  This is used to apply additional labels on deployment, pods and services
-#  to properly tag the team and environment
+#  This is used to apply additional labels on k8s resources if needed 
+#  and properly tag the team and environment
 
 additionalLabels: {}
 
