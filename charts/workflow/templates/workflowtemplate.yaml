@@ -3,6 +3,8 @@ kind: WorkflowTemplate
 metadata:
   name: {{ include "common.name" . }}
   generateName: {{ include "common.name" . }}-
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
 spec:
   arguments:
     parameters:
