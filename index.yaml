@@ -1447,6 +1447,16 @@ entries:
   workflow:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2024-10-29T17:08:34.653906597Z"
+    description: Standard Service Template
+    digest: c81136dda272d3359951c38d2203f6115ea3b3c813e32fde517464ad39377128
+    name: workflow
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/workflow-0.1.1-beta.4/workflow-0.1.1-beta.4.tgz
+    version: 0.1.1-beta.4
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2023-10-30T18:50:06.923188953Z"
     description: Standard Service Template
     digest: 975781b359fbdf1e00b7b98290831f2539a95923437c9f20b07ecc7d686bb6f1
@@ -1555,4 +1565,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2024-10-22T18:14:37.345791732Z"
+generated: "2024-10-29T17:08:34.655030005Z"
