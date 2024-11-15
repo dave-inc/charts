@@ -30,7 +30,8 @@ spec:
       name: http
   selector:
   {{- if not $.Values.podSelectorLabelsOverride }}
-    {{- $cselectorlabels | nindent 4 }}
+    app.kubernetes.io/name: {{ trimSuffix "-ca" .backend.service.name}}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
   {{- end }}
   {{- if $.Values.podSelectorLabelsOverride }}
     {{- $.Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
