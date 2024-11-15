@@ -1,6 +1,5 @@
 {{- if .Values.cloudArmor.enabled -}}
 {{- $commonname := include "common.name" . -}}
-{{- $cselectorlabels := include "common.selectorLabels" . -}}
 {{- $labels := include "common.labels" . -}}
 {{- range .Values.cloudArmor.paths }}
 
