@@ -29,12 +29,11 @@ spec:
       protocol: TCP
       name: http
   selector:
-  {{- if not $.Values.podSelectorLabelsOverride }}
-    app.kubernetes.io/name: {{ trimSuffix "-ca" .backend.service.name}}
-    app.kubernetes.io/instance: {{ $.Release.Name }}
-  {{- end }}
   {{- if $.Values.podSelectorLabelsOverride }}
     {{- $.Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
+  {{- else }}
+    app.kubernetes.io/name: {{ trimSuffix "-ca" .backend.service.name}}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
   {{- end }}
 {{- end }}
 {{- end }}
