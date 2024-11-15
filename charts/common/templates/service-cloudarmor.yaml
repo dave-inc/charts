@@ -1,28 +1,38 @@
 {{- if .Values.cloudArmor.enabled -}}
+{{- $commonname := include "common.name" . -}}
+{{- $labels := include "common.labels" . -}}
+{{- range .Values.cloudArmor.paths }}
+
+---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "common.cloudArmorName" . }}
+  {{- if hasSuffix "-ca" .backend.service.name  }}
+  name: {{ .backend.service.name }}
+  {{- else }}
+  {{- printf "The Service name '%s' does not meet the Cloud Armor naming standards!" .backend.service.name | fail }}
+  {{- end }}
   labels:
-    {{- include "common.labels" . | nindent 4 }}
+    {{ $labels | nindent 4 }}
   annotations:
-    {{- if .Values.cloudArmor.backendConfig.iap }}
-    cloud.google.com/backend-config: '{"ports": {"80":"{{ include "common.name" . }}", "443":"{{ include "common.name" . }}"},"default": "{{ include "common.name" . }}"}'
+    {{- if $.Values.cloudArmor.backendConfig.iap }}
+    cloud.google.com/backend-config: '{"ports": {"80":"{{ $commonname }}", "443":"{{ $commonname }}"},"default": "{{ $commonname }}"}'
     {{- else }}
-    cloud.google.com/backend-config: '{"ports": {"80":"{{ include "common.name" . }}", "443":"{{ include "common.name" . }}"}}'
+    cloud.google.com/backend-config: '{"ports": {"80":"{{ $commonname}}", "443":"{{ $commonname }}"}}'
     {{- end }}
 spec:
-  type: {{ .Values.cloudArmor.service.type }}
+  type: {{ $.Values.cloudArmor.service.type }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: {{ .Values.deploymentContainer.port }}
+    - port: {{ .backend.service.port.number }}
+      targetPort: {{ $.Values.deploymentContainer.port }}
       protocol: TCP
       name: http
   selector:
-  {{- if not .Values.podSelectorLabelsOverride }}
-    {{- include "common.selectorLabels" . | nindent 4 }}
+  {{- if $.Values.podSelectorLabelsOverride }}
+    {{- $.Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
+  {{- else }}
+    app.kubernetes.io/name: {{ trimSuffix "-ca" .backend.service.name}}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
   {{- end }}
-  {{- if .Values.podSelectorLabelsOverride }}
-    {{- .Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
-  {{- end }}
+{{- end }}
 {{- end }}
