@@ -178,6 +178,7 @@ cloudArmor:
           name: chart-service-ca
           port:
             number: 80
+          targetPort: 8080
       path: /*
       pathType: ImplementationSpecific
   # adding hosts but keeping paths above as default for backward compatibility with previous versions of this chart

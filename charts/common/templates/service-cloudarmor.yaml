@@ -24,7 +24,7 @@ spec:
   type: {{ $.Values.cloudArmor.service.type }}
   ports:
     - port: {{ .backend.service.port.number }}
-      targetPort: {{ $.Values.deploymentContainer.port }}
+      targetPort: {{ .backend.service.targetPort | default $.Values.deploymentContainer.port }}
       protocol: TCP
       name: http
   selector:
