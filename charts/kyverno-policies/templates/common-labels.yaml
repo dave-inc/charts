@@ -28,11 +28,9 @@ spec:
       validate:
         message: "Label `team` is required."
         pattern:
-          spec:
-            template:
-              metadata:
-                labels:
-                  team: "?*"
+          metadata:
+            labels:
+              team: "?*"
     - name: cron-label-team-required
       match:
         any:
