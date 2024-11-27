@@ -310,18 +310,20 @@ spec:
           livenessProbe:
             {{- toYaml .Values.cloudsqlProxy.livenessProbe | nindent 12 }}
           lifecycle:
+          {{- if .Values.cloudsqlProxy.lifecycle }}
+            {{- toYaml .Values.cloudsqlProxy.lifecycle | nindent 12 }}
+          {{- else }}
             preStop:
               exec:
                 command:
                   - /bin/sh
                   - -c
                   - /bin/sleep 30 && rm -f /cloudsql/{{ $sqlinstanceConnectionName }}
+          {{- end }}
           readinessProbe:
             {{- toYaml .Values.cloudsqlProxy.readinessProbe | nindent 12 }}
           startupProbe:
             {{- toYaml .Values.cloudsqlProxy.startupProbe | nindent 12 }}
-          lifecycle:
-            {{- toYaml .Values.cloudsqlProxy.lifecycle | nindent 12 }}
           {{- end }}
           resources:
             {{- toYaml .Values.cloudsqlProxy.resources | nindent 12 }}
