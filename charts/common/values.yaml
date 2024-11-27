@@ -470,7 +470,7 @@ cloudsqlProxy:
     # Defaults to 1 for readiness probe.
     successThreshold: 1
     failureThreshold: 6
-  # lifecycle is added by default to the cloudsqlProxy container with preStop hook 30 seconds
+  # lifecycle is added by default to the cloudsqlProxy container with preStop 30 seconds
   # but you can overwrite it here
   # lifecycle:
   #   preStop:
