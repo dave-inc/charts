@@ -309,10 +309,10 @@ spec:
             {{- toYaml .Values.cloudsqlProxy.ports | nindent 12 }}
           livenessProbe:
             {{- toYaml .Values.cloudsqlProxy.livenessProbe | nindent 12 }}
+          lifecycle:
           {{- if .Values.cloudsqlProxy.lifecycle }}
             {{- toYaml .Values.cloudsqlProxy.lifecycle | nindent 12 }}
           {{- else }}
-          lifecycle:
             preStop:
               exec:
                 command:
