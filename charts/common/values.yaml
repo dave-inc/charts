@@ -470,8 +470,15 @@ cloudsqlProxy:
     # Defaults to 1 for readiness probe.
     successThreshold: 1
     failureThreshold: 6
-  # Declare the HTTP Port so that k8s components can reach the
-  # metrics and health check endpoints.
+  # lifecycle is added by default to the cloudsqlProxy container with preStop hook 30 seconds
+  # but you can overwrite it here
+  # lifecycle:
+  #   preStop:
+  #     exec:
+  #       command:
+  #         - /bin/sh
+  #         - -c
+  #         - /bin/sleep 30 && rm -f /cloudsql/project_name:region:instance_name
   ports:
   - containerPort: 9801
     protocol: TCP
