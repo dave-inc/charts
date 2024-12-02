@@ -1,0 +1,15 @@
+{{- if .Values.canary.enabled -}}
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: {{ include "common.name" . }}
+spec:
+  host: {{ .Values.service.name | default (include "common.name" .) }}
+  subsets:
+  - labels:
+      canary: "true"
+    name: canary
+  - labels:
+      canary: "false"
+    name: production
+{{- end }}

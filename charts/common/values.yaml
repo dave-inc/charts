@@ -144,6 +144,13 @@ service:
   # The name of the service is optional, If not set, a name is generated using Release.Name
   # name: ""
 
+canary:
+  enabled: false
+  # percentage of traffic that should be sent to canary. (100 - weight) is sent to non-canary deployment.
+  # weight: 5
+  # image:
+  #  tag: ""
+
 ingress:
   enabled: false
   hosts:

@@ -1,0 +1,21 @@
+{{- if .Values.canary.enabled -}}
+{{- $canaryWeight := .Values.canary.weight | default 5 }}
+{{- $remainingWeight := sub 100 $canaryWeight }}
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ include "common.name" . }}-mesh
+spec:
+  hosts:
+  - {{ .Values.service.name | default (include "common.name" .) }}
+  http:
+  - route:
+    - destination:
+        host: {{ .Values.service.name | default (include "common.name" .) }}
+        subset: canary
+      weight: {{ $canaryWeight }}
+    - destination:
+        host: {{ .Values.service.name | default (include "common.name" .) }}
+        subset: production
+      weight: {{ $remainingWeight }}
+{{- end }}
