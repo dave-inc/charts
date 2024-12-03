@@ -1,6 +1,7 @@
 {{- if .Values.canary.enabled -}}
 {{- $canaryWeight := .Values.canary.weight | default 5 }}
-{{- $remainingWeight := sub 100 $canaryWeight }}
+{{- $effectiveCanaryWeight := min (max $canaryWeight 0) 100 }}
+{{- $remainingWeight := sub 100 $effectiveCanaryWeight }}
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
@@ -13,7 +14,7 @@ spec:
     - destination:
         host: {{ .Values.service.name | default (include "common.name" .) }}
         subset: canary
-      weight: {{ $canaryWeight }}
+      weight: {{ $effectiveCanaryWeight }}
     - destination:
         host: {{ .Values.service.name | default (include "common.name" .) }}
         subset: production
