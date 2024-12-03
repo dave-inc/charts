@@ -1,3 +1,4 @@
+{{- if .Values.canary.enabled -}}
 {{/* Any resource that defines a volume should be included in the list below */}}
 {{- $hasVolumes := (or
 .Values.initContainer.enabled
@@ -12,10 +13,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "common.name" . }}
+  name: {{ include "common.name" . }}-canary
   labels:
-    canary: "false"
-    tags.datadoghq.com/version: "{{ .Values.image.tag }}"
+    canary: "true"
+    tags.datadoghq.com/version: "{{ .Values.canary.image.tag }}"
     run: {{ include "common.name" . }}
     {{- include "common.labels" . | nindent 4 }}
 spec:
@@ -43,7 +44,7 @@ spec:
         {{- toYaml .Values.podAnnotations | nindent 8 }}
         {{- end }}
       labels:
-        tags.datadoghq.com/version: "{{ .Values.image.tag }}"
+        tags.datadoghq.com/version: "{{ .Values.canary.image.tag }}"
       {{- if not .Values.podSelectorLabelsOverride }}
         run: {{ include "common.name" . }}
         {{- include "common.selectorLabels" . | nindent 8 }}
@@ -107,7 +108,7 @@ spec:
         - name: {{ include "common.name" . }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.image.repository }}:{{ .Values.canary.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
@@ -187,7 +188,7 @@ spec:
             - name: DEPLOYMENT_NAME
               value: {{ include "common.name" . }}
             - name: DD_VERSION
-              value: "{{ .Values.image.tag }}"
+              value: "{{ .Values.canary.image.tag }}"
             - name: NAMESPACE
               valueFrom:
                 fieldRef:
@@ -406,3 +407,4 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+{{- end }}
