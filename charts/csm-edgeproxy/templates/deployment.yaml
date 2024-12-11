@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "csm-edgeproxy.name" . }}
+  labels:
+    {{- include "csm-edgeproxy.labels" . | nindent 4 }}
 spec:
 {{- if not .Values.autoscaling.enabled }}
   replicas: 3
@@ -21,6 +23,7 @@ spec:
       labels:
         app: istio-ingressgateway
         istio: {{ .Values.gatewayClass }}
+        {{- include "csm-edgeproxy.labels" . | nindent 8 }}
     spec:
       containers:
       - name: istio-proxy
