@@ -973,6 +973,16 @@ entries:
   csm-edgeproxy:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2024-12-11T22:31:26.735334663Z"
+    description: Cloud Service Mesh (Istio) Gateway Edgeproxy
+    digest: e3535e829f77966984edb8188ee3a7b223170082be9e38a42ae2c571239cbfc1
+    name: csm-edgeproxy
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/csm-edgeproxy-0.1.1/csm-edgeproxy-0.1.1.tgz
+    version: 0.1.1
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2024-12-11T22:02:41.278945266Z"
     description: Cloud Service Mesh (Istio) Gateway Edgeproxy
     digest: 536d866894b3dbccdbc120a1330782b448a90c295acf64fc3b6156f419dd33ee
@@ -1626,4 +1636,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2024-12-11T22:02:41.280374095Z"
+generated: "2024-12-11T22:31:26.736544819Z"
