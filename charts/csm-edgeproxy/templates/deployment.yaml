@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "csm-edgeproxy.name" . }}
+spec:
+{{- if not .Values.autoscaling.enabled }}
+  replicas: 3
+{{- end }}
+  selector:
+    matchLabels:
+      app: istio-ingressgateway
+      istio: {{ .Values.gatewayClass }}
+  strategy:
+    {{- toYaml .Values.strategy | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        # This is required to tell Anthos Service Mesh to inject the gateway with the
+        # required configuration.
+        inject.istio.io/templates: gateway
+      labels:
+        app: istio-ingressgateway
+        istio: {{ .Values.gatewayClass }}
+    spec:
+      containers:
+      - name: istio-proxy
+        image: auto # The image will automatically update each time the pod starts.
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+      serviceAccountName: {{ include "csm-edgeproxy.serviceAccountName" . }}
