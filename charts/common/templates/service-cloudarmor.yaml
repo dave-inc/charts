@@ -1,16 +1,22 @@
 {{- if .Values.cloudArmor.enabled -}}
 {{- $commonname := include "common.name" . -}}
 {{- $labels := include "common.labels" . -}}
-{{- range .Values.cloudArmor.paths }}
+{{- $svclist := list }}
+{{- range $k, $v := .Values.cloudArmor.paths -}}
+{{ $svclist = append $svclist $v.backend.service }}
+{{ end }}
+{{- $finallist :=  $svclist | uniq | toYaml -}}
+#{{- $finallist :=  $svclist | uniq  -}}
+{{- range $k, $v := $finallist -}}
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  {{- if hasSuffix "-ca" .backend.service.name  }}
-  name: {{ .backend.service.name }}
+  {{- if hasSuffix "-ca" $v.name  }}
+  name: {{ $v.name }}
   {{- else }}
-  {{- printf "The Service name '%s' does not meet the Cloud Armor naming standards!" .backend.service.name | fail }}
+  {{- printf "The Service name '%s' does not meet the Cloud Armor naming standards!" $v.name | fail }}
   {{- end }}
   labels:
     {{ $labels | nindent 4 }}
@@ -23,15 +29,15 @@ metadata:
 spec:
   type: {{ $.Values.cloudArmor.service.type }}
   ports:
-    - port: {{ .backend.service.port.number }}
-      targetPort: {{ .backend.service.targetPort | default $.Values.deploymentContainer.port }}
+    - port: {{ $v.port.number }}
+      targetPort: {{ $v.targetPort | default $.Values.deploymentContainer.port }}
       protocol: TCP
       name: http
   selector:
   {{- if $.Values.podSelectorLabelsOverride }}
     {{- $.Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
   {{- else }}
-    app.kubernetes.io/name: {{ trimSuffix "-ca" .backend.service.name}}
+    app.kubernetes.io/name: {{ trimSuffix "-ca" $v.name}}
     app.kubernetes.io/instance: {{ $.Release.Name }}
   {{- end }}
 {{- end }}
