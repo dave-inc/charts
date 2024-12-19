@@ -1,4 +1,4 @@
-{{- if .Values.cloudArmor.enabled -}}
+{{- if and .Values.cloudArmor.enabled (not .Values.canary) -}}
 {{- $svcport := .Values.service.port -}}
 {{- if hasKey .Values.cloudArmor "hosts" -}}
 {{- $commonname := include "common.name" . -}}
