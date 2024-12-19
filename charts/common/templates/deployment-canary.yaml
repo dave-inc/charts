@@ -15,7 +15,6 @@ kind: Deployment
 metadata:
   name: {{ include "common.name" . }}-canary
   labels:
-    canary: "true"
     tags.datadoghq.com/version: "{{ .Values.canary.image.tag }}"
     run: {{ include "common.name" . }}
     {{- include "common.labels" . | nindent 4 }}
@@ -45,6 +44,7 @@ spec:
         {{- end }}
       labels:
         tags.datadoghq.com/version: "{{ .Values.canary.image.tag }}"
+        canary: "true"
       {{- if not .Values.podSelectorLabelsOverride }}
         run: {{ include "common.name" . }}
         {{- include "common.selectorLabels" . | nindent 8 }}

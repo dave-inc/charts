@@ -1,0 +1,43 @@
+{{- if and .Values.ingress.enabled .Values.canary -}}
+{{- $labels := include "common.labels" . -}}
+{{- $svcport := .Values.service.port -}}
+{{- range .Values.ingress.hosts }}
+{{- $hostwithdashes := printf "%s" .host | replace "." "-" -}}
+{{- $hostwithdashestls := printf "%s-tls" .host | replace "." "-" }}
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  namespace: sys
+  name: {{ .name | default $hostwithdashes }}
+  labels:
+    {{- $labels | nindent 4 }}
+  {{- if .annotations }}
+  annotations:
+    {{- with .annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- end }}
+spec:
+  selector:
+    istio: gateway-private
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - {{ .host | quote }}
+    {{- if .tls }}
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    hosts:
+    - {{ .host | quote }}
+    tls:
+      mode: SIMPLE
+      credentialName: {{ .tls.secretName | default $hostwithdashestls }}
+    {{- end }}
+{{- end }}
+{{- end }}
