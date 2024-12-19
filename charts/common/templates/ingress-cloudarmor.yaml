@@ -1,4 +1,4 @@
-{{- if and .Values.cloudArmor.enabled (not .Values.canary) -}}
+{{- if .Values.cloudArmor.enabled -}}
 {{- $svcport := .Values.service.port -}}
 {{- if hasKey .Values.cloudArmor "hosts" -}}
 {{- $commonname := include "common.name" . -}}
@@ -10,6 +10,9 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  {{- if $.Values.canary.enabled }}
+  namespace: sys
+  {{- end }}
   name: {{ .name | default $hostwithdashes }}
   labels:
     {{- $labels | nindent 4 }}
@@ -46,6 +49,9 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  {{- if $.Values.canary.enabled }}
+  namespace: sys
+  {{- end }}
   name: {{ include "common.cloudArmorName" . }}
   labels:
     {{- include "common.labels" . | nindent 4 }}

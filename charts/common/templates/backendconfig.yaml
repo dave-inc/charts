@@ -2,6 +2,9 @@
 apiVersion: cloud.google.com/v1
 kind: BackendConfig
 metadata:
+  {{- if $.Values.canary.enabled }}
+  namespace: sys
+  {{- end }}
   name: {{ include "common.name" . }}
 spec:
   {{- toYaml .Values.cloudArmor.backendConfig | nindent 2 }}
