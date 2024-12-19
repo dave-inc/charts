@@ -13,8 +13,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  {{- if hasSuffix "-ca" $v.name  }}
-  name: {{ $v.name }}
+  {{- if .Values.canary.enabled -}}
+  namespace: sys
+  {{- end }}
+  {{- if hasSuffix "-ca" .backend.service.name  }}
+  name: {{ .backend.service.name }}
   {{- else }}
   {{- printf "The Service name '%s' does not meet the Cloud Armor naming standards!" $v.name | fail }}
   {{- end }}
@@ -36,6 +39,8 @@ spec:
   selector:
   {{- if $.Values.podSelectorLabelsOverride }}
     {{- $.Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
+  {{- else if $.Values.canary.enabled }}
+    app.kubernetes.io/name=csm-edgeproxy-public
   {{- else }}
     app.kubernetes.io/name: {{ trimSuffix "-ca" $v.name}}
     app.kubernetes.io/instance: {{ $.Release.Name }}
