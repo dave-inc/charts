@@ -2,12 +2,11 @@
 {{- $commonname := include "common.name" . -}}
 {{- $labels := include "common.labels" . -}}
 {{- range .Values.cloudArmor.paths }}
-
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  {{- if .Values.canary.enabled -}}
+  {{- if $.Values.canary.enabled }}
   namespace: sys
   {{- end }}
   {{- if hasSuffix "-ca" .backend.service.name  }}
@@ -27,14 +26,14 @@ spec:
   type: {{ $.Values.cloudArmor.service.type }}
   ports:
     - port: {{ .backend.service.port.number }}
-      targetPort: {{ .backend.service.targetPort | default $.Values.deploymentContainer.port }}
+      targetPort: {{ if $.Values.canary.enabled }}80{{- else }}{{ .backend.service.targetPort | default $.Values.deploymentContainer.port }}{{- end }}
       protocol: TCP
       name: http
   selector:
   {{- if $.Values.podSelectorLabelsOverride }}
     {{- $.Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
   {{- else if $.Values.canary.enabled }}
-    app.kubernetes.io/name=csm-edgeproxy-public
+    app.kubernetes.io/name: csm-edgeproxy-public
   {{- else }}
     app.kubernetes.io/name: {{ trimSuffix "-ca" .backend.service.name}}
     app.kubernetes.io/instance: {{ $.Release.Name }}

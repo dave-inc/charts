@@ -2,6 +2,9 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
+  {{- if $.Values.canary.enabled }}
+  namespace: sys
+  {{- end }}
   name: {{ include "common.name" . }}
 spec:
   secretName: {{ .Values.cloudArmor.certificate.secretName | default (include "common.cloudArmorTlsSecret" .) }}

@@ -2,6 +2,9 @@
 apiVersion: networking.gke.io/v1beta1
 kind: FrontendConfig
 metadata:
+  {{- if $.Values.canary.enabled }}
+  namespace: sys
+  {{- end }}
   name: {{ include "common.name" . }}
 spec:
   {{- toYaml .Values.cloudArmor.frontendConfig | nindent 2 }}
