@@ -5,10 +5,18 @@
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
-  name: {{ include "common.name" . }}-mesh
+  name: {{ .Values.service.name | default (include "common.name" .) }}
 spec:
+  gateways:
+  - mesh
+  {{- if .Values.ingress.enabled }}
+  - sys/{{ .Values.service.name | default (include "common.name" .) }}
+  {{- end }}
   hosts:
   - {{ .Values.service.name | default (include "common.name" .) }}
+  {{- range .Values.ingress.hosts }}
+  - {{ .host | quote }}
+  {{- end }}
   http:
   - route:
     - destination:
