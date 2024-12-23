@@ -10,8 +10,11 @@ spec:
   gateways:
   - mesh
   {{- if .Values.ingress.enabled }}
-  - sys/{{ .Values.service.name | default (include "common.name" .) }}
-  {{- end }}
+  - {{ .Values.canary.gatewayNamespace}}/{{ .Values.service.name | default (include "common.name" .) }}
+  {{ end }}
+  {{- if .Values.cloudArmor.enabled -}}
+  - {{ .Values.canary.gatewayNamespace}}/{{ .Values.service.name | default (include "common.name" .) }}-ca
+  {{ end }}
   hosts:
   - {{ .Values.service.name | default (include "common.name" .) }}
   {{- range .Values.ingress.hosts }}

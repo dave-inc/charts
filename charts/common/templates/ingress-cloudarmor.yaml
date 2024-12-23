@@ -11,7 +11,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   {{- if $.Values.canary.enabled }}
-  namespace: sys
+  namespace: {{ $.Values.canary.gatewayNamespace }}
   {{- end }}
   name: {{ .name | default $hostwithdashes }}
   labels:
@@ -23,6 +23,7 @@ metadata:
     kubernetes.io/ingress.global-static-ip-name: {{ .staticIpName }}
     networking.gke.io/v1beta1.FrontendConfig: {{ $commonname }}
 spec:
+  this: wat
   rules:
   - host: {{ .host | quote }}
     http:
@@ -33,7 +34,9 @@ spec:
           service:
             name: {{ $service.name }}
             port:
-              {{- if $service.port }}
+              {{- if $.Values.canary.enabled }}
+              number: 80
+              {{- else if $service.port }}
               number: {{ $service.port.number }}
               {{- else }}
               number: {{ default $svcport }}
@@ -50,7 +53,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   {{- if $.Values.canary.enabled }}
-  namespace: sys
+  namespace: {{ .Values.canary.gatewayNamespace }}
   {{- end }}
   name: {{ include "common.cloudArmorName" . }}
   labels:
@@ -71,7 +74,9 @@ spec:
           service:
             name: {{ $service.name }}
             port:
-              {{- if $service.port }}
+              {{- if $.Values.canary.enabled }}
+              number: 80
+              {{- else if $service.port }}
               number: {{ $service.port.number }}
               {{- else }}
               number: {{ default $svcport }}

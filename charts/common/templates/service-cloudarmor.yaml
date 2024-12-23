@@ -9,16 +9,12 @@
 {{- $finallist :=  $svclist | uniq | toYaml -}}
 #{{- $finallist :=  $svclist | uniq  -}}
 {{- range $k, $v := $finallist }}
-
-=======
-{{- range .Values.cloudArmor.paths }}
->>>>>>> 8c836a3 (wip)
 ---
 apiVersion: v1
 kind: Service
 metadata:
   {{- if $.Values.canary.enabled }}
-  namespace: sys
+  namespace: {{ $.Values.canary.gatewayNamespace }}
   {{- end }}
   {{- if hasSuffix "-ca" $v.name  }}
   name: {{ $v.name }}

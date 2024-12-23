@@ -1,0 +1,21 @@
+{{- if and .Values.autoscaling.enabled .Values.canary.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "common.name" . }}-canary
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "common.name" . }}
+  minReplicas: {{ .Values.canary.autoscaling.minReplicas | default .Values.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.canary.autoscaling.maxReplicas | default .Values.autoscaling.maxReplicas }}
+  metrics:
+    {{- toYaml .Values.autoscaling.metrics | nindent 4 }}
+  {{- if .Values.hpaBehavior.enabled }}
+  behavior:
+    {{- toYaml .Values.hpaBehavior.behavior | nindent 4 }}
+  {{- end }}
+{{- end }}

@@ -3,7 +3,7 @@ apiVersion: cloud.google.com/v1
 kind: BackendConfig
 metadata:
   {{- if $.Values.canary.enabled }}
-  namespace: sys
+  namespace: {{ .Values.canary.gatewayNamespace }}
   {{- end }}
   name: {{ include "common.name" . }}
 spec:

@@ -3,7 +3,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   {{- if $.Values.canary.enabled }}
-  namespace: sys
+  namespace: {{ .Values.canary.gatewayNamespace }}
   {{- end }}
   name: {{ include "common.name" . }}
 spec:

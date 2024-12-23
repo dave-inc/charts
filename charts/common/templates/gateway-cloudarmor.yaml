@@ -1,4 +1,4 @@
-{{- if and .Values.cloudArmor.enabled .Values.canary -}}
+{{- if and .Values.cloudArmor.enabled .Values.canary.enabled -}}
 {{- $labels := include "common.labels" . -}}
 {{- $svcport := .Values.service.port -}}
 {{- range .Values.ingress.hosts }}
@@ -8,7 +8,7 @@
 apiVersion: networking.istio.io/v1beta1
 kind: Gateway
 metadata:
-  namespace: sys
+  namespace: {{ $.Values.canary.gatewayNamespace }}
   name: {{ .name | default $hostwithdashes }}-ca
   labels:
     {{- $labels | nindent 4 }}
