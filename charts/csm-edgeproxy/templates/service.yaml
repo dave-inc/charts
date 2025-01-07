@@ -23,4 +23,8 @@ spec:
     protocol: TCP
     targetPort: 443
     name: https
+  - name: healthz
+    port: 15020
+    protocol: TCP
+    targetPort: 15020
 {{- end }}
