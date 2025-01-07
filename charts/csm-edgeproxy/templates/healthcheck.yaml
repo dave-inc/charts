@@ -1,0 +1,44 @@
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  labels:
+    {{- include "csm-edgeproxy.labels" . | nindent 4 }}
+  name: {{ include "csm-edgeproxy.name" . }}-healthz
+spec:
+  gateways:
+  - {{ include "csm-edgeproxy.name" . }}-healthz
+  hosts:
+    - '*'
+  http:
+  - match:
+    - headers:
+        user-agent:
+          prefix: GoogleHC
+      method:
+        exact: GET
+    rewrite:
+      authority: {{ include "csm-edgeproxy.name" .}}.{{ .Release.Namespace }}.svc.cluster.local:15020
+      uri: /healthz/ready
+    route:
+    - destination:
+        host: {{ include "csm-edgeproxy.name" .}}.{{ .Release.Namespace }}.svc.cluster.local
+        port:
+          number: 15020
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  labels:
+    {{- include "csm-edgeproxy.labels" . | nindent 4 }}
+  name: {{ include "csm-edgeproxy.name" . }}-healthz
+spec:
+  selector:
+    istio: {{ .Values.gatewayClass }}
+  servers:
+  - hosts:
+    - '*'
+    port:
+      name: http
+      number: 80
+      protocol: HTTP
