@@ -23,7 +23,6 @@ metadata:
     kubernetes.io/ingress.global-static-ip-name: {{ .staticIpName }}
     networking.gke.io/v1beta1.FrontendConfig: {{ $commonname }}
 spec:
-  this: wat
   rules:
   - host: {{ .host | quote }}
     http:
