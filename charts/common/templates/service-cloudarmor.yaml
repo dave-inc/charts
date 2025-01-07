@@ -1,7 +1,6 @@
 {{- if .Values.cloudArmor.enabled -}}
 {{- $commonname := include "common.name" . -}}
 {{- $labels := include "common.labels" . -}}
-<<<<<<< HEAD
 {{- $svclist := list }}
 {{- range $k, $v := .Values.cloudArmor.paths -}}
 {{ $svclist = append $svclist $v.backend.service }}
@@ -32,7 +31,7 @@ metadata:
 spec:
   type: {{ $.Values.cloudArmor.service.type }}
   ports:
-    - port: {{ .backend.service.port.number }}
+    - port: {{ $v.port.number }}
       targetPort: {{ if $.Values.canary.enabled }}80{{- else }}{{ $v.targetPort | default $.Values.deploymentContainer.port }}{{- end }}
       protocol: TCP
       name: http
