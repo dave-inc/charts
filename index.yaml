@@ -993,6 +993,16 @@ entries:
   csm-edgeproxy:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2025-01-08T20:39:35.621006375Z"
+    description: Cloud Service Mesh (Istio) Gateway Edgeproxy
+    digest: 8808873e48d89e3b44a342a68d0b47afc042c196a48fa6d0b3374958028c0f97
+    name: csm-edgeproxy
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/csm-edgeproxy-0.1.4/csm-edgeproxy-0.1.4.tgz
+    version: 0.1.4
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2024-12-17T21:27:00.160293783Z"
     description: Cloud Service Mesh (Istio) Gateway Edgeproxy
     digest: c69f07939fc0e03e43bb4a6b3204dc76145f614c0a765b97b27b41b6c140a661
@@ -1289,6 +1299,16 @@ entries:
     - https://github.com/dave-inc/charts/releases/download/job-0.1.0/job-0.1.0.tgz
     version: 0.1.0
   kyverno-policies:
+  - apiVersion: v2
+    appVersion: 0.0.1
+    created: "2025-01-08T20:39:35.81775Z"
+    description: A Helm chart for deploying kyverno policies
+    digest: 91c772ff0dddf9225dacc4b8efa12b4d925f49d4be7120eb51af6acb09c32a6c
+    name: kyverno-policies
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/kyverno-policies-0.1.1-beta.9/kyverno-policies-0.1.1-beta.9.tgz
+    version: 0.1.1-beta.9
   - apiVersion: v2
     appVersion: 0.0.1
     created: "2024-11-27T20:50:35.379353474Z"
@@ -1676,4 +1696,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2024-12-17T23:05:05.849540102Z"
+generated: "2025-01-08T20:39:35.818767934Z"
