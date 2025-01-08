@@ -27,9 +27,6 @@ policySets:
       exclude:
         any:
         - resources:
-            namespaces:
-            - policy
-        - resources:
             kinds:
             - CronJob
             selector:
@@ -41,11 +38,6 @@ policySets:
       validationFailureAction: Audit
       exclude:
         any:
-        - resources:
-            namespaces:
-            - policy
-            - sys
-            - workflows
         - resources:
             kinds:
             - Deployment
@@ -64,9 +56,6 @@ policySets:
       validationFailureAction: Audit
       exclude:
         any:
-        - resources:
-            namespaces:
-            - sys
         - resources:
             kinds:
             - Ingress
@@ -94,11 +83,6 @@ policySets:
       exclude:
         any:
         - resources:
-            namespaces:
-            - policy
-            - sys
-            - workflows
-        - resources:
             kinds:
             - Deployment
             selector:
@@ -124,11 +108,6 @@ policySets:
       validationFailureAction: Audit
       exclude:
         any:
-        - resources:
-            namespaces:
-            - policy
-            - sys
-            - workflows
         - resources:
             kinds:
             - Deployment
