@@ -27,10 +27,15 @@ spec:
         {{ .Values.policySets.common.labels.exclude | toYaml | nindent 8 }}
       validate:
         message: "Label `team` is required."
-        pattern:
-          metadata:
+        anyPattern:
+        - metadata:
             labels:
               team: "?*"
+        - spec:
+            template:
+              metadata:
+                labels:
+                  team: "?*"
     - name: cron-label-team-required
       match:
         any:
@@ -41,8 +46,13 @@ spec:
         {{ .Values.policySets.common.labels.exclude | toYaml | nindent 8 }}
       validate:
         message: "Label `team` is required."
-        pattern:
-          metadata:
+        anyPattern:
+        - metadata:
             labels:
               team: "?*"
+        - spec:
+            template:
+              metadata:
+                labels:
+                  team: "?*"
 {{- end }}
