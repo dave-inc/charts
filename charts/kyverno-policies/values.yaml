@@ -59,6 +59,7 @@ policySets:
         - resources:
             kinds:
             - Ingress
+            - Service
             selector:
               matchLabels:
                 kyverno-public-access-policy: skip
@@ -71,8 +72,7 @@ policySets:
         - resources:
             kinds:
             - Deployment
-            - DaemonSet
-            - StatefulSet
+            - CronJob
             selector:
               matchLabels:
                 kyverno-resources-policy: skip
@@ -99,6 +99,7 @@ policySets:
             - Deployment
             - DaemonSet
             - StatefulSet
+            - CronJob
             selector:
               matchLabels:
                 kyverno-resources-policy: skip
@@ -111,6 +112,7 @@ policySets:
         - resources:
             kinds:
             - Deployment
+            - CronJob
             selector:
               matchLabels:
                 kyverno-security-context-policy: skip
