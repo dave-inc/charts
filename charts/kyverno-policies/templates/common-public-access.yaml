@@ -52,8 +52,11 @@ spec:
           value: LoadBalancer
       validate:
         message: "Service Type:LoadBalancer detected, add annotation networking.gke.io/load-balancer-type: Internal, or switch to Type:ClusterIP or use Cloud Armor."
-        pattern:
-          metadata:
+        anyPattern:
+        - metadata:
             annotations:
               networking.gke.io/load-balancer-type: "Internal"
+        - metadata:
+            annotations:
+              cloud.google.com/load-balancer-type: "Internal"
 {{- end }}
