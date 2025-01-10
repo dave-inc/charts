@@ -36,6 +36,8 @@ cloudsqlProxy:
   # this should be your GCP database as project:location:instance, e.g. internal-1-4825:us-central1:staging-2
   instanceConnectionName: ""
   proxyImageTag: 2.11.4-alpine
+  # environment variable name that gives the mounted path to the cloud_sql_proxy socket
+  socketpathEnvName: DB_SOCKETPATH
   resources:
     requests:
       cpu: 50m
