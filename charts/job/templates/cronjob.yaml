@@ -162,7 +162,7 @@ spec:
                       apiVersion: v1
                       fieldPath: metadata.name
               {{- if .Values.cloudsqlProxy.enabled }}
-                - name: DB_SOCKETPATH
+                - name: {{ .Values.cloudsqlProxy.socketpathEnvName }}
                   value: /cloudsql/{{ .Values.cloudsqlProxy.instanceConnectionName }}
               {{- end }}
               {{- if .Values.apm.enabled }}
