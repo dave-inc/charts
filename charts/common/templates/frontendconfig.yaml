@@ -3,7 +3,7 @@ apiVersion: networking.gke.io/v1beta1
 kind: FrontendConfig
 metadata:
   {{- if $.Values.canary.enabled }}
-  namespace: {{ .Values.canary.gatewatNamespace }}
+  namespace: {{ .Values.canary.gatewayNamespace }}
   {{- end }}
   name: {{ include "common.name" . }}
 spec:

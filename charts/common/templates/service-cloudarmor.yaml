@@ -39,7 +39,7 @@ spec:
   {{- if $.Values.podSelectorLabelsOverride }}
     {{- $.Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
   {{- else if $.Values.canary.enabled }}
-    app.kubernetes.io/name: csm-edgeproxy-public
+    istio: gateway-public
   {{- else }}
     app.kubernetes.io/name: {{ trimSuffix "-ca" $v.name}}
     app.kubernetes.io/instance: {{ $.Release.Name }}
