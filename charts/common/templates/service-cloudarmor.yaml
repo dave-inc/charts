@@ -8,11 +8,13 @@
 {{- $finallist :=  $svclist | uniq | toYaml -}}
 #{{- $finallist :=  $svclist | uniq  -}}
 {{- range $k, $v := $finallist }}
-
 ---
 apiVersion: v1
 kind: Service
 metadata:
+  {{- if $.Values.canary.enabled }}
+  namespace: {{ $.Values.canary.gatewayNamespace }}
+  {{- end }}
   {{- if hasSuffix "-ca" $v.name  }}
   name: {{ $v.name }}
   {{- else }}
@@ -30,12 +32,14 @@ spec:
   type: {{ $.Values.cloudArmor.service.type }}
   ports:
     - port: {{ $v.port.number }}
-      targetPort: {{ $v.targetPort | default $.Values.deploymentContainer.port }}
+      targetPort: {{ if $.Values.canary.enabled }}80{{- else }}{{ $v.targetPort | default $.Values.deploymentContainer.port }}{{- end }}
       protocol: TCP
       name: http
   selector:
   {{- if $.Values.podSelectorLabelsOverride }}
     {{- $.Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
+  {{- else if $.Values.canary.enabled }}
+    istio: gateway-public
   {{- else }}
     app.kubernetes.io/name: {{ trimSuffix "-ca" $v.name}}
     app.kubernetes.io/instance: {{ $.Release.Name }}
