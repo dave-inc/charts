@@ -146,7 +146,7 @@ service:
 
 canary:
   enabled: false
-  gatewayNamespace: sys
+  gatewayNamespace: istio-ingress
   # percentage of traffic that should be sent to canary. (100 - weight) is sent to non-canary deployment.
   # weight: 5
   # image:
