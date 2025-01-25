@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "definitions": {
-    "paths": {
+    "cloudArmorPaths": {
       "type": "array",
       "items": {
         "type": "object",
@@ -87,13 +87,13 @@
                         "required": []
                     },
                     "paths": {
-                        "$ref": "#/definitions/paths"
+                        "$ref": "#/definitions/cloudArmorPaths"
                     }
                 }
             }
         },
         "paths": {
-          "$ref": "#/definitions/paths"
+          "$ref": "#/definitions/cloudArmorPaths"
         },
         "certificate": {
           "type": "object",
