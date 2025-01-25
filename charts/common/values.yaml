@@ -193,9 +193,10 @@ cloudArmor:
   #     paths:
   #       - backend:
   #           service:
-  #             name: chart-service
+  #             name: chart-service-ca
   #             port:
   #               number: 80
+  #             targetPort: 8080
   #         path: /
   #         pathType: ImplementationSpecific
   certificate:
@@ -212,8 +213,8 @@ cloudArmor:
       requestPath: /
       type: HTTP
     # securityPolicy should be set for CloudArmor and it's optional for Cloud IAP
-    # securityPolicy:
-    #   name: chart-securitypolicy
+    securityPolicy:
+      name: chart-securitypolicy
     # Cloud IAP requires an existing Oauth client secret
     # iap:
     #   enabled: true

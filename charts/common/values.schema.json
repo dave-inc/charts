@@ -1,0 +1,216 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "definitions": {
+    "paths": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "backend": {
+            "type": "object",
+            "properties": {
+              "service": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9][a-z0-9-]+-ca$"
+                  },
+                  "port": {
+                    "type": "object",
+                    "properties": {
+                      "number": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": ["number"],
+                    "additionalProperties": false
+                  },
+                  "targetPort": {
+                    "type": "integer"
+                  }
+                },
+                "required": ["name", "port", "targetPort"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["service"],
+            "additionalProperties": false
+          },
+          "path": {
+            "type": "string"
+          },
+          "pathType": {
+            "type": "string",
+            "enum": ["ImplementationSpecific", "Prefix", "Exact"]
+          }
+        },
+        "required": ["backend", "path", "pathType"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "properties": {
+    "cloudArmor": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "required": []
+        },
+        "hosts": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "host": {
+                        "type": "string"
+                    },
+                    "staticIpName": {
+                        "type": "string"
+                    },
+                    "annotations": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "required": []
+                    },
+                    "paths": {
+                        "$ref": "#/definitions/paths"
+                    }
+                }
+            }
+        },
+        "paths": {
+          "$ref": "#/definitions/paths"
+        },
+        "certificate": {
+          "type": "object",
+          "properties": {
+            "host": {
+              "type": "string"
+            },
+            "secretName": {
+              "type": "string"
+            },
+            "issuer": {
+              "type": "string"
+            },
+            "alternativeDnsNames": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": ["host"],
+          "additionalProperties": false
+        },
+        "backendConfig": {
+          "type": "object",
+          "properties": {
+            "healthCheck": {
+              "type": "object",
+              "properties": {
+                "requestPath": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              },
+              "required": ["requestPath", "type"],
+              "additionalProperties": false
+            },
+            "securityPolicy": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "iap": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "oauthclientCredentials": {
+                  "type": "object",
+                  "properties": {
+                    "secretName": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["secretName"],
+                  "additionalProperties": false
+                }
+              },
+              "required": ["enabled", "oauthclientCredentials"],
+              "additionalProperties": false
+            }
+          },
+          "required": ["healthCheck", "securityPolicy"]
+        },
+        "frontendConfig": {
+          "type": "object",
+          "properties": {
+            "redirectToHttps": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "responseCodeName": {
+                  "type": "string"
+                }
+              },
+              "required": ["enabled", "responseCodeName"],
+              "additionalProperties": false
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "staticIpName": {
+          "type": "string"
+        },
+        "service": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string"
+            }
+          },
+          "required": ["type"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["enabled", "certificate", "backendConfig", "frontendConfig"],
+      "oneOf": [
+        {
+          "required": ["hosts"],
+          "$comment": "If hosts is defined, paths should not be defined"
+        },
+        {
+          "required": ["paths"],
+          "$comment": "If paths is defined, hosts should not be defined"
+        }
+      ],
+      "additionalProperties": false
+    }
+  }
+}
