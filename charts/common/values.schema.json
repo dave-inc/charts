@@ -21,14 +21,18 @@
                     "type": "object",
                     "properties": {
                       "number": {
-                        "type": "integer"
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 65535
                       }
                     },
                     "required": ["number"],
                     "additionalProperties": false
                   },
                   "targetPort": {
-                    "type": "integer"
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 65535
                   }
                 },
                 "required": ["name", "port", "targetPort"],
@@ -59,7 +63,8 @@
           "type": "boolean"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]+-ca$"
         },
         "annotations": {
           "type": "object",
