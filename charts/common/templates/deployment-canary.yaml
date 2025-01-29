@@ -8,14 +8,19 @@
 .Values.customConfig.enabled
 .Values.customVolumes.enabled
 ) -}}
+{{- $imageTag := printf "%s:%s" .Values.image.repository (default .Chart.AppVersion .Values.canary.image.tag) }}
+{{- if .Values.canary.migration }}
+{{- $imageTag := printf "%s:%s" .Values.image.repository (default .Chart.AppVersion .Values.image.tag) }}
+{{- end }}
 {{- $sqlProxyVersion := include "common.cloudsqlProxyVersion" . -}}
 {{- $sqlinstanceConnectionName := include "common.instanceConnectionName" . -}}
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "common.name" . }}-canary
   labels:
-    tags.datadoghq.com/version: "{{ .Values.canary.image.tag }}"
+    tags.datadoghq.com/version: "{{ $imageTag }}"
     run: {{ include "common.name" . }}
     {{- include "common.labels" . | nindent 4 }}
 spec:
@@ -43,7 +48,7 @@ spec:
         {{- toYaml .Values.podAnnotations | nindent 8 }}
         {{- end }}
       labels:
-        tags.datadoghq.com/version: "{{ .Values.canary.image.tag }}"
+        tags.datadoghq.com/version: "{{ $imageTag }}"
         canary: "true"
       {{- if not .Values.podSelectorLabelsOverride }}
         run: {{ include "common.name" . }}
@@ -108,7 +113,7 @@ spec:
         - name: {{ include "common.name" . }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.canary.image.tag | default .Chart.AppVersion }}"
+          image: "{{ $imageTag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
@@ -188,7 +193,7 @@ spec:
             - name: DEPLOYMENT_NAME
               value: {{ include "common.name" . }}
             - name: DD_VERSION
-              value: "{{ .Values.canary.image.tag }}"
+              value: "{{ $imageTag }}"
             - name: NAMESPACE
               valueFrom:
                 fieldRef:
