@@ -205,7 +205,7 @@
           "additionalProperties": false
         }
       },
-      "required": ["enabled", "certificate", "backendConfig", "frontendConfig"],
+      "required": ["enabled", "certificate", "backendConfig"],
       "oneOf": [
         {
           "required": ["hosts"],
