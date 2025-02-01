@@ -1,8 +1,14 @@
-{{- if and .Values.cloudArmor.enabled .Values.cloudArmor.frontendConfig -}}
+{{- if and .Values.cloudArmor .Values.cloudArmor.enabled -}}
 apiVersion: networking.gke.io/v1beta1
 kind: FrontendConfig
 metadata:
   name: {{ include "common.name" . }}
 spec:
+  {{- if .Values.cloudArmor.frontendConfig }}
   {{- toYaml .Values.cloudArmor.frontendConfig | nindent 2 }}
+  {{- else }}
+  redirectToHttps:
+    enabled: true
+    responseCodeName: PERMANENT_REDIRECT
+  {{- end }}
 {{- end }}

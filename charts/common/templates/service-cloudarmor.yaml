@@ -1,4 +1,4 @@
-{{- if .Values.cloudArmor.enabled -}}
+{{- if and .Values.cloudArmor .Values.cloudArmor.enabled -}}
 {{- $commonname := include "common.name" . -}}
 {{- $labels := include "common.labels" . -}}
 {{- $svclist := list }}
@@ -27,7 +27,11 @@ metadata:
     cloud.google.com/backend-config: '{"ports": {"80":"{{ $commonname}}", "443":"{{ $commonname }}"}}'
     {{- end }}
 spec:
+  {{- if and $.Values.cloudArmor.service $.Values.cloudArmor.service.type }}
   type: {{ $.Values.cloudArmor.service.type }}
+  {{- else }}
+  type: NodePort
+  {{- end }}
   ports:
     - port: {{ $v.port.number }}
       targetPort: {{ $v.targetPort | default $.Values.deploymentContainer.port }}

@@ -1,4 +1,4 @@
-{{- if .Values.cloudArmor.enabled -}}
+{{- if and .Values.cloudArmor .Values.cloudArmor.enabled -}}
 apiVersion: cloud.google.com/v1
 kind: BackendConfig
 metadata:

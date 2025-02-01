@@ -1,4 +1,4 @@
-{{- if .Values.cloudArmor.enabled -}}
+{{- if and .Values.cloudArmor .Values.cloudArmor.enabled -}}
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -7,7 +7,7 @@ spec:
   secretName: {{ .Values.cloudArmor.certificate.secretName | default (include "common.cloudArmorTlsSecret" .) }}
   issuerRef:
     kind: ClusterIssuer
-    name: {{ .Values.cloudArmor.certificate.issuer }}
+    name: {{ .Values.cloudArmor.certificate.issuer | default "letsencrypt" }}
   commonName: {{ .Values.cloudArmor.certificate.host | quote }}
   dnsNames:
     - {{ .Values.cloudArmor.certificate.host | quote }}
