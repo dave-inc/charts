@@ -110,7 +110,8 @@
               "type": "string"
             },
             "issuer": {
-              "type": "string"
+              "type": "string",
+              "enum": ["aws-certificate-issuer", "letsencrypt"]
             },
             "alternativeDnsNames": {
               "type": "array",
