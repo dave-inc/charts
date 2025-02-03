@@ -147,7 +147,13 @@ service:
 canary:
   enabled: false
   gatewayNamespace: istio-ingress
+  # if set to true (default), then two sets of Cloud Armor-related resources are created: one for "legacy" and one for "cloud service mesh" aka "canary"
   migration: true
+  # HPA settings for canary deployment. ".Values.autoscaling" values are used to confiugre HPA.
+  # minReplicas and/or maxReplicas can be overriten for canary with this configuration. Does not support overriding any other values. 
+  # autoscaling:
+  #  minReplicas: 1 (defaults to .Values.autoscaling.minReplicas)
+  #  maxReplicas: 10 (defaults to .Values.autoscaling.maxReplicas)
   # percentage of traffic that should be sent to canary. (100 - weight) is sent to non-canary deployment.
   # weight: 5
   # image:
