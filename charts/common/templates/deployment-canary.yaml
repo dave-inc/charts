@@ -8,9 +8,9 @@
 .Values.customConfig.enabled
 .Values.customVolumes.enabled
 ) -}}
-{{- $imageTag := printf "%s:%s" .Values.image.repository (default .Chart.AppVersion .Values.canary.image.tag) }}
+{{- $imageTag := default .Chart.AppVersion .Values.canary.image.tag }}
 {{- if .Values.canary.migration }}
-{{- $imageTag := printf "%s:%s" .Values.image.repository (default .Chart.AppVersion .Values.image.tag) }}
+{{- $imageTag := default .Chart.AppVersion .Values.image.tag }}
 {{- end }}
 {{- $sqlProxyVersion := include "common.cloudsqlProxyVersion" . -}}
 {{- $sqlinstanceConnectionName := include "common.instanceConnectionName" . -}}
@@ -101,7 +101,7 @@ spec:
         {{- if .Values.failOnMissingLocalSecrets.enabled }}
         - name: check-local-secrets
           {{/* Reusing the main container's image is done on purpose */}}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.image.repository }}:{{ $imageTag }}"
           command: {{ toYaml .Values.failOnMissingLocalSecrets.secretsFetch.command | nindent 12}}
           args: {{ toYaml .Values.failOnMissingLocalSecrets.secretsFetch.args | nindent 12}}
           env:
@@ -113,7 +113,7 @@ spec:
         - name: {{ include "common.name" . }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ $imageTag }}"
+          image: "{{ .Values.image.repository }}:{{ $imageTag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
