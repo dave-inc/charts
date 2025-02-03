@@ -166,70 +166,70 @@ ingress:
   #    hosts:
   #      - chart-example.local
 
-  # cloudArmor:
-  #  enabled: false
+  #  cloudArmor:
+  #    enabled: false
   ## The name of cloudArmor is optional, if not set, a name is generated using <Release.Name>-ca
   ## If you overwrite <name> it should match <serviceName> under the paths section
-  ## name: ""
-  #  annotations: {}
-  #  paths:
-  #    - backend:
-  #        service:
-  #          name: chart-service-ca
-  #          port:
-  #            number: 80
-  #          targetPort: 8080
-  #      path: /*
-  #      pathType: ImplementationSpecific
+  #    name: ""
+  #    annotations: {}
+  #    paths:
+  #      - backend:
+  #          service:
+  #            name: chart-service-ca
+  #            port:
+  #              number: 80
+  #            targetPort: 8080
+  #        path: /*
+  #        pathType: ImplementationSpecific
   ## adding hosts but keeping paths above as default for backward compatibility with previous versions of this chart
-  ## hosts:
-  #   - host: chart-example.local
-  #     ## The name is optional, If not set, a name is generated using host
-  #     ## name: ""
-  #     staticIpName: ""
-  #     annotations: {}
+  ##   hosts:
+  #      - host: chart-example.local
+  #      ## The name is optional, If not set, a name is generated using host
+  #        name: ""
+  #        staticIpName: ""
+  #        annotations: {}
   #       ## kubernetes.io/ingress.class: (nginx-internal or nginx-public)
   #       ## kubernetes.io/tls-acme: "true"
-  #     paths:
-  #       - backend:
-  #           service:
-  #             name: chart-service-ca
-  #             port:
-  #               number: 80
-  #             targetPort: 8080
-  #         path: /
-  #         pathType: ImplementationSpecific
-  #  certificate:
-  #    host: chart-example.local
-  #    # secretName is optional, if not set, a name is generated using <host> will be converted to chart-example-local-ca-tls
-  #    secretName: chart-example-local-ca-tls
-  #    issuer: letsencrypt
-  #    alternativeDnsNames:
-  #      - www.chart-example.local
-  #      - blog.chart-example.local
+  #        paths:
+  #          - backend:
+  #              service:
+  #                name: chart-service-ca
+  #                port:
+  #                  number: 80
+  #                targetPort: 8080
+  #            path: /
+  #            pathType: ImplementationSpecific
+  #    certificate:
+  #      host: chart-example.local
+  #      # secretName is optional, if not set, a name is generated using <host> will be converted to chart-example-local-ca-tls
+  #      secretName: chart-example-local-ca-tls
+  #      issuer: letsencrypt
+  #      alternativeDnsNames:
+  #        - www.chart-example.local
+  #        - blog.chart-example.local
   ## securityPolicy is required in backendConfig. This is a resource in GCP.
-  #  backendConfig:
-  #    healthCheck:
-  #      requestPath: /
-  #      type: HTTP
+  #    backendConfig:
+  #      healthCheck:
+  #        requestPath: /
+  #        type: HTTP
   ## securityPolicy should be set for CloudArmor and it's optional for Cloud IAP
-  #    securityPolicy:
-  #      name: chart-securitypolicy
+  #      securityPolicy:
+  #        name: chart-securitypolicy
   ## Cloud IAP requires an existing Oauth client secret
-  # iap:
-  #   enabled: true
-  #   oauthclientCredentials:
-  #     secretName: chart-iapsecret
-  ## By default we always use redirectToHttps in frontendConfig if you want to define overwrite consider including it
-  #  frontendConfig:
-  #    redirectToHttps:
+  #    iap:
   #      enabled: true
-  #      responseCodeName: PERMANENT_REDIRECT
+  #      oauthclientCredentials:
+  #        secretName: chart-iapsecret
+  ## By default we always use redirectToHttps in frontendConfig if you want to define overwrite consider including it
+  #    frontendConfig:
+  #      redirectToHttps:
+  #        enabled: true
+  #        responseCodeName: PERMANENT_REDIRECT
   ## staticIpName is optional, If not set, a name is generated using Release.Name. This is a resource in GCP.
   # staticIpName: ""
   ## cloudArmor needs a service type NodePort
-  #  service:
-  #    type: NodePort
+  #    service:
+  #      type: NodePort
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
