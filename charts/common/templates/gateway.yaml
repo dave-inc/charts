@@ -25,7 +25,6 @@ spec:
       name: http
       protocol: HTTP
     hosts:
-    - {{ .Values.service.name | default (include "common.name" .) }}
     {{- range .Values.ingress.hosts }}
     - {{ .host | quote }}
     {{- end }}
