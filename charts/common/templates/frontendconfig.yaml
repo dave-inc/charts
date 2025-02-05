@@ -2,6 +2,7 @@
 {{- $ingressStyles := fromJsonArray (include "ingressStyles" .) }}
 {{- range $ingressStyles }}
 {{- $ingressStyle := . }}
+---
 apiVersion: networking.gke.io/v1beta1
 kind: FrontendConfig
 metadata:

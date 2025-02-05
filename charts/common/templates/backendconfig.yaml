@@ -2,6 +2,7 @@
 {{- $ingressStyles := fromJsonArray (include "ingressStyles" .) }}
 {{- range $ingressStyles }}
 {{- $ingressStyle := . }}
+---
 apiVersion: cloud.google.com/v1
 kind: BackendConfig
 metadata:
