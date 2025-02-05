@@ -136,6 +136,9 @@ Once all apps are using cloud sql proxy v2 this can be simplified.
 {{- end -}}
 {{- end -}}
 
+{{/*
+Creates ingressStyles based on the canary deployment and migration settings.
+*/}}
 {{- define "ingressStyles" -}}
   {{- $ingressStyle := list "legacy" }}
   {{- if and .Values.canary.enabled (.Values.canary.migration) }}

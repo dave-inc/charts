@@ -3,10 +3,11 @@
 {{- $svcport := .Values.service.port -}}
 {{- range $ingressStyles }}
 {{- $ingressStyle := . }}
+{{/* cloudArmor.hosts takes priority over cloudArmor.paths */}}
 {{- if hasKey $.Values.cloudArmor "hosts" -}}
-{{- $commonname := include "common.name" . -}}
-{{- $labels := include "common.labels" . -}}
-{{- $secretname := $.Values.cloudArmor.certificate.secretName | default (include "common.cloudArmorTlsSecret" .) -}}
+{{- $commonname := include "common.name" $ -}}
+{{- $labels := include "common.labels" $ -}}
+{{- $secretname := $.Values.cloudArmor.certificate.secretName | default (include "common.cloudArmorTlsSecret" $) -}}
 {{- range $.Values.cloudArmor.hosts }}
 {{- $hostwithdashes := printf "%s-ca" .host | replace "." "-" }}
 ---
@@ -24,7 +25,7 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
     {{- if eq $ingressStyle "csm" }}
-    kubernetes.io/ingress.global-static-ip-name: {{ .meshStaticIpName }}
+    kubernetes.io/ingress.global-static-ip-name: {{ .csmStaticIpName }}
     {{- else }}
     kubernetes.io/ingress.global-static-ip-name: {{ .staticIpName }}
     {{- end }}
@@ -54,6 +55,7 @@ spec:
   tls:
     - secretName: {{ $secretname }}
 {{- end }}
+{{/* Backwards Compatibility with cloudArmor.paths */}}
 {{- else if hasKey $.Values.cloudArmor "paths" }}
 ---
 apiVersion: networking.k8s.io/v1
@@ -70,7 +72,7 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
     {{- if eq $ingressStyle "csm" }}
-    kubernetes.io/ingress.global-static-ip-name: {{ $.Values.cloudArmor.meshStaticIpName | default (printf "%s-csm" (include "common.name" $)) }}
+    kubernetes.io/ingress.global-static-ip-name: {{ $.Values.cloudArmor.csmStaticIpName | default (printf "%s-csm" (include "common.name" $)) }}
     {{- else }}
     kubernetes.io/ingress.global-static-ip-name: {{ $.Values.cloudArmor.staticIpName | default (include "common.name" $) }}
     {{- end }}
@@ -98,7 +100,6 @@ spec:
       {{- end }}
   tls:
     - secretName: {{ $.Values.cloudArmor.certificate.secretName | default (include "common.cloudArmorTlsSecret" $) }}
-
 {{- end }}
 {{- end }}
-{{- end}}
+{{- end }}
