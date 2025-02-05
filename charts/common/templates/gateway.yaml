@@ -1,3 +1,4 @@
+{{/* This file is not used now but keeping it in future case of Private gateway applications */}}
 {{- if and .Values.ingress.enabled .Values.canary.enabled -}}
 {{- $labels := include "common.labels" . -}}
 {{- $svcport := .Values.service.port -}}
