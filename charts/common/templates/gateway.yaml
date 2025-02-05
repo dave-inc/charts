@@ -2,15 +2,12 @@
 {{- if and .Values.ingress.enabled .Values.canary.enabled -}}
 {{- $labels := include "common.labels" . -}}
 {{- $svcport := .Values.service.port -}}
-{{- range .Values.ingress.hosts }}
-{{- $hostwithdashes := printf "%s" .host | replace "." "-" -}}
-{{- $hostwithdashestls := printf "%s-tls" .host | replace "." "-" }}
 ---
 apiVersion: networking.istio.io/v1beta1
 kind: Gateway
 metadata:
   namespace: {{ $.Values.canary.gatewayNamespace }}
-  name: {{ .name | default $hostwithdashes }}
+  name: {{ include "common.name" . }}
   labels:
     {{- $labels | nindent 4 }}
   {{- if .annotations }}
@@ -38,10 +35,12 @@ spec:
       name: https
       protocol: HTTPS
     hosts:
+    - {{ .Values.service.name | default (include "common.name" .) }}
+    {{- range .Values.ingress.hosts }}
     - {{ .host | quote }}
+    {{- end }}
     tls:
       mode: SIMPLE
       credentialName: {{ .tls.secretName | default $hostwithdashestls }}
     {{- end }}
-{{- end }}
 {{- end }}
