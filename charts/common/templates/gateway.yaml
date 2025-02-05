@@ -29,6 +29,7 @@ spec:
     {{- range .Values.ingress.hosts }}
     - {{ .host | quote }}
     {{- end }}
+  {{/*
     {{- if .tls }}
   - port:
       number: 443
@@ -43,4 +44,5 @@ spec:
       mode: SIMPLE
       credentialName: {{ .tls.secretName | default $hostwithdashestls }}
     {{- end }}
+    */}}
 {{- end }}
