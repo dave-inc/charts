@@ -12,13 +12,19 @@ spec:
   {{- if .Values.ingress.enabled }}
   - {{ .Values.canary.gatewayNamespace}}/{{ .Values.service.name | default (include "common.name" .) }}
   {{ end }}
-  {{- if .Values.cloudArmor.enabled -}}
+  {{- if .Values.cloudArmor.enabled }}
   - {{ .Values.canary.gatewayNamespace}}/{{ .Values.service.name | default (include "common.name" .) }}-ca
   {{ end }}
   hosts:
   - {{ .Values.service.name | default (include "common.name" .) }}
-  {{- range .Values.ingress.hosts }}
+  {{- if .Values.cloudArmor.enabled -}}
+  {{- range .Values.cloudArmor.hosts }}
   - {{ .host | quote }}
+  {{- end }}
+  - {{ .Values.cloudArmor.certificate.host | quote }}
+  {{- range  .Values.cloudArmor.certificate.alternativeDnsNames }}
+  - {{ . | quote }}
+  {{- end }}
   {{- end }}
   http:
   - route:

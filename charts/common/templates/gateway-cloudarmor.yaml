@@ -1,15 +1,14 @@
 {{- if and .Values.cloudArmor.enabled .Values.canary.enabled -}}
 {{- $labels := include "common.labels" . -}}
-{{- $svcport := .Values.service.port -}}
-{{- range .Values.ingress.hosts }}
-{{- $hostwithdashes := printf "%s" .host | replace "." "-" -}}
-{{- $hostwithdashestls := printf "%s-tls" .host | replace "." "-" }}
+{{/* {{- $svcport := .Values.service.port -}} */}}
+{{/* {{- $hostwithdashes := printf "%s" .host | replace "." "-" -}} */}}
+{{/* {{- $hostwithdashestls := printf "%s-tls" .host | replace "." "-" }} */}}
 ---
 apiVersion: networking.istio.io/v1beta1
 kind: Gateway
 metadata:
   namespace: {{ $.Values.canary.gatewayNamespace }}
-  name: {{ .name | default $hostwithdashes }}-ca
+  name: {{ include "common.name" . }}-ca
   labels:
     {{- $labels | nindent 4 }}
   {{- if .annotations }}
@@ -27,17 +26,25 @@ spec:
       name: http
       protocol: HTTP
     hosts:
+    {{- range .Values.cloudArmor.hosts }}
     - {{ .host | quote }}
-    {{- if .tls }}
-  - port:
-      number: 443
-      name: https
-      protocol: HTTPS
-    hosts:
-    - {{ .host | quote }}
-    tls:
-      mode: SIMPLE
-      credentialName: {{ .tls.secretName | default $hostwithdashestls }}
     {{- end }}
-{{- end }}
+    - {{ .Values.cloudArmor.certificate.host | quote }}
+    {{- range  .Values.cloudArmor.certificate.alternativeDnsNames }}
+    - {{ . | quote }}
+    {{- end }}
+  {{/* Keeping this commented out for now if we want to enable tls in the future this code requires more testing to play with CloudArmor/Gateway API */}}
+  {{/* {{- if .tls }} */}}
+  {{/* - port: */}}
+  {{/*     number: 443 */}}
+  {{/*     name: https */}}
+  {{/*     protocol: HTTPS */}}
+  {{/*   hosts: */}}
+  {{/*   {{- range .Values.cloudArmor.hosts }} */}}
+  {{/*   - {{ .host | quote }} */}}
+  {{/*   {{- end }} */}}
+  {{/*   tls: */}}
+  {{/*     mode: SIMPLE */}}
+  {{/*     credentialName: {{ .tls.secretName | default $hostwithdashestls }} */}}
+  {{/*   {{- end }} */}}
 {{- end }}
