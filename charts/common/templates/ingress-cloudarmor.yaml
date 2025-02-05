@@ -1,15 +1,22 @@
 {{- if .Values.cloudArmor.enabled -}}
+{{- $ingressStyles := fromJsonArray (include "ingressStyles" .) }}
 {{- $svcport := .Values.service.port -}}
-{{- if hasKey .Values.cloudArmor "hosts" -}}
-{{- $commonname := include "common.name" . -}}
-{{- $labels := include "common.labels" . -}}
-{{- $secretname := .Values.cloudArmor.certificate.secretName | default (include "common.cloudArmorTlsSecret" .) -}}
-{{- range .Values.cloudArmor.hosts }}
+{{- range $ingressStyles }}
+{{- $ingressStyle := . }}
+{{/* cloudArmor.hosts takes priority over cloudArmor.paths */}}
+{{- if hasKey $.Values.cloudArmor "hosts" -}}
+{{- $commonname := include "common.name" $ -}}
+{{- $labels := include "common.labels" $ -}}
+{{- $secretname := $.Values.cloudArmor.certificate.secretName | default (include "common.cloudArmorTlsSecret" $) -}}
+{{- range $.Values.cloudArmor.hosts }}
 {{- $hostwithdashes := printf "%s-ca" .host | replace "." "-" }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  {{- if eq $ingressStyle "csm" }}
+  namespace: {{ $.Values.canary.gatewayNamespace }}
+  {{- end }}
   name: {{ .name | default $hostwithdashes }}
   labels:
     {{- $labels | nindent 4 }}
@@ -17,7 +24,11 @@ metadata:
     {{- with .annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
+    {{- if eq $ingressStyle "csm" }}
+    kubernetes.io/ingress.global-static-ip-name: {{ .csmStaticIpName }}
+    {{- else }}
     kubernetes.io/ingress.global-static-ip-name: {{ .staticIpName }}
+    {{- end }}
     networking.gke.io/v1beta1.FrontendConfig: {{ $commonname }}
 spec:
   rules:
@@ -30,7 +41,9 @@ spec:
           service:
             name: {{ $service.name }}
             port:
-              {{- if $service.port }}
+              {{- if eq $ingressStyle "csm" }}
+              number: 80
+              {{- else if $service.port }}
               number: {{ $service.port.number }}
               {{- else }}
               number: {{ default $svcport }}
@@ -42,30 +55,41 @@ spec:
   tls:
     - secretName: {{ $secretname }}
 {{- end }}
-{{- else if hasKey .Values.cloudArmor "paths" -}}
+{{/* Backwards Compatibility with cloudArmor.paths */}}
+{{- else if hasKey $.Values.cloudArmor "paths" }}
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "common.cloudArmorName" . }}
+  {{- if eq $ingressStyle "csm" }}
+  namespace: {{ $.Values.canary.gatewayNamespace }}
+  {{- end }}
+  name: {{ include "common.cloudArmorName" $ }}
   labels:
-    {{- include "common.labels" . | nindent 4 }}
+    {{- include "common.labels" $ | nindent 4 }}
   annotations:
-    {{- with .Values.cloudArmor.annotations }}
+    {{- with $.Values.cloudArmor.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-    kubernetes.io/ingress.global-static-ip-name: {{ .Values.cloudArmor.staticIpName | default (include "common.name" .) }}
-    networking.gke.io/v1beta1.FrontendConfig: {{ include "common.name" . }}
+    {{- if eq $ingressStyle "csm" }}
+    kubernetes.io/ingress.global-static-ip-name: {{ $.Values.cloudArmor.csmStaticIpName | default (printf "%s-csm" (include "common.name" $)) }}
+    {{- else }}
+    kubernetes.io/ingress.global-static-ip-name: {{ $.Values.cloudArmor.staticIpName | default (include "common.name" $) }}
+    {{- end }}
+    networking.gke.io/v1beta1.FrontendConfig: {{ include "common.name" $ }}
 spec:
   rules:
   - http:
       paths:
-      {{- range .Values.cloudArmor.paths }}
+      {{- range $.Values.cloudArmor.paths }}
       - backend:
         {{- range $backend, $service := .backend }}
           service:
             name: {{ $service.name }}
             port:
-              {{- if $service.port }}
+              {{- if eq $ingressStyle "csm" }}
+              number: 80
+              {{- else if $service.port }}
               number: {{ $service.port.number }}
               {{- else }}
               number: {{ default $svcport }}
@@ -75,6 +99,7 @@ spec:
         pathType: {{ .pathType | default "ImplementationSpecific" }}
       {{- end }}
   tls:
-    - secretName: {{ .Values.cloudArmor.certificate.secretName | default (include "common.cloudArmorTlsSecret" .) }}
+    - secretName: {{ $.Values.cloudArmor.certificate.secretName | default (include "common.cloudArmorTlsSecret" $) }}
+{{- end }}
 {{- end }}
 {{- end }}

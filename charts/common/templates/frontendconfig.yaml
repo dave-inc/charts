@@ -1,8 +1,16 @@
 {{- if and .Values.cloudArmor.enabled .Values.cloudArmor.frontendConfig -}}
+{{- $ingressStyles := fromJsonArray (include "ingressStyles" .) }}
+{{- range $ingressStyles }}
+{{- $ingressStyle := . }}
+---
 apiVersion: networking.gke.io/v1beta1
 kind: FrontendConfig
 metadata:
-  name: {{ include "common.name" . }}
+  {{- if eq $ingressStyle "csm" }}
+  namespace: {{ $.Values.canary.gatewayNamespace }}
+  {{- end }}
+  name: {{ include "common.name" $ }}
 spec:
-  {{- toYaml .Values.cloudArmor.frontendConfig | nindent 2 }}
+  {{- toYaml $.Values.cloudArmor.frontendConfig | nindent 2 }}
+{{- end }}
 {{- end }}
