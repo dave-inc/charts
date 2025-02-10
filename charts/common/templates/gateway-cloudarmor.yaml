@@ -1,4 +1,4 @@
-{{- if and .Values.cloudArmor.enabled .Values.canary.enabled -}}
+{{- if and .Values.cloudArmor .Values.cloudArmor.enabled .Values.canary.enabled -}}
 {{- $labels := include "common.labels" . -}}
 {{/* {{- $svcport := .Values.service.port -}} */}}
 {{/* {{- $hostwithdashes := printf "%s" .host | replace "." "-" -}} */}}
