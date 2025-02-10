@@ -1,14 +1,22 @@
 {{- if and .Values.cloudArmor .Values.cloudArmor.enabled -}}
+{{- $ingressStyles := fromJsonArray (include "ingressStyles" .) }}
+{{- range $ingressStyles }}
+{{- $ingressStyle := . }}
+---
 apiVersion: networking.gke.io/v1beta1
 kind: FrontendConfig
 metadata:
-  name: {{ include "common.name" . }}
+  {{- if eq $ingressStyle "csm" }}
+  namespace: {{ $.Values.canary.gatewayNamespace }}
+  {{- end }}
+  name: {{ include "common.name" $ }}
 spec:
-  {{- if .Values.cloudArmor.frontendConfig }}
-  {{- toYaml .Values.cloudArmor.frontendConfig | nindent 2 }}
+  {{- if $.Values.cloudArmor.frontendConfig }}
+  {{- toYaml $.Values.cloudArmor.frontendConfig | nindent 2 }}
   {{- else }}
   redirectToHttps:
     enabled: true
     responseCodeName: PERMANENT_REDIRECT
   {{- end }}
+{{- end }}
 {{- end }}

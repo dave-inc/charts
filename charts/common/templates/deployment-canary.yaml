@@ -1,3 +1,4 @@
+{{- if .Values.canary.enabled -}}
 {{/* Any resource that defines a volume should be included in the list below */}}
 {{- $hasVolumes := (or
 .Values.initContainer.enabled
@@ -7,14 +8,19 @@
 .Values.customConfig.enabled
 .Values.customVolumes.enabled
 ) -}}
+{{- $imageTag := default .Chart.AppVersion .Values.canary.image.tag }}
+{{- if .Values.canary.migration }}
+{{- $imageTag := default .Chart.AppVersion .Values.image.tag }}
+{{- end }}
 {{- $sqlProxyVersion := include "common.cloudsqlProxyVersion" . -}}
 {{- $sqlinstanceConnectionName := include "common.instanceConnectionName" . -}}
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "common.name" . }}
+  name: {{ include "common.name" . }}-canary
   labels:
-    tags.datadoghq.com/version: "{{ .Values.image.tag }}"
+    tags.datadoghq.com/version: "{{ $imageTag }}"
     run: {{ include "common.name" . }}
     {{- include "common.labels" . | nindent 4 }}
 spec:
@@ -42,8 +48,8 @@ spec:
         {{- toYaml .Values.podAnnotations | nindent 8 }}
         {{- end }}
       labels:
-        tags.datadoghq.com/version: "{{ .Values.image.tag }}"
-        canary: "false"
+        tags.datadoghq.com/version: "{{ $imageTag }}"
+        canary: "true"
       {{- if not .Values.podSelectorLabelsOverride }}
         run: {{ include "common.name" . }}
         {{- include "common.selectorLabels" . | nindent 8 }}
@@ -95,7 +101,7 @@ spec:
         {{- if .Values.failOnMissingLocalSecrets.enabled }}
         - name: check-local-secrets
           {{/* Reusing the main container's image is done on purpose */}}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.image.repository }}:{{ $imageTag }}"
           command: {{ toYaml .Values.failOnMissingLocalSecrets.secretsFetch.command | nindent 12}}
           args: {{ toYaml .Values.failOnMissingLocalSecrets.secretsFetch.args | nindent 12}}
           env:
@@ -107,7 +113,7 @@ spec:
         - name: {{ include "common.name" . }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.image.repository }}:{{ $imageTag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
@@ -187,7 +193,7 @@ spec:
             - name: DEPLOYMENT_NAME
               value: {{ include "common.name" . }}
             - name: DD_VERSION
-              value: "{{ .Values.image.tag }}"
+              value: "{{ $imageTag }}"
             - name: NAMESPACE
               valueFrom:
                 fieldRef:
@@ -406,3 +412,4 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+{{- end }}
