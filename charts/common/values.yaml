@@ -202,6 +202,7 @@ ingress:
   #      ## The name is optional, If not set, a name is generated using host
   #        name: ""
   #        staticIpName: ""
+  #        csmStaticIpName: "" # Only used if canary.enabled is true. Optional, If not set, a name is generated using Release.Name with "-csm" suffix. This is a resource in GCP.
   #        annotations: {}
   #       ## kubernetes.io/ingress.class: (nginx-internal or nginx-public)
   #       ## kubernetes.io/tls-acme: "true"
@@ -242,6 +243,7 @@ ingress:
   #        responseCodeName: PERMANENT_REDIRECT
   ## staticIpName is optional, If not set, a name is generated using Release.Name. This is a resource in GCP.
   # staticIpName: ""
+  # csmStaticIpName: "" # Only used if canary.enabled is true. Optional, If not set, a name is generated using Release.Name with "-csm" suffix. This is a resource in GCP.
   ## cloudArmor needs a service type NodePort
   #    service:
   #      type: NodePort

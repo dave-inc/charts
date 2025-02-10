@@ -81,6 +81,10 @@
                     "host": {
                         "type": "string"
                     },
+                    "csmStaticIpName": {
+                      "type": "string",
+                      "$comment": "Only used if canary.enabled is true. Optional, If not set, a name is generated using Release.Name with '-csm'"
+                    },
                     "staticIpName": {
                         "type": "string"
                     },
@@ -193,6 +197,10 @@
         },
         "staticIpName": {
           "type": "string"
+        },
+        "csmStaticIpName": {
+          "type": "string",
+          "$comment": "Only used if canary.enabled is true. Optional, If not set, a name is generated using Release.Name with '-csm'"
         },
         "service": {
           "type": "object",
