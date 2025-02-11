@@ -190,6 +190,9 @@
               },
               "required": ["enabled", "responseCodeName"],
               "additionalProperties": false
+            },
+            "sslPolicy": {
+              "type": "string"
             }
           },
           "required": [],
