@@ -1,4 +1,4 @@
-{{- if and .Values.cloudArmor.enabled .Values.cloudArmor.frontendConfig -}}
+{{- if and .Values.cloudArmor .Values.cloudArmor.enabled -}}
 {{- $ingressStyles := fromJsonArray (include "ingressStyles" .) }}
 {{- range $ingressStyles }}
 {{- $ingressStyle := . }}
@@ -11,6 +11,12 @@ metadata:
   {{- end }}
   name: {{ include "common.name" $ }}
 spec:
+  {{- if $.Values.cloudArmor.frontendConfig }}
   {{- toYaml $.Values.cloudArmor.frontendConfig | nindent 2 }}
+  {{- else }}
+  redirectToHttps:
+    enabled: true
+    responseCodeName: PERMANENT_REDIRECT
+  {{- end }}
 {{- end }}
 {{- end }}

@@ -1,4 +1,4 @@
-{{- if .Values.cloudArmor.enabled -}}
+{{- if and .Values.cloudArmor .Values.cloudArmor.enabled -}}
 {{- $ingressStyles := fromJsonArray (include "ingressStyles" .) }}
 {{- $commonname := include "common.name" . -}}
 {{- $labels := include "common.labels" . -}}
@@ -46,7 +46,11 @@ metadata:
       {"ports": {"80":"{{ $commonname }}", "443":"{{ $commonname }}"}}
       {{- end }}
 spec:
+  {{- if and $.Values.cloudArmor.service $.Values.cloudArmor.service.type }}
   type: {{ $.Values.cloudArmor.service.type }}
+  {{- else }}
+  type: NodePort
+  {{- end }}
   ports:
     - port: {{ $svc.port.number }}
       targetPort: {{ if eq $ingressStyle "csm" }}80{{- else }}{{ $svc.targetPort | default $.Values.deploymentContainer.port }}{{- end }}
