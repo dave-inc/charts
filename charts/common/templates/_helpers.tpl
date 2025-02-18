@@ -107,9 +107,9 @@ Once all apps are using cloud sql proxy v2 this can be simplified.
 */}}
 {{- define "common.instanceConnectionName" -}}
 {{- if .Values.cloudsqlProxy.instanceConnectionName -}}
-  {{- .Values.cloudsqlProxy.instanceConnectionName  -}}
+  {{- .Values.cloudsqlProxy.instanceConnectionName -}}
 {{- else if .Values.cloudsqlProxy.migrationTemplate.instanceConnectionName -}}
-  {{- .Values.cloudsqlProxy.migrationTemplate.instanceConnectionName  -}}
+  {{- .Values.cloudsqlProxy.migrationTemplate.instanceConnectionName -}}
 {{- else if .Values.cloudsqlProxy.enabled -}}
   {{- if .Values.cloudsqlProxy.command -}}
     {{- $commandList := .Values.cloudsqlProxy.command -}}
