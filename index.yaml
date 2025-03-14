@@ -1341,6 +1341,16 @@ entries:
   kyverno-policies:
   - apiVersion: v2
     appVersion: 0.0.1
+    created: "2025-03-14T20:49:01.453987213Z"
+    description: A Helm chart for deploying kyverno policies
+    digest: d96fd4f9415d597c0020206dedf9bb6b959d3852d0a77aaabaf29d5415c354ad
+    name: kyverno-policies
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/kyverno-policies-0.1.1-beta.11/kyverno-policies-0.1.1-beta.11.tgz
+    version: 0.1.1-beta.11
+  - apiVersion: v2
+    appVersion: 0.0.1
     created: "2025-01-09T00:53:09.762868769Z"
     description: A Helm chart for deploying kyverno policies
     digest: ab41248b87463adb3b2d0456f34903455a198bb7f3b734f1e9d6dd039920dea4
@@ -1746,4 +1756,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2025-02-18T22:56:26.198452962Z"
+generated: "2025-03-14T20:49:01.45565434Z"
