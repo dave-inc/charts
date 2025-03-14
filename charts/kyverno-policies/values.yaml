@@ -75,7 +75,7 @@ policySets:
             - CronJob
             selector:
               matchLabels:
-                kyverno-resources-policy: skip
+                kyverno-labels-policy: skip
     probes:
       category: "SRE Best Practices"
       severity: medium
