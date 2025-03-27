@@ -44,7 +44,7 @@ spec:
         {{- end }}
       labels:
         tags.datadoghq.com/version: "{{ $imageTag }}"
-        canary: "true"
+        deployment-group: "canary"
         run: {{ include "common.name" . }}
         {{- include "common.canarySelectorLabels" . | nindent 8 }}
       {{- if .Values.additionalLabels }}
@@ -181,9 +181,9 @@ spec:
             https://github.com/dave-inc/logger/blob/6c69fe2cba9bb954494fe9c6b5297633c1a19aeb/README.md#L69
             */}}
             - name: DEPLOYMENT_NAME
-              value: {{ include "common.canaryName" . }}
+              value: {{ include "common.name" . }}
             - name: DD_VERSION
-              value: "{{ $imageTag }}"
+              value: "{{ $imageTag }}-canary"
             - name: NAMESPACE
               valueFrom:
                 fieldRef:
@@ -201,11 +201,7 @@ spec:
                   fieldPath: metadata.name
           {{- if .Values.apm.enabled }}
             - name: DD_ENV
-            {{- if .Values.apm.datadogEnvironment }}
-              value: {{ .Values.apm.datadogEnvironment }}
-            {{- else }}
-              value: {{ include "common.canaryEnvironment" . }}
-            {{- end }}
+              value: {{ .Values.apm.datadogEnvironment | default .Values.environment }}
             - name: DD_TRACE_AGENT_HOSTNAME
               valueFrom:
                 fieldRef:

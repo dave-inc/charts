@@ -22,13 +22,6 @@ Control common name
 {{- end }}
 
 {{/*
-Canary environment
-*/}}
-{{- define "common.canaryEnvironment" -}}
-{{- printf "%s-canary" .Values.environment }}
-{{- end }}
-
-{{/*
 Create chart name and version as used by the chart label.
 */}}
 {{- define "common.chart" -}}
