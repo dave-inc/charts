@@ -52,35 +52,39 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
 {{/*
+Selector labels builder
+*/}}
+{{- define "common.selectorLabelsBuilder" -}}
+app.kubernetes.io/name: {{ include "common.name" (index . 0) }}{{ index . 2}}
+app.kubernetes.io/instance: {{ index . 1}}{{ index . 2}}
+{{- end }}
+
+{{/*
 Selector labels
 */}}
 {{- define "common.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "common.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
+{{ include "common.selectorLabelsBuilder" (list . .Release.Name "") }}
 {{- end }}
 
 {{/*
 Reverse proxy selector labels (used if canary is enabled)
 */}}
 {{- define "common.reversProxySelectorLabels" -}}
-app.kubernetes.io/name: {{ include "common.name" . }}-rproxy
-app.kubernetes.io/instance: {{ .Release.Name }}-rproxy
+{{ include "common.selectorLabelsBuilder" (list . .Release.Name "-rproxy") }}
 {{- end }}
 
 {{/*
 Canary selector labels
 */}}
 {{- define "common.canarySelectorLabels" -}}
-app.kubernetes.io/name: {{ include "common.name" . }}-canary
-app.kubernetes.io/instance: {{ .Release.Name }}-canary
+{{ include "common.selectorLabelsBuilder" (list . .Release.Name "-canary") }}
 {{- end }}
 
 {{/*
 Control selector labels
 */}}
 {{- define "common.controlSelectorLabels" -}}
-app.kubernetes.io/name: {{ include "common.name" . }}-control
-app.kubernetes.io/instance: {{ .Release.Name }}-control
+{{ include "common.selectorLabelsBuilder" (list . .Release.Name "-control") }}
 {{- end }}
 
 {{/*
