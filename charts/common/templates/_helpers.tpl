@@ -8,6 +8,20 @@ Expand the name of the chart.
 {{- end }}
 
 {{/*
+Canary common name
+*/}}
+{{- define "common.canaryName" -}}
+{{- printf "%s-canary" (include "common.name" .) }}
+{{- end }}
+
+{{/*
+Control common name
+*/}}
+{{- define "common.controlName" -}}
+{{- printf "%s-control" (include "common.name" .) }}
+{{- end }}
+
+{{/*
 Create chart name and version as used by the chart label.
 */}}
 {{- define "common.chart" -}}
@@ -31,11 +45,39 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
 {{/*
+Selector labels builder
+*/}}
+{{- define "common.selectorLabelsBuilder" -}}
+app.kubernetes.io/name: {{ include "common.name" (index . 0) }}{{ index . 2}}
+app.kubernetes.io/instance: {{ index . 1}}{{ index . 2}}
+{{- end }}
+
+{{/*
 Selector labels
 */}}
 {{- define "common.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "common.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
+{{ include "common.selectorLabelsBuilder" (list . .Release.Name "") }}
+{{- end }}
+
+{{/*
+Reverse proxy selector labels (used if canary is enabled)
+*/}}
+{{- define "common.reversProxySelectorLabels" -}}
+{{ include "common.selectorLabelsBuilder" (list . .Release.Name "-rproxy") }}
+{{- end }}
+
+{{/*
+Canary selector labels
+*/}}
+{{- define "common.canarySelectorLabels" -}}
+{{ include "common.selectorLabelsBuilder" (list . .Release.Name "-canary") }}
+{{- end }}
+
+{{/*
+Control selector labels
+*/}}
+{{- define "common.controlSelectorLabels" -}}
+{{ include "common.selectorLabelsBuilder" (list . .Release.Name "-control") }}
 {{- end }}
 
 {{/*

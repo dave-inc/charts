@@ -4,6 +4,7 @@ kind: Service
 metadata:
   name: {{ .Values.service.name | default (include "common.name" .) }}
   annotations:
+    argocd.argoproj.io/sync-wave: "1"
     {{- if .Values.service.annotations }}
     {{- toYaml .Values.service.annotations | nindent 4 }}
     {{- end }}
@@ -17,10 +18,14 @@ spec:
       protocol: TCP
       name: http
   selector:
-  {{- if not .Values.podSelectorLabelsOverride }}
-    {{- include "common.selectorLabels" . | nindent 4 }}
-  {{- end }}
-  {{- if .Values.podSelectorLabelsOverride }}
-    {{- .Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
+  {{- if .Values.canary.enabled -}}
+    {{- include "common.reversProxySelectorLabels" . | nindent 4 }}
+  {{- else}}
+    {{- if not .Values.podSelectorLabelsOverride }}
+      {{- include "common.selectorLabels" . | nindent 4 }}
+    {{- end }}
+    {{- if .Values.podSelectorLabelsOverride }}
+      {{- .Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
+    {{- end }}
   {{- end }}
 {{- end }}

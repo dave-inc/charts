@@ -146,9 +146,10 @@ service:
 
 canary:
   enabled: false
-  gatewayNamespace: istio-ingress
-  # if set to true (default), then two sets of Cloud Armor-related resources are created: one for "legacy" and one for "cloud service mesh" aka "canary"
-  migration: true
+  service: 
+    annotations: 
+      canary: {}
+      control: {}
   # HPA settings for canary deployment. ".Values.autoscaling" values are used to confiugre HPA.
   # minReplicas and/or maxReplicas can be overriten for canary with this configuration. Does not support overriding any other values.
   # autoscaling:
@@ -332,7 +333,7 @@ affinity: {}
 apm:
   enabled: false
   otlp: false
-  # If datadogEnvironment is not defined we use variable environment as default
+  # If datadogEnvironment is not defined we use variable environment long with a suffix of "-canary" if canary is enabled as default
   datadogEnvironment: ""
   # Optional override DD_SERVICE_NAME to a custon name instead of common.name
   datadogServiceName: ""

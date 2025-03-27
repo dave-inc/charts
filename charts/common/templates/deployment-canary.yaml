@@ -8,9 +8,9 @@
 .Values.customConfig.enabled
 .Values.customVolumes.enabled
 ) -}}
-{{- $imageTag := default .Chart.AppVersion .Values.canary.image.tag }}
-{{- if .Values.canary.migration }}
-{{- $imageTag := default .Chart.AppVersion .Values.image.tag }}
+{{- $imageTag := "latest"  }}
+{{- if and .Values.canary.image .Values.canary.image.tag }}
+{{- $imageTag := .Values.canary.image.tag }}
 {{- end }}
 {{- $sqlProxyVersion := include "common.cloudsqlProxyVersion" . -}}
 {{- $sqlinstanceConnectionName := include "common.instanceConnectionName" . -}}
@@ -18,7 +18,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "common.name" . }}-canary
+  name: {{ include "common.canaryName" . }}
   labels:
     tags.datadoghq.com/version: "{{ $imageTag }}"
     run: {{ include "common.name" . }}
@@ -29,12 +29,7 @@ spec:
 {{- end }}
   selector:
     matchLabels:
-    {{- if not .Values.podSelectorLabelsOverride }}
-      {{- include "common.selectorLabels" . | nindent 6 }}
-    {{- end }}
-    {{- if .Values.podSelectorLabelsOverride }}
-      {{- .Values.podSelectorLabelsOverride | toYaml | nindent 6 }}
-    {{- end }}
+      {{- include "common.canarySelectorLabels" . | nindent 6 }}
   strategy:
     {{- toYaml .Values.strategy | nindent 6 }}
   template:
@@ -49,14 +44,9 @@ spec:
         {{- end }}
       labels:
         tags.datadoghq.com/version: "{{ $imageTag }}"
-        canary: "true"
-      {{- if not .Values.podSelectorLabelsOverride }}
+        deployment-group: "canary"
         run: {{ include "common.name" . }}
-        {{- include "common.selectorLabels" . | nindent 8 }}
-      {{- end }}
-      {{- if .Values.podSelectorLabelsOverride }}
-        {{- .Values.podSelectorLabelsOverride | toYaml | nindent 8 }}
-      {{- end }}
+        {{- include "common.canarySelectorLabels" . | nindent 8 }}
       {{- if .Values.additionalLabels }}
         {{- .Values.additionalLabels | toYaml | nindent 8 }}
       {{- end }}
@@ -77,7 +67,7 @@ spec:
           whenUnsatisfiable: {{ .Values.topologySpreadConstraints.zone.whenUnsatisfiable }}
           labelSelector:
             matchLabels:
-              {{- include "common.selectorLabels" . | nindent 14 }}
+              {{- include "common.canarySelectorLabels" . | nindent 14 }}
         {{- end }}
         {{- if .Values.topologySpreadConstraints.node.enabled }}
         - topologyKey: {{ .Values.topologySpreadConstraints.node.topologyKey }}
@@ -85,7 +75,7 @@ spec:
           whenUnsatisfiable: {{ .Values.topologySpreadConstraints.node.whenUnsatisfiable }}
           labelSelector:
             matchLabels:
-              {{- include "common.selectorLabels" . | nindent 14 }}
+              {{- include "common.canarySelectorLabels" . | nindent 14 }}
         {{- end }}
       {{- end }}
       {{- if (or .Values.initContainer.enabled .Values.failOnMissingLocalSecrets.enabled) }}
@@ -193,7 +183,7 @@ spec:
             - name: DEPLOYMENT_NAME
               value: {{ include "common.name" . }}
             - name: DD_VERSION
-              value: "{{ $imageTag }}"
+              value: "{{ $imageTag }}-canary"
             - name: NAMESPACE
               valueFrom:
                 fieldRef:
