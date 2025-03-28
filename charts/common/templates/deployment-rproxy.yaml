@@ -1,0 +1,115 @@
+{{- if .Values.canary.enabled -}}
+{{- $canaryWeight := .Values.canary.weight | default 5 }}
+{{- $effectiveCanaryWeight := min (max $canaryWeight 0) 100 }}
+{{- $remainingWeight := sub 100 $effectiveCanaryWeight }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "common.canaryName" . }}-
+  labels:
+    run: {{ include "common.reverseProxyName" . }}
+    {{- include "common.labels" . | nindent 4 }}
+spec:
+{{- if not .Values.canary.reverseProxy.autoscaling.enabled }}
+  replicas: {{ .Values.canary.reverseProxy.replicaCount }}
+{{- end }}
+  selector:
+    matchLabels:
+      {{- include "common.reverseProxySelectorLabels" . | nindent 6 }}
+  strategy:
+    {{- toYaml .Values.strategy | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{- /*
+        https://helm.sh/docs/howto/charts_tips_and_tricks/#automatically-roll-deployments
+        */}}
+        checksum/config: {{ .Values.env | toString | sha256sum }}
+        {{- if .Values.podAnnotations }}
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
+        {{- end }}
+      labels:
+        run: {{ include "common.name" . }}
+        {{- include "common.reverseProxySelectorLabels" . | nindent 8 }}
+      {{- if .Values.additionalLabels }}
+        {{- .Values.additionalLabels | toYaml | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "common.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- if or (.Values.topologySpreadConstraints.zone.enabled) (.Values.topologySpreadConstraints.node.enabled) }}
+      topologySpreadConstraints:
+        {{- if .Values.topologySpreadConstraints.zone.enabled }}
+        - topologyKey: {{ .Values.topologySpreadConstraints.zone.topologyKey }}
+          maxSkew: {{ .Values.topologySpreadConstraints.zone.maxSkew }}
+          whenUnsatisfiable: {{ .Values.topologySpreadConstraints.zone.whenUnsatisfiable }}
+          labelSelector:
+            matchLabels:
+              {{- include "common.canarySelectorLabels" . | nindent 14 }}
+        {{- end }}
+        {{- if .Values.topologySpreadConstraints.node.enabled }}
+        - topologyKey: {{ .Values.topologySpreadConstraints.node.topologyKey }}
+          maxSkew: {{ .Values.topologySpreadConstraints.node.maxSkew }}
+          whenUnsatisfiable: {{ .Values.topologySpreadConstraints.node.whenUnsatisfiable }}
+          labelSelector:
+            matchLabels:
+              {{- include "common.canarySelectorLabels" . | nindent 14 }}
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: reverseProxy
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.canary.reverseProxy.image.repository }}:{{ .Values.canary.reverseProxy.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.deploymentContainer.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: "/__reverseProxy/ping"
+              port: {{ .Values.deploymentContainer.port }}
+            failureThreshold: {{ .Values.canary.reverseProxy.livenessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.deplcanary.reverseProxyoymentContainer.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.canary.reverseProxy.livenessProbe.periodSeconds }}
+            successThreshold: {{ .Values.canary.reverseProxy.livenessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.canary.reverseProxy.livenessProbe.timeoutSeconds }}
+          readinessProbe:
+            httpGet:
+              path: "/__reverseProxy/ping"
+              port: {{ .Values.deploymentContainer.port }}
+            failureThreshold: {{ .Values.canary.reverseProxy.readinessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.deplcanary.reverseProxyoymentContainer.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.canary.reverseProxy.readinessProbe.periodSeconds }}
+            successThreshold: {{ .Values.canary.reverseProxy.readinessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.canary.reverseProxy.readinessProbe.timeoutSeconds }}
+          startupProbe:
+            httpGet:
+              path: "/__reverseProxy/ping"
+              port: {{ .Values.deploymentContainer.port }}
+            failureThreshold: {{ .Values.canary.reverseProxy.startupProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.deplcanary.reverseProxyoymentContainer.startupProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.canary.reverseProxy.startupProbe.periodSeconds }}
+            successThreshold: {{ .Values.canary.reverseProxy.startupProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.canary.reverseProxy.startupProbe.timeoutSeconds }}
+          resources:
+            {{- toYaml .Values.canary.reverseProxy.resources | nindent 8 }}
+          env:
+            - name: NGINX_LISTEN_PORT
+              value: {{ .Values.deploymentContainer.port }}
+            - name: NGINX_CONTROL_HOST
+              value: {{ include "common.controlName" . }}
+            - name: NGINX_CONTROL_WEIGHT
+              value: {{ $remainingWeight | quotes }}
+            - name: NGINX_CANARY_HOST
+              value: {{ include "common.canaryName" . }} 
+            - name: NGINX_CANARY_WEIGHT
+              value: {{ $effectiveCanaryWeight | quotes }}
+{{- end }}
