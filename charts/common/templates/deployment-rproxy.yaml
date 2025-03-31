@@ -86,7 +86,7 @@ spec:
               path: "/__reverseProxy/ping"
               port: {{ .Values.deploymentContainer.port }}
             failureThreshold: {{ .Values.canary.reverseProxy.readinessProbe.failureThreshold }}
-            initialDelaySeconds: {{ .Values.canary.reversePrreverseProxyoxyoymentContainer.readinessProbe.initialDelaySeconds }}
+            initialDelaySeconds: {{ .Values.canary.reverseProxy.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.canary.reverseProxy.readinessProbe.periodSeconds }}
             successThreshold: {{ .Values.canary.reverseProxy.readinessProbe.successThreshold }}
             timeoutSeconds: {{ .Values.canary.reverseProxy.readinessProbe.timeoutSeconds }}
