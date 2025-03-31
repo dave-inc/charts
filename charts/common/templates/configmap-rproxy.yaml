@@ -6,108 +6,97 @@ metadata:
   labels:
     {{- include "common.labels" . | nindent 4 }}
 data:
-  nginx.conf: |
-    worker_processes auto;
-    pid /tmp/nginx.pid;
+  dave.conf.template: |
+    proxy_temp_path /tmp/proxy_temp;
+    client_body_temp_path /tmp/client_temp;
+    fastcgi_temp_path /tmp/fastcgi_temp;
+    uwsgi_temp_path /tmp/uwsgi_temp;
+    scgi_temp_path /tmp/scgi_temp;
     
-    events {
-      worker_connections 8192;
-      multi_accept on;
-      use epoll;
+    # Basic settings
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout ${NGINX_KEEPALIVE_TIMEOUT};
+    types_hash_max_size 2048;
+    server_tokens off;
+    client_max_body_size ${NGINX_CLIENT_MAX_BODY_SIZE};
+    
+    # Timeouts
+    client_body_timeout ${NGINX_CLIENT_BODY_TIMEOUT};
+    client_header_timeout ${NGINX_CLIENT_HEADER_TIMEOUT};
+    send_timeout 30;
+    
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+    
+    access_log /dev/stdout;
+    error_log /dev/stderr warn;
+    
+    gzip on;
+    gzip_disable "msie6";
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+    
+    upstream canary {
+      server ${NGINX_CANARY_HOST} max_fails=0 fail_timeout=0 weight=${NGINX_CANARY_WEIGHT};
+      keepalive 32;
+    }
+    upstream control {
+      server ${NGINX_CONTROL_HOST} max_fails=0 fail_timeout=0 weight=${NGINX_CONTROL_WEIGHT};
+      keepalive 32;
+    }
+    upstream backend {
+      server ${NGINX_CONTROL_HOST} max_fails=0 fail_timeout=0 weight=${NGINX_CONTROL_WEIGHT};
+      server ${NGINX_CANARY_HOST} max_fails=0 fail_timeout=0 weight=${NGINX_CANARY_WEIGHT};
+      keepalive 32;
     }
     
-    http {
-      proxy_temp_path /tmp/proxy_temp;
-      client_body_temp_path /tmp/client_temp;
-      fastcgi_temp_path /tmp/fastcgi_temp;
-      uwsgi_temp_path /tmp/uwsgi_temp;
-      scgi_temp_path /tmp/scgi_temp;
+    # Map the X-Dave-Upstream-Group header to a variable
+    map $http_x_dave_upstream_group $target_upstream {
+      "canary" canary;
+      "control" control;
+      default backend;
+    }
+
+    server {
+      listen ${NGINX_LISTEN_PORT} default_server;
+      server_name _;
       
-      # Basic settings
-      sendfile on;
-      tcp_nopush on;
-      tcp_nodelay on;
-      keepalive_timeout 65;
-      types_hash_max_size 2048;
-      server_tokens off;
-      client_max_body_size 50m;
-      
-      # Timeouts
-      client_body_timeout 10;
-      client_header_timeout 10;
-      send_timeout 30;
-      
-      include /etc/nginx/mime.types;
-      default_type application/octet-stream;
-      
-      access_log /dev/stdout;
-      error_log /dev/stderr warn;
-      
-      gzip on;
-      gzip_disable "msie6";
-      gzip_vary on;
-      gzip_proxied any;
-      gzip_comp_level 6;
-      gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
-      
-      # Define upstream servers with max_fails=0 to prevent circuit breaking
-      upstream control {
-        server ${NGINX_CONTROL_HOST} max_fails=0 fail_timeout=0;
-        keepalive 32;
+      # Health check endpoint
+      location = /__reverseProxy/ping {
+        add_header Content-Type text/plain;
+        return 200 'pong';
       }
       
-      upstream canary {
-        server ${NGINX_CANARY_HOST} max_fails=0 fail_timeout=0;
-        keepalive 32;
+      # Handle Google Health Checks based on user-agent
+      if ($http_user_agent = "GoogleHC") {
+        return 200 'pong';
       }
       
-      # Split clients based on a hash of their IP address and User-Agent
-      split_clients "${remote_addr}${http_user_agent}${date_gmt}" $upstream_group {
-        ${NGINX_CONTROL_WEIGHT}% control;
-        ${NGINX_CANARY_WEIGHT}% canary;
-        * control;  # Default fallback
-      }
-      
-      server {
-        listen ${NGINX_LISTEN_PORT} default_server;
-        server_name _;
+      # Route traffic based on the split_clients directive
+      location / {
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Connection "";
+        proxy_http_version 1.1;
         
-        # Health check endpoint
-        location = /__reverseProxy/ping {
-          add_header Content-Type text/plain;
-          return 200 'pong';
-        }
+        # Timeouts configuration
+        proxy_connect_timeout 5;
+        proxy_send_timeout 30;
+        proxy_read_timeout 30;
         
-        # Handle Google Health Checks based on user-agent
-        if ($http_user_agent = "GoogleHC") {
-          return 200 'pong';
-        }
+        # Buffer settings
+        proxy_buffering on;
+        proxy_buffer_size 8k;
+        proxy_buffers 8 8k;
         
-        # Route traffic based on the split_clients directive
-        location / {
-          proxy_set_header Host $host;
-          proxy_set_header X-Real-IP $remote_addr;
-          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-          proxy_set_header X-Forwarded-Proto $scheme;
-          proxy_set_header Connection "";
-          proxy_http_version 1.1;
-          
-          # Timeouts configuration
-          proxy_connect_timeout 5;
-          proxy_send_timeout 30;
-          proxy_read_timeout 30;
-          
-          # Buffer settings
-          proxy_buffering on;
-          proxy_buffer_size 8k;
-          proxy_buffers 8 8k;
-          
-          # Add a header to indicate which upstream was chosen
-          add_header X-Upstream-Group $upstream_group;
-          
-          # Proxy to the selected upstream
-          proxy_pass http://$upstream_group;
-        }
+        # Proxy to the selected upstream
+        proxy_pass http://$target_upstream;
       }
     }
 {{- end }}
