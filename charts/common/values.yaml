@@ -157,8 +157,6 @@ canary:
       tag: 1.27.4
     autoscaling:
       enabled: true
-      minReplicas: 1
-      maxReplicas: 100
       metrics: []
     resources: {}
 

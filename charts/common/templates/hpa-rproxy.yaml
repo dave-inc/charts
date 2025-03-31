@@ -10,12 +10,12 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: {{ include "common.reverseProxyName" . }}
-  minReplicas: {{ .Values.canary.reverseProxy.autoscaling.minReplicas | default 1 }}
-  maxReplicas: {{ .Values.canary.reverseProxy.autoscaling.maxReplicas | default 3 }}
+  minReplicas: {{ .Values.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:
-    {{- toYaml .Values.canary.reverseProxy.autoscaling.metrics | nindent 4 }}
-  {{- if .Values.canary.reverseProxy.autoscaling.behavior }}
+    {{- toYaml .Values.autoscaling.metrics | nindent 4 }}
+  {{- if .Values.hpaBehavior.enabled }}
   behavior:
-    {{- toYaml .Values.canary.reverseProxy.autoscaling.behavior | nindent 4 }}
+    {{- toYaml .Values.hpaBehavior.behavior | nindent 4 }}
   {{- end }}
 {{- end }}
