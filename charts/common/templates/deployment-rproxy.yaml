@@ -106,7 +106,7 @@ spec:
               mountPath: /etc/nginx/templates
           env:
             - name: NGINX_LISTEN_PORT
-              value: {{ .Values.deploymentContainer.port }}
+              value: {{ .Values.deploymentContainer.port | quote }}
             - name: NGINX_CONTROL_HOST
               value: {{ include "common.controlName" . }}
             - name: NGINX_CONTROL_WEIGHT
