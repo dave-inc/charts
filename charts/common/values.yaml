@@ -152,6 +152,9 @@ canary:
       control: {}
   # Implmentation specific configurations for canary deployment
   reverseProxy:
+    image:
+      repository: nginx
+      tag: 1.27.4
     autoscaling:
       enabled: true
       minReplicas: 1
