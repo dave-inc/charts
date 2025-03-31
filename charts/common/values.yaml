@@ -150,6 +150,15 @@ canary:
     annotations: 
       canary: {}
       control: {}
+  # Implmentation specific configurations for canary deployment
+  reverseProxy:
+    autoscaling:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 100
+      metrics: []
+    resources: {}
+
   # HPA settings for canary deployment. ".Values.autoscaling" values are used to confiugre HPA.
   # minReplicas and/or maxReplicas can be overriten for canary with this configuration. Does not support overriding any other values.
   # autoscaling:

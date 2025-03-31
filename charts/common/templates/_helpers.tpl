@@ -62,7 +62,7 @@ Selector labels
 {{/*
 Reverse proxy selector labels (used if canary is enabled)
 */}}
-{{- define "common.reversProxySelectorLabels" -}}
+{{- define "common.reverseProxySelectorLabels" -}}
 {{ include "common.selectorLabelsBuilder" (list . .Release.Name "-rproxy") }}
 {{- end }}
 
@@ -190,3 +190,10 @@ Creates ingressStyles based on the canary deployment and migration settings.
   {{- end }}
   {{- toJson $ingressStyle }}
 {{- end -}}
+
+{{/*
+Reverse Proxy common name
+*/}}
+{{- define "common.reverseProxyName" -}}
+{{- printf "%s-rproxy" (include "common.name" .) }}
+{{- end }}
