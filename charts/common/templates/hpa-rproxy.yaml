@@ -1,4 +1,4 @@
-{{- if and .Values.canary.reverseProxy.autoscaling.enabled .Values.canary.enabled }}
+{{- if and .Values.canary.enabled .Values.canary.reverseProxy.autoscaling.enabled }}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
