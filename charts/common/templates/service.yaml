@@ -19,7 +19,7 @@ spec:
       name: http
   selector:
   {{- if .Values.canary.enabled -}}
-    {{- include "common.reversProxySelectorLabels" . | nindent 4 }}
+    {{- include "common.reverseProxySelectorLabels" . | nindent 4 }}
   {{- else}}
     {{- if not .Values.podSelectorLabelsOverride }}
       {{- include "common.selectorLabels" . | nindent 4 }}
