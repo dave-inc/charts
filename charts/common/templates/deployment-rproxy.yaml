@@ -77,7 +77,7 @@ spec:
               path: "/__reverseProxy/ping"
               port: {{ .Values.deploymentContainer.port }}
             failureThreshold: {{ .Values.canary.reverseProxy.livenessProbe.failureThreshold }}
-            initialDelaySeconds: {{ .Values.deplcanary.reverseProxyoymentContainer.livenessProbe.initialDelaySeconds }}
+            initialDelaySeconds: {{ .Values.canary.reverseProxy.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.canary.reverseProxy.livenessProbe.periodSeconds }}
             successThreshold: {{ .Values.canary.reverseProxy.livenessProbe.successThreshold }}
             timeoutSeconds: {{ .Values.canary.reverseProxy.livenessProbe.timeoutSeconds }}
@@ -86,7 +86,7 @@ spec:
               path: "/__reverseProxy/ping"
               port: {{ .Values.deploymentContainer.port }}
             failureThreshold: {{ .Values.canary.reverseProxy.readinessProbe.failureThreshold }}
-            initialDelaySeconds: {{ .Values.deplcanary.reverseProxyoymentContainer.readinessProbe.initialDelaySeconds }}
+            initialDelaySeconds: {{ .Values.canary.reversePrreverseProxyoxyoymentContainer.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.canary.reverseProxy.readinessProbe.periodSeconds }}
             successThreshold: {{ .Values.canary.reverseProxy.readinessProbe.successThreshold }}
             timeoutSeconds: {{ .Values.canary.reverseProxy.readinessProbe.timeoutSeconds }}
@@ -95,7 +95,7 @@ spec:
               path: "/__reverseProxy/ping"
               port: {{ .Values.deploymentContainer.port }}
             failureThreshold: {{ .Values.canary.reverseProxy.startupProbe.failureThreshold }}
-            initialDelaySeconds: {{ .Values.deplcanary.reverseProxyoymentContainer.startupProbe.initialDelaySeconds }}
+            initialDelaySeconds: {{ .Values.canary.reverseProxy.startupProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.canary.reverseProxy.startupProbe.periodSeconds }}
             successThreshold: {{ .Values.canary.reverseProxy.startupProbe.successThreshold }}
             timeoutSeconds: {{ .Values.canary.reverseProxy.startupProbe.timeoutSeconds }}

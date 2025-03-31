@@ -153,6 +153,7 @@ canary:
   # Implmentation specific configurations for canary deployment
   reverseProxy:
     livenessProbe:
+      initialDelaySeconds: 1
       failureThreshold: 3
       # The probe will be checked every 10 seconds.
       periodSeconds: 10
@@ -167,6 +168,7 @@ canary:
       # The probe will fail if it does not respond in 10 seconds
       timeoutSeconds: 10
     readinessProbe:
+      initialDelaySeconds: 1
       failureThreshold: 3
       # The probe will be checked every 10 seconds.
       periodSeconds: 10
@@ -181,6 +183,7 @@ canary:
       # The probe will fail if it does not respond in 10 seconds
       timeoutSeconds: 10
     startupProbe:
+      initialDelaySeconds: 1
       failureThreshold: 60
       periodSeconds: 1
       successThreshold: 1
