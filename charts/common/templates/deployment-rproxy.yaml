@@ -110,21 +110,21 @@ spec:
             - name: NGINX_CONTROL_HOST
               value: {{ include "common.controlName" . }}
             - name: NGINX_CONTROL_WEIGHT
-              value: {{ $remainingWeight | quotes }}
+              value: {{ $remainingWeight | quote }}
             - name: NGINX_CANARY_HOST
               value: {{ include "common.canaryName" . }} 
             - name: NGINX_CANARY_WEIGHT
-              value: {{ $effectiveCanaryWeight | quotes }}
+              value: {{ $effectiveCanaryWeight | quote }}
             - name: NGINX_CLIENT_MAX_BODY_SIZE
-              value: {{ .Values.canary.reverseProxy.clientMaxBodySize | default "50m" | quotes }}
+              value: {{ .Values.canary.reverseProxy.clientMaxBodySize | default "50m" | quote }}
             - name: NGINX_CLIENT_BODY_TIMEOUT
-              value: {{ .Values.canary.reverseProxy.clientBodyTimeout | default "10" | quotes }}
+              value: {{ .Values.canary.reverseProxy.clientBodyTimeout | default "10" | quote }}
             - name: NGINX_CLIENT_HEADER_TIMEOUT
-              value: {{ .Values.canary.reverseProxy.clientHeaderTimeout | default "10" | quotes }}
+              value: {{ .Values.canary.reverseProxy.clientHeaderTimeout | default "10" | quote }}
             - name: NGINX_KEEPALIVE_TIMEOUT
-              value: {{ .Values.canary.reverseProxy.keepaliveTimeout | default "65" | quotes }}
+              value: {{ .Values.canary.reverseProxy.keepaliveTimeout | default "65" | quote }}
             - name: NGINX_LARGE_CLIENT_HEADER_BUFFERS
-              value: {{ .Values.canary.reverseProxy.largeClientHeaderBuffers | default "8k" | quotes }}
+              value: {{ .Values.canary.reverseProxy.largeClientHeaderBuffers | default "8k" | quote }}
       volumes:
         - name: nginx-config
           configMap:
