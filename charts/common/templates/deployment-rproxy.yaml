@@ -5,7 +5,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "common.canaryName" . }}-
+  name: {{ include "common.reverseProxyName" . }}
   labels:
     run: {{ include "common.reverseProxyName" . }}
     {{- include "common.labels" . | nindent 4 }}
