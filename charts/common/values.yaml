@@ -194,7 +194,12 @@ canary:
     autoscaling:
       enabled: true
       metrics: []
-    resources: {}
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 256Mi
 
   # HPA settings for canary deployment. ".Values.autoscaling" values are used to confiugre HPA.
   # minReplicas and/or maxReplicas can be overriten for canary with this configuration. Does not support overriding any other values.
