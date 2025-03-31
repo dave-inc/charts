@@ -100,7 +100,7 @@ spec:
             successThreshold: {{ .Values.canary.reverseProxy.startupProbe.successThreshold }}
             timeoutSeconds: {{ .Values.canary.reverseProxy.startupProbe.timeoutSeconds }}
           resources:
-            {{- toYaml .Values.canary.reverseProxy.resources | nindent 8 }}
+            {{- toYaml .Values.canary.reverseProxy.resources | nindent 12 }}
           volumeMounts:
             - name: nginx-config
               mountPath: /etc/nginx/templates
