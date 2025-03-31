@@ -123,6 +123,8 @@ spec:
               value: {{ .Values.canary.reverseProxy.clientHeaderTimeout | default "10" | quotes }}
             - name: NGINX_KEEPALIVE_TIMEOUT
               value: {{ .Values.canary.reverseProxy.keepaliveTimeout | default "65" | quotes }}
+            - name: NGINX_LARGE_CLIENT_HEADER_BUFFERS
+              value: {{ .Values.canary.reverseProxy.largeClientHeaderBuffers | default "8k" | quotes }}
       volumes:
         - name: nginx-config
           configMap:

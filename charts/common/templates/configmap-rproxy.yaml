@@ -25,6 +25,7 @@ data:
     # Timeouts
     client_body_timeout ${NGINX_CLIENT_BODY_TIMEOUT};
     client_header_timeout ${NGINX_CLIENT_HEADER_TIMEOUT};
+    large_client_header_buffers 4 ${NGINX_LARGE_CLIENT_HEADER_BUFFERS};
     send_timeout 30;
     
     include /etc/nginx/mime.types;
@@ -41,11 +42,11 @@ data:
     gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
     
     upstream canary {
-      server ${NGINX_CANARY_HOST} max_fails=0 fail_timeout=0 weight=${NGINX_CANARY_WEIGHT};
+      server ${NGINX_CANARY_HOST} max_fails=0 fail_timeout=0;
       keepalive 32;
     }
     upstream control {
-      server ${NGINX_CONTROL_HOST} max_fails=0 fail_timeout=0 weight=${NGINX_CONTROL_WEIGHT};
+      server ${NGINX_CONTROL_HOST} max_fails=0 fail_timeout=0;
       keepalive 32;
     }
     upstream backend {
