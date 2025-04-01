@@ -103,7 +103,13 @@ spec:
             {{- toYaml .Values.canary.reverseProxy.resources | nindent 12 }}
           volumeMounts:
             - name: nginx-config
-              mountPath: /etc/nginx/templates
+              mountPath: /etc/nginx/templates/dave.conf.template
+              subPath: dave.conf.template
+            - name: nginx-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+            - name: nginx-conf-d
+              mountPath: /etc/nginx/conf.d
           env:
             - name: NGINX_LISTEN_PORT
               value: {{ .Values.deploymentContainer.port | quote }}
@@ -129,4 +135,6 @@ spec:
         - name: nginx-config
           configMap:
             name: {{ include "common.reverseProxyName" . }}
+        - name: nginx-conf-d
+          emptyDir: {}
 {{- end }}
