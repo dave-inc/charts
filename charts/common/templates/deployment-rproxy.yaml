@@ -63,7 +63,7 @@ spec:
         {{- end }}
       {{- end }}
       containers:
-        - name: reverseProxy
+        - name: rproxy
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.canary.reverseProxy.image.repository }}:{{ .Values.canary.reverseProxy.image.tag }}"
