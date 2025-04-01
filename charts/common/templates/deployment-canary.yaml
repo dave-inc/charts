@@ -8,7 +8,7 @@
 .Values.customConfig.enabled
 .Values.customVolumes.enabled
 ) -}}
-{{- $imageTag := "latest"  }}
+{{- $imageTag := .Values.image.tag   }}
 {{- if and .Values.canary.image .Values.canary.image.tag }}
 {{- $imageTag := .Values.canary.image.tag }}
 {{- end }}
