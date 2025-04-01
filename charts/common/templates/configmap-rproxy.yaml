@@ -8,9 +8,6 @@ metadata:
 data:
   dave.conf.template: |    
     # Basic settings
-    sendfile on;
-    tcp_nopush on;
-    tcp_nodelay on;
     keepalive_timeout ${NGINX_KEEPALIVE_TIMEOUT};
     types_hash_max_size 2048;
     server_tokens off;
