@@ -12,34 +12,24 @@ data:
     types_hash_max_size 2048;
     server_tokens off;
     client_max_body_size ${NGINX_CLIENT_MAX_BODY_SIZE};
-    
+
     # Timeouts
     client_body_timeout ${NGINX_CLIENT_BODY_TIMEOUT};
     client_header_timeout ${NGINX_CLIENT_HEADER_TIMEOUT};
     large_client_header_buffers 4 ${NGINX_LARGE_CLIENT_HEADER_BUFFERS};
     send_timeout 30;
-    
-    include /etc/nginx/mime.types;
-    default_type application/octet-stream;
-    
-    access_log /dev/stdout;
-    error_log /dev/stderr warn;
-    
-    gzip on;
-    gzip_disable "msie6";
-    gzip_vary on;
-    gzip_proxied any;
-    gzip_comp_level 6;
-    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
-    
+
+    # Upstream definitions
     upstream canary {
       server ${NGINX_CANARY_HOST} max_fails=0 fail_timeout=0;
       keepalive 32;
     }
+    
     upstream control {
       server ${NGINX_CONTROL_HOST} max_fails=0 fail_timeout=0;
       keepalive 32;
     }
+    
     upstream backend {
       server ${NGINX_CONTROL_HOST} max_fails=0 fail_timeout=0 weight=${NGINX_CONTROL_WEIGHT};
       server ${NGINX_CANARY_HOST} max_fails=0 fail_timeout=0 weight=${NGINX_CANARY_WEIGHT};
@@ -68,7 +58,7 @@ data:
         return 200 'pong';
       }
       
-      # Route traffic based on the split_clients directive
+      # Route traffic based on header
       location / {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -91,37 +81,39 @@ data:
         proxy_pass http://$target_upstream;
       }
     }
+    
   nginx.conf: |
-    worker_processes  auto;
-
-    error_log  /dev/stderr notice;
-    pid        /tmp/nginx.pid;
-
+    worker_processes auto;
+    pid /tmp/nginx.pid;
 
     events {
-        worker_connections  1024;
+        worker_connections 1024;
+        multi_accept on;
     }
 
     http {
-        include       /etc/nginx/mime.types;
-        default_type  application/octet-stream;
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
 
-        log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
-                          '$status $body_bytes_sent "$http_referer" '
-                          '"$http_user_agent" "$http_x_forwarded_for"';
+        log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                        '$status $body_bytes_sent "$http_referer" '
+                        '"$http_user_agent" "$http_x_forwarded_for"';
 
-        access_log  /dev/stdout main;
+        access_log /dev/stdout main;
+        error_log /dev/stderr warn;
 
-        sendfile       on;
-        tcp_nopush     on;
-        tcp_nodelay    on;
+        sendfile on;
+        tcp_nopush on;
+        tcp_nodelay on;
+        keepalive_timeout ${NGINX_KEEPALIVE_TIMEOUT};
+        server_tokens off;
 
         # non-root thing
         client_body_temp_path /tmp/client_temp;
-        proxy_temp_path       /tmp/proxy_temp_path;
-        fastcgi_temp_path     /tmp/fastcgi_temp;
-        uwsgi_temp_path       /tmp/uwsgi_temp;
-        scgi_temp_path        /tmp/scgi_temp;
+        proxy_temp_path /tmp/proxy_temp;
+        fastcgi_temp_path /tmp/fastcgi_temp;
+        uwsgi_temp_path /tmp/uwsgi_temp;
+        scgi_temp_path /tmp/scgi_temp;
 
         # Load additional configs (templated)
         include /etc/nginx/conf.d/*.conf;
