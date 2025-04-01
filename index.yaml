@@ -32,6 +32,16 @@ entries:
   common:
   - apiVersion: v2
     appVersion: 1.17.0
+    created: "2025-04-01T18:41:07.312678528Z"
+    description: Standard Service Template
+    digest: f633990d568696713843329e2af18adfff7f2cc78e7b02811b3781a579e8b0d3
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.10.0-bei-978-b8/common-0.10.0-bei-978-b8.tgz
+    version: 0.10.0-bei-978-b8
+  - apiVersion: v2
+    appVersion: 1.17.0
     created: "2025-04-01T18:29:28.65385393Z"
     description: Standard Service Template
     digest: 7dfdfec822a8eb4865269bdb4f103946ab5bee8eec2862ed2820d89f7ab111ae
@@ -212,6 +222,16 @@ entries:
     version: 0.8.9
   - apiVersion: v2
     appVersion: 1.17.0
+    created: "2024-09-18T16:21:03.735084914Z"
+    description: Standard Service Template
+    digest: 7bb442d82472d79639f3a077bf8317ab46a4ae1bf9463a270126f28b1baa1b47
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.8.9-bei-719/common-0.8.9-bei-719.tgz
+    version: 0.8.9-bei-719
+  - apiVersion: v2
+    appVersion: 1.17.0
     created: "2024-09-18T23:07:53.957992564Z"
     description: Standard Service Template
     digest: c7e242bc43a7734a20e868ad3ad6e13ee5cb946482122f743ff485de32804d62
@@ -235,16 +255,6 @@ entries:
     created: "2024-09-17T17:51:00.885390099Z"
     description: Standard Service Template
     digest: 3d1b70a5c8e1bda6322e7edfec75b0234f66b5cc0ba5526637451b462ec58dbc
-    name: common
-    type: application
-    urls:
-    - https://github.com/dave-inc/charts/releases/download/common-0.8.9-bei-719/common-0.8.9-bei-719.tgz
-    version: 0.8.9-bei-719
-  - apiVersion: v2
-    appVersion: 1.17.0
-    created: "2024-09-18T16:21:03.735084914Z"
-    description: Standard Service Template
-    digest: 7bb442d82472d79639f3a077bf8317ab46a4ae1bf9463a270126f28b1baa1b47
     name: common
     type: application
     urls:
@@ -1846,4 +1856,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2025-04-01T18:29:28.655115793Z"
+generated: "2025-04-01T18:41:07.313989905Z"
