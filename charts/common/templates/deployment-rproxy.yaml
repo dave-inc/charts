@@ -124,11 +124,11 @@ spec:
             - name: NGINX_CLIENT_MAX_BODY_SIZE
               value: {{ .Values.canary.reverseProxy.clientMaxBodySize | default "50m" | quote }}
             - name: NGINX_CLIENT_BODY_TIMEOUT
-              value: {{ .Values.canary.reverseProxy.clientBodyTimeout | default "10" | quote }}
+              value: {{ .Values.canary.reverseProxy.clientBodyTimeout | default "10s" | quote }}
             - name: NGINX_CLIENT_HEADER_TIMEOUT
-              value: {{ .Values.canary.reverseProxy.clientHeaderTimeout | default "10" | quote }}
+              value: {{ .Values.canary.reverseProxy.clientHeaderTimeout | default "10s" | quote }}
             - name: NGINX_KEEPALIVE_TIMEOUT
-              value: {{ .Values.canary.reverseProxy.keepaliveTimeout | default "65" | quote }}
+              value: {{ .Values.canary.reverseProxy.keepaliveTimeout | default "65s" | quote }}
             - name: NGINX_LARGE_CLIENT_HEADER_BUFFERS
               value: {{ .Values.canary.reverseProxy.largeClientHeaderBuffers | default "8k" | quote }}
       volumes:
