@@ -48,12 +48,14 @@ data:
       
       # Health check endpoint
       location = /__reverseProxy/ping {
+        access_log off;  # Disable access logging for health checks
         add_header Content-Type text/plain;
         return 200 'pong';
       }
       
       # Handle Google Health Checks based on user-agent
       if ($http_user_agent = "GoogleHC") {
+        access_log off;  # Disable access logging for Google health checks
         return 200 'pong';
       }
       
