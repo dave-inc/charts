@@ -1,5 +1,5 @@
 {{- if .Values.canary.enabled -}}
-{{- $canaryWeight := .Values.canary.weight | default 5 }}
+{{- $canaryWeight := .Values.canary.weight | default 0 }}
 {{- $effectiveCanaryWeight := min (max $canaryWeight 0) 100 }}
 {{- $remainingWeight := sub 100 $effectiveCanaryWeight }}
 apiVersion: apps/v1
