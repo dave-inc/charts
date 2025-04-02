@@ -127,7 +127,7 @@ podAnnotations: {}
 podSecurityContext:
   runAsUser: 1000
   runAsGroup: 1000
-  
+
 securityContext:
   allowPrivilegeEscalation: false
   # capabilities:
@@ -146,8 +146,8 @@ service:
 
 canary:
   enabled: false
-  service: 
-    annotations: 
+  service:
+    annotations:
       canary: {}
       control: {}
   # Implementation specific configurations for canary deployment
@@ -295,7 +295,6 @@ ingress:
   #        responseCodeName: PERMANENT_REDIRECT
   ## staticIpName is optional, If not set, a name is generated using Release.Name. This is a resource in GCP.
   # staticIpName: ""
-  # csmStaticIpName: "" # Only used if canary.enabled is true. Optional, If not set, a name is generated using Release.Name with "-csm" suffix. This is a resource in GCP.
   ## cloudArmor needs a service type NodePort
   #    service:
   #      type: NodePort
@@ -312,7 +311,7 @@ resources: {}
   #   cpu: 100m
   #   memory: 128Mi
 
-strategy: 
+strategy:
   rollingUpdate:
     maxSurge: 25%
     maxUnavailable: 25%
@@ -323,7 +322,7 @@ autoscaling:
   minReplicas: 1
   maxReplicas: 100
   metrics: []
-  
+
 hpaBehavior:
   enabled: false
   behavior: {}
