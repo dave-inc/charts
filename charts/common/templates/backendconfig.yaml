@@ -1,16 +1,8 @@
-{{- if and .Values.cloudArmor .Values.cloudArmor.enabled -}}
-{{- $ingressStyles := fromJsonArray (include "ingressStyles" .) }}
-{{- range $ingressStyles }}
-{{- $ingressStyle := . }}
----
+{{- if .Values.cloudArmor.enabled -}}
 apiVersion: cloud.google.com/v1
 kind: BackendConfig
 metadata:
-  {{- if eq $ingressStyle "csm" }}
-  namespace: {{ $.Values.canary.gatewayNamespace }}
-  {{- end }}
-  name: {{ include "common.name" $ }}
+  name: {{ include "common.name" . }}
 spec:
-  {{- toYaml $.Values.cloudArmor.backendConfig | nindent 2 }}
-{{- end }}
+  {{- toYaml .Values.cloudArmor.backendConfig | nindent 2 }}
 {{- end }}
