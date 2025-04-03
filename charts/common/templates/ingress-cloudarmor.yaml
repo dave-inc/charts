@@ -56,7 +56,7 @@ metadata:
     {{- with $.Values.cloudArmor.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-    kubernetes.io/ingress.global-static-ip-name: {{ .Values.cloudArmor.staticIpName | default (include "common.name" $) }}
+    kubernetes.io/ingress.global-static-ip-name: {{ $.Values.cloudArmor.staticIpName | default (include "common.name" $) }}
     networking.gke.io/v1beta1.FrontendConfig: {{ include "common.name" $ }}
 spec:
   rules:
