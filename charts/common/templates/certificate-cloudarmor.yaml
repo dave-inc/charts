@@ -3,16 +3,16 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: {{ include "common.name" $ }}
+  name: {{ include "common.name" . }}
 spec:
-  secretName: {{ $.Values.cloudArmor.certificate.secretName | default (include "common.cloudArmorTlsSecret" $) }}
+  secretName: {{ .Values.cloudArmor.certificate.secretName | default (include "common.cloudArmorTlsSecret" .) }}
   issuerRef:
     kind: ClusterIssuer
-    name: {{ $.Values.cloudArmor.certificate.issuer | default "letsencrypt" }}
-  commonName: {{ $.Values.cloudArmor.certificate.host | quote }}
+    name: {{ .Values.cloudArmor.certificate.issuer | default "letsencrypt" }}
+  commonName: {{ .Values.cloudArmor.certificate.host | quote }}
   dnsNames:
-    - {{ $.Values.cloudArmor.certificate.host | quote }}
-{{- if $.Values.cloudArmor.certificate.alternativeDnsNames }}
-    {{- toYaml $.Values.cloudArmor.certificate.alternativeDnsNames | nindent 4 }}
+    - {{ .Values.cloudArmor.certificate.host | quote }}
+{{- if .Values.cloudArmor.certificate.alternativeDnsNames }}
+    {{- toYaml .Values.cloudArmor.certificate.alternativeDnsNames | nindent 4 }}
 {{- end }}
 {{- end }}

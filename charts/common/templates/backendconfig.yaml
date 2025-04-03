@@ -4,5 +4,5 @@ kind: BackendConfig
 metadata:
   name: {{ include "common.name" . }}
 spec:
-  {{- toYaml $.Values.cloudArmor.backendConfig | nindent 2 }}
+  {{- toYaml .Values.cloudArmor.backendConfig | nindent 2 }}
 {{- end }}
