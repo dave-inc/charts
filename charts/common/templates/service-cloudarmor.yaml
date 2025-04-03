@@ -38,7 +38,11 @@ metadata:
       {"ports": {"80":"{{ $commonname }}", "443":"{{ $commonname }}"}}
       {{- end }}
 spec:
+  {{- if and $.Values.cloudArmor.service $.Values.cloudArmor.service.type }}
   type: {{ $.Values.cloudArmor.service.type }}
+  {{- else }}
+  type: NodePort
+  {{- end }}
   ports:
     - port: {{ $svc.port.number }}
       targetPort: {{ $svc.targetPort | default $.Values.deploymentContainer.port }}
