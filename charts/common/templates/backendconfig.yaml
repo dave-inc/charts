@@ -1,8 +1,8 @@
-{{- if .Values.cloudArmor.enabled -}}
+{{- if and .Values.cloudArmor .Values.cloudArmor.enabled -}}
 apiVersion: cloud.google.com/v1
 kind: BackendConfig
 metadata:
   name: {{ include "common.name" . }}
 spec:
-  {{- toYaml .Values.cloudArmor.backendConfig | nindent 2 }}
+  {{- toYaml $.Values.cloudArmor.backendConfig | nindent 2 }}
 {{- end }}

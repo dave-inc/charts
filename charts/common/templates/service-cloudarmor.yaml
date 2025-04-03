@@ -1,43 +1,54 @@
-{{- if .Values.cloudArmor.enabled -}}
+{{- if and .Values.cloudArmor .Values.cloudArmor.enabled -}}
 {{- $commonname := include "common.name" . -}}
 {{- $labels := include "common.labels" . -}}
+{{- $svcport := .Values.service.port -}}
 {{- $svclist := list }}
-{{- range $k, $v := .Values.cloudArmor.paths -}}
-{{ $svclist = append $svclist $v.backend.service }}
-{{ end }}
-{{- $finallist :=  $svclist | uniq | toYaml -}}
-#{{- $finallist :=  $svclist | uniq  -}}
-{{- range $k, $v := $finallist }}
+{{/* cloudArmor.hosts takes priority over cloudArmor.paths */}}
+{{- if hasKey .Values.cloudArmor "hosts" -}}
+  {{- range .Values.cloudArmor.hosts -}}
+    {{- range .paths -}}
+      {{- $svclist = append $svclist .backend.service }}
+    {{- end -}}
+  {{- end -}}
+{{/* Backwards compatibility with cloudArmor.paths */}}
+{{- else if hasKey .Values.cloudArmor "paths" -}}
+  {{- range .Values.cloudArmor.paths -}}
+    {{- $svclist = append $svclist .backend.service }}
+  {{- end -}}
+{{- end -}}
 
+{{- $finallist := $svclist | uniq -}}
+{{- range $svc := $finallist }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  {{- if hasSuffix "-ca" $v.name  }}
-  name: {{ $v.name }}
+  {{- if hasSuffix "-ca" $svc.name  }}
+  name: {{ $svc.name }}
   {{- else }}
-  {{- printf "The Service name '%s' does not meet the Cloud Armor naming standards!" $v.name | fail }}
+  {{- printf "The Service name '%s' does not meet the Cloud Armor naming standards!" $svc.name | fail }}
   {{- end }}
   labels:
     {{- $labels | nindent 4 }}
   annotations:
-    {{- if $.Values.cloudArmor.backendConfig.iap }}
-    cloud.google.com/backend-config: '{"ports": {"80":"{{ $commonname }}", "443":"{{ $commonname }}"},"default": "{{ $commonname }}"}'
-    {{- else }}
-    cloud.google.com/backend-config: '{"ports": {"80":"{{ $commonname}}", "443":"{{ $commonname }}"}}'
-    {{- end }}
+    cloud.google.com/backend-config: >
+      {{- if $.Values.cloudArmor.backendConfig.iap }}
+      {"ports": {"80":"{{ $commonname }}", "443":"{{ $commonname }}"},"default": "{{ $commonname }}"}
+      {{- else }}
+      {"ports": {"80":"{{ $commonname }}", "443":"{{ $commonname }}"}}
+      {{- end }}
 spec:
   type: {{ $.Values.cloudArmor.service.type }}
   ports:
-    - port: {{ $v.port.number }}
-      targetPort: {{ $v.targetPort | default $.Values.deploymentContainer.port }}
+    - port: {{ $svc.port.number }}
+      targetPort: {{ $svc.targetPort | default $.Values.deploymentContainer.port }}
       protocol: TCP
       name: http
   selector:
   {{- if $.Values.podSelectorLabelsOverride }}
     {{- $.Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
   {{- else }}
-    app.kubernetes.io/name: {{ trimSuffix "-ca" $v.name}}
+    app.kubernetes.io/name: {{ trimSuffix "-ca" $svc.name}}
     app.kubernetes.io/instance: {{ $.Release.Name }}
   {{- end }}
 {{- end }}
