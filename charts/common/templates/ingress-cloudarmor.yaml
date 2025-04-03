@@ -53,7 +53,7 @@ metadata:
   labels:
     {{- include "common.labels" . | nindent 4 }}
   annotations:
-    {{- with ..Values.cloudArmor.annotations }}
+    {{- with .Values.cloudArmor.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
     kubernetes.io/ingress.global-static-ip-name: {{ .Values.cloudArmor.staticIpName | default (include "common.name" .) }}
