@@ -7,4 +7,8 @@ spec:
   {{- if $.Values.cloudArmor.frontendConfig }}
   {{- toYaml $.Values.cloudArmor.frontendConfig | nindent 2 }}
   {{- else }}
+  redirectToHttps:
+    enabled: true
+    responseCodeName: PERMANENT_REDIRECT
+  {{- end }}
 {{- end }}
