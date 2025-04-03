@@ -44,7 +44,6 @@ spec:
       labels:
         deployment-group: "control"
         tags.datadoghq.com/version: "{{ .Values.image.tag }}"
-        canary: "false"
       {{- if not .Values.podSelectorLabelsOverride }}
         run: {{ include "common.name" . }}
         {{- include "common.selectorLabels" . | nindent 8 }}

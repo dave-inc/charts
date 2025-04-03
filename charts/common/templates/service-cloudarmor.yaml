@@ -1,10 +1,8 @@
 {{- if and .Values.cloudArmor .Values.cloudArmor.enabled -}}
-{{- $ingressStyles := fromJsonArray (include "ingressStyles" .) }}
 {{- $commonname := include "common.name" . -}}
 {{- $labels := include "common.labels" . -}}
 {{- $svcport := .Values.service.port -}}
 {{- $svclist := list }}
-
 {{/* cloudArmor.hosts takes priority over cloudArmor.paths */}}
 {{- if hasKey .Values.cloudArmor "hosts" -}}
   {{- range .Values.cloudArmor.hosts -}}
@@ -20,18 +18,12 @@
 {{- end -}}
 
 {{- $finallist := $svclist | uniq -}}
-
-{{- range $ingressStyles }}
-  {{- $ingressStyle := . }}
-  {{- range $svc := $finallist }}
+{{- range $svc := $finallist }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  {{- if eq $ingressStyle "csm" }}
-  namespace: {{ $.Values.canary.gatewayNamespace }}
-  {{- end }}
-  {{- if hasSuffix "-ca" $svc.name }}
+  {{- if hasSuffix "-ca" $svc.name  }}
   name: {{ $svc.name }}
   {{- else }}
   {{- printf "The Service name '%s' does not meet the Cloud Armor naming standards!" $svc.name | fail }}
@@ -40,31 +32,28 @@ metadata:
     {{- $labels | nindent 4 }}
   annotations:
     cloud.google.com/backend-config: >
-      {{- if $.Values.cloudArmor.backendConfig.iap }}
+      {{- if .Values.cloudArmor.backendConfig.iap }}
       {"ports": {"80":"{{ $commonname }}", "443":"{{ $commonname }}"},"default": "{{ $commonname }}"}
       {{- else }}
       {"ports": {"80":"{{ $commonname }}", "443":"{{ $commonname }}"}}
       {{- end }}
 spec:
-  {{- if and $.Values.cloudArmor.service $.Values.cloudArmor.service.type }}
-  type: {{ $.Values.cloudArmor.service.type }}
+  {{- if and .Values.cloudArmor.service .Values.cloudArmor.service.type }}
+  type: {{ .Values.cloudArmor.service.type }}
   {{- else }}
   type: NodePort
   {{- end }}
   ports:
     - port: {{ $svc.port.number }}
-      targetPort: {{ if eq $ingressStyle "csm" }}80{{- else }}{{ $svc.targetPort | default $.Values.deploymentContainer.port }}{{- end }}
+      targetPort: {{ $svc.targetPort | default .Values.deploymentContainer.port }}
       protocol: TCP
       name: http
   selector:
-    {{- if $.Values.podSelectorLabelsOverride }}
-    {{- $.Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
-    {{- else if eq $ingressStyle "csm" }}
-    istio: gateway-public
-    {{- else }}
-    app.kubernetes.io/name: {{ trimSuffix "-ca" $svc.name }}
-    app.kubernetes.io/instance: {{ $.Release.Name }}
-    {{- end }}
+  {{- if .Values.podSelectorLabelsOverride }}
+    {{- .Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
+  {{- else }}
+    app.kubernetes.io/name: {{ trimSuffix "-ca" $svc.name}}
+    app.kubernetes.io/instance: {{ .Release.Name }}
   {{- end }}
 {{- end }}
 {{- end }}
