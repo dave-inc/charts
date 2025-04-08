@@ -146,6 +146,7 @@ service:
 
 canary:
   enabled: false
+  weight: 0
   service:
     annotations:
       canary: {}

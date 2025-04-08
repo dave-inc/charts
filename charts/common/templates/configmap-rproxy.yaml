@@ -1,4 +1,5 @@
 {{- if .Values.canary.enabled -}}
+{{- $canaryWeight := .Values.canary.weight }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -31,7 +32,9 @@ data:
     
     upstream backend {
       server ${NGINX_CONTROL_HOST} max_fails=0 fail_timeout=0 weight=${NGINX_CONTROL_WEIGHT};
+      {{- if ne (toString $canaryWeight) "0" }}
       server ${NGINX_CANARY_HOST} max_fails=0 fail_timeout=0 weight=${NGINX_CANARY_WEIGHT};
+      {{- end }}
       keepalive 32;
     }
     
@@ -75,7 +78,7 @@ data:
         proxy_buffering on;
         proxy_buffer_size 8k;
         proxy_buffers 8 8k;
-        
+
         # Proxy to the selected upstream
         proxy_pass http://$target_upstream;
       }
