@@ -122,6 +122,16 @@ entries:
     version: 0.10.0-bei-978-b2
   - apiVersion: v2
     appVersion: 1.17.0
+    created: "2025-04-09T19:09:15.349401735Z"
+    description: Standard Service Template
+    digest: 276ddf3962dc82834c9be4e118bd543550cd168d068dcd4cb67fe4ee2e9994b9
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.10.0-bei-978-b16/common-0.10.0-bei-978-b16.tgz
+    version: 0.10.0-bei-978-b16
+  - apiVersion: v2
+    appVersion: 1.17.0
     created: "2025-04-08T22:48:57.06052025Z"
     description: Standard Service Template
     digest: 5db12c732282f5d83fec5bc3056f4e1e74f26fa0311afbd292983f6cb20a579f
@@ -1916,4 +1926,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2025-04-08T22:48:57.061862051Z"
+generated: "2025-04-09T19:09:15.350741343Z"
