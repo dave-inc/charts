@@ -127,7 +127,7 @@ podAnnotations: {}
 podSecurityContext:
   runAsUser: 1000
   runAsGroup: 1000
-  
+
 securityContext:
   allowPrivilegeEscalation: false
   # capabilities:
@@ -146,9 +146,62 @@ service:
 
 canary:
   enabled: false
-  gatewayNamespace: istio-ingress
-  # if set to true (default), then two sets of Cloud Armor-related resources are created: one for "legacy" and one for "cloud service mesh" aka "canary"
-  migration: true
+  weight: 0
+  service:
+    annotations:
+      canary: {}
+      control: {}
+  # Implementation specific configurations for canary deployment
+  reverseProxy:
+    livenessProbe:
+      initialDelaySeconds: 1
+      failureThreshold: 3
+      # The probe will be checked every 10 seconds.
+      periodSeconds: 10
+      # Number of times the probe is allowed to fail before the transition
+      # from healthy to failure state.
+      # If periodSeconds = 60, 5 tries will result in five minutes of
+      # checks. The proxy starts to refresh a certificate five minutes
+      # before its expiration. If those five minutes lapse without a
+      # successful refresh, the liveness probe will fail and the pod will be
+      # restarted.
+      successThreshold: 1
+      # The probe will fail if it does not respond in 10 seconds
+      timeoutSeconds: 10
+    readinessProbe:
+      initialDelaySeconds: 1
+      failureThreshold: 3
+      # The probe will be checked every 10 seconds.
+      periodSeconds: 10
+      # Number of times the probe is allowed to fail before the transition
+      # from healthy to failure state.
+      # If periodSeconds = 60, 5 tries will result in five minutes of
+      # checks. The proxy starts to refresh a certificate five minutes
+      # before its expiration. If those five minutes lapse without a
+      # successful refresh, the liveness probe will fail and the pod will be
+      # restarted.
+      successThreshold: 1
+      # The probe will fail if it does not respond in 10 seconds
+      timeoutSeconds: 10
+    startupProbe:
+      initialDelaySeconds: 1
+      failureThreshold: 60
+      periodSeconds: 1
+      successThreshold: 1
+      timeoutSeconds: 10
+    image:
+      repository: nginx
+      tag: 1.27.4
+    autoscaling:
+      enabled: true
+      metrics: []
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 256Mi
+
   # HPA settings for canary deployment. ".Values.autoscaling" values are used to confiugre HPA.
   # minReplicas and/or maxReplicas can be overriten for canary with this configuration. Does not support overriding any other values.
   # autoscaling:
@@ -243,7 +296,6 @@ ingress:
   #        responseCodeName: PERMANENT_REDIRECT
   ## staticIpName is optional, If not set, a name is generated using Release.Name. This is a resource in GCP.
   # staticIpName: ""
-  # csmStaticIpName: "" # Only used if canary.enabled is true. Optional, If not set, a name is generated using Release.Name with "-csm" suffix. This is a resource in GCP.
   ## cloudArmor needs a service type NodePort
   #    service:
   #      type: NodePort
@@ -260,7 +312,7 @@ resources: {}
   #   cpu: 100m
   #   memory: 128Mi
 
-strategy: 
+strategy:
   rollingUpdate:
     maxSurge: 25%
     maxUnavailable: 25%
@@ -271,7 +323,7 @@ autoscaling:
   minReplicas: 1
   maxReplicas: 100
   metrics: []
-  
+
 hpaBehavior:
   enabled: false
   behavior: {}
@@ -332,7 +384,7 @@ affinity: {}
 apm:
   enabled: false
   otlp: false
-  # If datadogEnvironment is not defined we use variable environment as default
+  # If datadogEnvironment is not defined we use variable environment long with a suffix of "-canary" if canary is enabled as default
   datadogEnvironment: ""
   # Optional override DD_SERVICE_NAME to a custon name instead of common.name
   datadogServiceName: ""

@@ -1,10 +1,8 @@
 {{- if and .Values.cloudArmor .Values.cloudArmor.enabled -}}
-{{- $ingressStyles := fromJsonArray (include "ingressStyles" .) }}
 {{- $commonname := include "common.name" . -}}
 {{- $labels := include "common.labels" . -}}
 {{- $svcport := .Values.service.port -}}
 {{- $svclist := list }}
-
 {{/* cloudArmor.hosts takes priority over cloudArmor.paths */}}
 {{- if hasKey .Values.cloudArmor "hosts" -}}
   {{- range .Values.cloudArmor.hosts -}}
@@ -20,18 +18,12 @@
 {{- end -}}
 
 {{- $finallist := $svclist | uniq -}}
-
-{{- range $ingressStyles }}
-  {{- $ingressStyle := . }}
-  {{- range $svc := $finallist }}
+{{- range $svc := $finallist }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  {{- if eq $ingressStyle "csm" }}
-  namespace: {{ $.Values.canary.gatewayNamespace }}
-  {{- end }}
-  {{- if hasSuffix "-ca" $svc.name }}
+  {{- if hasSuffix "-ca" $svc.name  }}
   name: {{ $svc.name }}
   {{- else }}
   {{- printf "The Service name '%s' does not meet the Cloud Armor naming standards!" $svc.name | fail }}
@@ -53,18 +45,15 @@ spec:
   {{- end }}
   ports:
     - port: {{ $svc.port.number }}
-      targetPort: {{ if eq $ingressStyle "csm" }}80{{- else }}{{ $svc.targetPort | default $.Values.deploymentContainer.port }}{{- end }}
+      targetPort: {{ $svc.targetPort | default $.Values.deploymentContainer.port }}
       protocol: TCP
       name: http
   selector:
-    {{- if $.Values.podSelectorLabelsOverride }}
+  {{- if $.Values.podSelectorLabelsOverride }}
     {{- $.Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
-    {{- else if eq $ingressStyle "csm" }}
-    istio: gateway-public
-    {{- else }}
-    app.kubernetes.io/name: {{ trimSuffix "-ca" $svc.name }}
+  {{- else }}
+    app.kubernetes.io/name: {{ trimSuffix "-ca" $svc.name}}
     app.kubernetes.io/instance: {{ $.Release.Name }}
-    {{- end }}
   {{- end }}
 {{- end }}
 {{- end }}

@@ -1,0 +1,26 @@
+{{- if and .Values.service.enabled .Values.canary.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "common.controlName" . }}
+  annotations:
+    {{- if .Values.canary.service.annotations.control }}
+    {{- toYaml .Values.canary.service.annotations.control | nindent 4 }}
+    {{- end }}
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: {{ .Values.deploymentContainer.port }}
+      protocol: TCP
+      name: http
+  selector:
+  {{- if not .Values.podSelectorLabelsOverride }}
+    {{- include "common.selectorLabels" . | nindent 4 }}
+  {{- end }}
+  {{- if .Values.podSelectorLabelsOverride }}
+    {{- .Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
+  {{- end }}
+{{- end }}

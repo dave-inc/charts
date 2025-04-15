@@ -1,4 +1,4 @@
-{{- if and .Values.ingress.enabled (not .Values.canary.enabled) -}}
+{{- if .Values.ingress.enabled -}}
 {{- $labels := include "common.labels" . -}}
 {{- $svcport := .Values.service.port -}}
 {{- range .Values.ingress.hosts }}

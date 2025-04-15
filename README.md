@@ -7,7 +7,7 @@ Collection of common sub charts to bootstrap common applications
 ## To develop locally
 1. Choose chart you wish to update. For example `common`. Update `charts/common/Chart.yaml` version to whatever semver you plan on with a suffix of the jira ticket. For example, `1.0.0-bei-719`
 2. In the sre repo cd into the directory of the chart you wish to test. For example `notification-service`
-3. With your current directory of charts/notification-service/public update the Chart.yaml file to point to the local file system path and the updated version you chose in step 1. Below shows an example `sre/charts/notification-service/production/Chart.yaml`
+3. With your current directory of charts/notification-service/production update the Chart.yaml file to point to the local file system path and the updated version you chose in step 1. Below shows an example `sre/charts/notification-service/production/Chart.yaml`
 
 ```
 apiVersion: v2
