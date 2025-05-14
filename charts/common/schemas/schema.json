@@ -3,7 +3,7 @@
   "type": "object",
   "properties": {
     "cloudArmor": {
-      "$ref": "file://./schemas/cloudArmor.schema.json#/properties/cloudArmor"
+      "$ref": "./cloudArmor.schema.json#/properties/cloudArmor"
     }
   }
 }
