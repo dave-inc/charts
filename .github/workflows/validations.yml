@@ -1,0 +1,16 @@
+name: Helm chart validations
+
+on:
+  push:
+    branches:
+      - "SRE-5685/json-schema"
+  paths:
+    - "charts/**/schemas/**"
+    - ".github/workflows/validations.yml"
+
+jobs:
+  validations:
+    runs-on: ubuntu-latest
+    steps:
+      - run:
+          echo "${{ toJson(github.event) }}""
