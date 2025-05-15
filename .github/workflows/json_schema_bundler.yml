@@ -7,7 +7,7 @@ on:
     - ".github/workflows/json_schema_bundle.yml"
 
 jobs:
-  json_schema_bundle:
+  json_schema_bundler:
     runs-on: ubuntu-latest
     steps:
     - name: Check out code
