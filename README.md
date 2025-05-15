@@ -27,11 +27,11 @@ dependencies:
 
 We use JSON schema to validate our custom charts. To enable that feature a `values.schema.json` file at the root directory for a given chart must be present. e.g. `charts/common/values.schema.json`.
 
-Both `heml template`, `helm lint` are JSON schema aware. `helm template` in specific is what ArgoCD uses to render the kubernetes manifests.
+Both `helm template`, `helm lint` are JSON schema aware. `helm template` in specific is what ArgoCD uses to render the kubernetes manifests.
 
-For our use case, we have decided to have a means to bundle together the schema files that can be found under the root directory for any given chart (e.g. `charts/common/schemas`) into a resulting `values.schema.json` file. This file gets created by [json-schema-bundler](https://www.npmjs.com/package/@skriptfabrik/json-schema-bundler) through the  (json_schema_bundler.yml)[https://github.com/dave-inc/charts/blob/master/.github/workflows/json_schema_bundler.yml)] workflow. The main entrypoint for the schemas is `charts/$chart_name/schemas/schema.yaml`. That file should include references to other subschemas so we can leverage modularization.
+For our use case, we have decided to have a means to bundle together the schema files that can be found under the root directory for any given chart (e.g. `charts/common/schemas`) into a resulting `values.schema.json` file. This file gets created by [json-schema-bundler](https://www.npmjs.com/package/@skriptfabrik/json-schema-bundler) through the  [json_schema_bundler.yml](https://github.com/dave-inc/charts/blob/master/.github/workflows/json_schema_bundler.yml) workflow. The main entrypoint for the schemas is `charts/$chart_name/schemas/schema.yaml`. That file should include references to other subschemas so we can leverage modularization.
 
-The reason  we don't use plain `$refs` pointing to a file path is because resolving those references becomes difficult since we have to account for absolute paths, relative paths, so `helm` is able to resolve them. The bundler takes care of that for us.
+The reason  we don't use plain `$refs` pointing to a file path is because resolving those references becomes difficult since we have to account for absolute paths, relative paths, and `helm` being able to resolve them under all circumstances. The bundler takes care of that for us.
 
 `json-schema-bundler` also has the benefit of allowing us to use yaml files as schemas improving readability. The bundler will convert them to json before rendering the final `values.schema.json` file.
 
@@ -41,16 +41,16 @@ If you want to introduce a new schema or update an existing one, you can do so b
 
 Install [json-schema-bundler](https://www.npmjs.com/package/@skriptfabrik/json-schema-bundler) locally and test things out this way:
 
-``` sh
+```sh
 npm install -g @skriptfabrik/json-schema-bundler
 cd ${charts_repo}/charts/common
 json-schema-bundler -d schemas/schema.yaml > values.schema.json
 helm lint .
 ```
 
-That should be enough to get you started with the JSON schema validation.
+That should be enough to get you started with JSON schema validations.
 
-Remember that values.schema.json is a generated file and should not be committed to the repo. The bundler will take care of that for you when the workflow runs.
+Remember that `values.schema.json` is a generated file and should not be committed to the repo. The bundler will take care of that for you when the workflow runs.
 
 ## To beta test your changes from a feature branch
 1. Create a PR
