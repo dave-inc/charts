@@ -1,0 +1,51 @@
+name: Helm chart json schema validation + bundling
+
+on:
+  pull_request:
+    paths:
+    - "charts/**/schemas/**"
+    - ".github/workflows/json_schema_bundle.yml"
+
+jobs:
+  json_schema_bundler:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@85e6279cec87321a52edac9c87bce653a07cf6c2 # main
+    - name: Set up Helm
+      uses: azure/setup-helm@fe7b79cd5ee1e45176fcad797de68ecaf3ca4814 # v4.2.0
+    - name: Retrieve changed json schema files
+      id: changed-files
+      uses: step-security/changed-files@3dbe17c78367e7d60f00d78ae6781a35be47b4a1 # v45.0.1
+      with:
+        files: |
+          charts/**/schemas/*.{json,yaml,yml}
+    - name: Get base directories for charts that had their json schema updated
+      env:
+        ALL_CHANGED_SCHEMA_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+      run: |
+        echo "Directories with changed files:"
+        for file in ${ALL_CHANGED_SCHEMA_FILES}; do
+          # Remove the filename, then the schema directory
+          dirname $(dirname $file)
+        done |
+        sort |
+        uniq |
+        tee changed_dirs.txt
+
+        echo CHANGED_DIRS="$(cat changed_dirs.txt)" >> $GITHUB_ENV
+    - name: Bundle json schema files and validate charts against them
+      run: |
+        npm install -g @skriptfabrik/json-schema-bundler
+        for dir in $CHANGED_DIRS; do
+          pushd $dir
+          json-schema-bundler -d schemas/schema.yaml | jq . > values.schema.json
+          helm lint .
+          popd
+        done
+    - name: Commit and push json schema bundle
+      uses: stefanzweifel/git-auto-commit-action@b863ae1933cb653a53c021fe36dbb774e1fb9403 # v5.2.0
+      with:
+        commit_message: Automated json schema bundle update for values.schema.json
+        file_pattern: >-
+          **/values.schema.json
