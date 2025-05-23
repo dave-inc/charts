@@ -1,5 +1,11 @@
 $schema: http://json-schema.org/draft-07/schema#
 type: object
 properties:
+  replicaCount:
+    type: integer
+    minimum: 0
+    description: Number of replicas for the application.
+
+  # Fields validated through subschemas
   cloudArmor:
     $ref: ./cloudArmor.schema.json#/properties/cloudArmor
