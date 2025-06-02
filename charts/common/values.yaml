@@ -108,6 +108,9 @@ imagePullSecrets: []
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
+  # Controls whether the service account token is automatically mounted into pods.
+  # Set to false to improve security if your app does not need to access the Kubernetes API.
+  automountServiceAccountToken: true
   # Annotations to add to the service account
   annotations: {}
   # The name of the service account to use.
