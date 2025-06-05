@@ -16,9 +16,6 @@ initContainer:
   name: "setup"
   image: "alpine:latest"
   command: ["sh", "-c", "touch /tmp/this"]
-  volumeMounts:
-    - name: tmp
-      mountPath: /tmp
 
 deploymentContainer:
   command: []
