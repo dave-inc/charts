@@ -1,0 +1,88 @@
+$schema: "http://json-schema.org/draft-07/schema#"
+type: object
+definitions:
+  probe:
+    type: object
+    properties:
+      path:
+        type: string
+      port:
+        type: integer
+        minimum: 1024
+        maximum: 65535
+      httpHeaders:
+        type: array
+        items:
+          type: object
+          properties:
+            name:
+              type: string
+            value:
+              type: string
+          required:
+            - name
+            - value
+      failureThreshold:
+        type: integer
+        minimum: 1
+      initialDelaySeconds:
+        type: integer
+        minimum: 0
+      periodSeconds:
+        type: integer
+        minimum: 1
+      successThreshold:
+        type: integer
+        minimum: 1
+      timeoutSeconds:
+        type: integer
+        minimum: 1
+
+    required:
+      - path
+      - failureThreshold
+      - initialDelaySeconds
+      - periodSeconds
+      - successThreshold
+      - timeoutSeconds
+properties:
+  deploymentContainer:
+    type: object
+    properties:
+      command:
+        type: array
+        items:
+          type: string
+      args:
+        type: array
+        items:
+          type: string
+
+      # Only unpriviledged ports are allowed
+      port:
+        type: integer
+        minimum: 1024
+        maximum: 65535
+
+      livenessProbe:
+        $ref: "#/definitions/probe"
+
+      readinessProbe:
+        $ref: "#/definitions/probe"
+
+      startupProbe:
+        $ref: "#/definitions/probe"
+
+      customLivenessProbe:
+        type: object
+
+      customReadinessProbe:
+        type: object
+
+      customStartupProbe:
+        type: object
+
+      lifecycle:
+        type: object
+
+    additionalProperties: false
