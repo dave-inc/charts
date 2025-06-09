@@ -49,11 +49,15 @@ spec:
       protocol: TCP
       name: http
   selector:
-  {{- if $.Values.podSelectorLabelsOverride }}
-    {{- $.Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
-  {{- else }}
+  {{- if .Values.canary.enabled -}}
+    {{- include "common.reverseProxySelectorLabels" . | nindent 4 }}
+  {{- else}}
+    {{- if $.Values.podSelectorLabelsOverride }}
+      {{- $.Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
+    {{- else }}
     app.kubernetes.io/name: {{ trimSuffix "-ca" $svc.name}}
     app.kubernetes.io/instance: {{ $.Release.Name }}
-  {{- end }}
+    {{- end }}
+  {{- end}}
 {{- end }}
 {{- end }}
