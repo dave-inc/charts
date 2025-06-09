@@ -9,3 +9,7 @@ properties:
   # Fields validated through subschemas
   cloudArmor:
     $ref: ./cloudArmor.schema.json#/properties/cloudArmor
+  initContainer:
+    $ref: ./initContainer.schema.yaml#/properties/initContainer
+  deploymentContainer:
+    $ref: ./deploymentContainer.schema.yaml#/properties/deploymentContainer
