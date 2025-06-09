@@ -24,7 +24,8 @@ deploymentContainer:
 
   # https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
   # Default probe mechanism httpGet, if a different mechanism is needed use customLivenessProbe and customReadinessProbe
-  livenessProbe: {}
+
+  # livenessProbe:
     # path: /
     # port: ""
     # httpHeaders:
@@ -35,7 +36,8 @@ deploymentContainer:
     # periodSeconds: 10
     # successThreshold: 1
     # timeoutSeconds: 1
-  readinessProbe: {}
+
+  # readinessProbe:
     # path: /
     # port: ""
     # httpHeaders:
@@ -46,7 +48,8 @@ deploymentContainer:
     # periodSeconds: 10
     # successThreshold: 1
     # timeoutSeconds: 1
-  startupProbe: {}
+
+  # startupProbe:
     # path: /
     # port: ""
     # httpHeaders:
