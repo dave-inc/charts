@@ -86,3 +86,6 @@ properties:
         type: object
 
     additionalProperties: false
+
+    required:
+      - port
