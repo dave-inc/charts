@@ -31,6 +31,7 @@ metadata:
   labels:
     {{- $labels | nindent 4 }}
   annotations:
+    argocd.argoproj.io/sync-wave: "1"
     cloud.google.com/backend-config: >
       {{- if $.Values.cloudArmor.backendConfig.iap }}
       {"ports": {"80":"{{ $commonname }}", "443":"{{ $commonname }}"},"default": "{{ $commonname }}"}
@@ -49,11 +50,15 @@ spec:
       protocol: TCP
       name: http
   selector:
-  {{- if $.Values.podSelectorLabelsOverride }}
-    {{- $.Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
-  {{- else }}
+  {{- if and $.Values.canary $.Values.canary.enabled -}}
+    {{- include "common.reverseProxySelectorLabels" $ | nindent 4 }}
+  {{- else}}
+    {{- if $.Values.podSelectorLabelsOverride }}
+      {{- $.Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
+    {{- else }}
     app.kubernetes.io/name: {{ trimSuffix "-ca" $svc.name}}
     app.kubernetes.io/instance: {{ $.Release.Name }}
-  {{- end }}
+    {{- end }}
+  {{- end}}
 {{- end }}
 {{- end }}
