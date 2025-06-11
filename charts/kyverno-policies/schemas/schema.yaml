@@ -1,0 +1,9 @@
+$schema: http://json-schema.org/draft-07/schema#
+type: object
+properties:
+  # Fields validated through subschemas
+  policySets:
+    type: object
+    properties:
+      common:
+        $ref: ./policySets.common.schema.yaml#/properties/common
