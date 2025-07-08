@@ -21,7 +21,8 @@ dependencies:
 ...
   ```
 4. Run `helm dependency update`. This will copy over the chart into this repo. Make you you don't commit it.
-5. Run `helm template .`. This will render out the Kubernetes manifest objects with the variables replaced to the `stdout`. The output should be a valid yaml file that could be directly applied in a GKE cluster. If there are errors the templating engine will write it to the `stderr`
+   a. If this command doesn't work you might need to first run `helm repo add dave-inc https://dave-inc.github.io/charts`
+6. Run `helm template .`. This will render out the Kubernetes manifest objects with the variables replaced to the `stdout`. The output should be a valid yaml file that could be directly applied in a GKE cluster. If there are errors the templating engine will write it to the `stderr`
 
 ## Validations through JSON schema
 
