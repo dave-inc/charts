@@ -50,8 +50,9 @@ spec:
       protocol: TCP
       name: http
   selector:
-  {{- if and $.Values.canary $.Values.canary.enabled -}}
-    {{- include "common.reverseProxySelectorLabels" $ | nindent 4 }}
+  {{- if $svc.canary -}}
+    app.kubernetes.io/name: {{ printf "%s-rproxy" (trimSuffix "-ca" $svc.name) }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
   {{- else}}
     {{- if $.Values.podSelectorLabelsOverride }}
       {{- $.Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
