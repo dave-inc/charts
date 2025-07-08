@@ -50,7 +50,7 @@ spec:
       protocol: TCP
       name: http
   selector:
-  {{- if $svc.canary -}}
+  {{- if $svc.canary }}
     app.kubernetes.io/name: {{ printf "%s-rproxy" (trimSuffix "-ca" $svc.name) }}
     app.kubernetes.io/instance: {{ $.Release.Name }}
   {{- else}}
