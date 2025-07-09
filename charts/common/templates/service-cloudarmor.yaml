@@ -52,7 +52,7 @@ spec:
   selector:
   {{- if $svc.canary }}
     app.kubernetes.io/name: {{ printf "%s-rproxy" (trimSuffix "-ca" $svc.name) }}
-    app.kubernetes.io/instance: {{ $.Release.Name }}
+    app.kubernetes.io/instance: {{ printf "%s-rproxy" $.Release.Name }}
   {{- else}}
     {{- if $.Values.podSelectorLabelsOverride }}
       {{- $.Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
