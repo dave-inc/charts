@@ -50,22 +50,22 @@ spec:
       protocol: TCP
       name: http
   selector:
-  {{- $caRootName := trimSuffix "-ca" $svc.name -}}
+  {{- $svcRootName := trimSuffix "-ca" $svc.name -}}
   {{- $commonname := include "common.name" $ -}}
   {{- $isCanary := false -}}
   {{- if kindIs "bool" $svc.canary -}}
     {{- $isCanary = $svc.canary -}}
-  {{- else if and $.Values.canary (kindIs "bool" $.Values.canary.enabled) (eq $caRootName $commonname) -}}
+  {{- else if and $.Values.canary (kindIs "bool" $.Values.canary.enabled) (eq $svcRootName $commonname) -}}
     {{- $isCanary = $.Values.canary.enabled -}}
   {{- end -}}
   
   {{- if $isCanary }}
-    app.kubernetes.io/name: {{ printf "%s-rproxy" $caRootName }}
+    app.kubernetes.io/name: {{ printf "%s-rproxy" $svcRootName }}
     app.kubernetes.io/instance: {{ printf "%s-rproxy" $.Release.Name }}
   {{- else if $.Values.podSelectorLabelsOverride }}
     {{- $.Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
   {{- else }}
-    app.kubernetes.io/name: {{ $caRootName }}
+    app.kubernetes.io/name: {{ $svcRootName }}
     app.kubernetes.io/instance: {{ $.Release.Name }}
   {{- end }}
 {{- end }}
