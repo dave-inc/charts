@@ -55,7 +55,7 @@ spec:
   {{- $isCanary := false -}}
   {{- if kindIs "bool" $svc.canary -}}
     {{- $isCanary = $svc.canary -}}
-  {{- else if and $.Values.canary (and (kindIs "bool" $.Values.canary.enabled) (eq $caRootName $commonname)) -}}
+  {{- else if and $.Values.canary (kindIs "bool" $.Values.canary.enabled) (eq $caRootName $commonname) -}}
     {{- $isCanary = $.Values.canary.enabled -}}
   {{- end -}}
   
