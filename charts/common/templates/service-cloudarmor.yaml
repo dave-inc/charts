@@ -51,7 +51,6 @@ spec:
       name: http
   selector:
   {{- $svcRootName := trimSuffix "-ca" $svc.name -}}
-  {{- $commonname := include "common.name" $ -}}
   {{- $isCanary := false -}}
   {{- if kindIs "bool" $svc.canary -}}
     {{- $isCanary = $svc.canary -}}
