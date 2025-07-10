@@ -51,9 +51,9 @@ spec:
       name: http
   selector:
   {{- $isCanary := false -}}
-  {{- if hasKey $svc "canary" -}}
+  {{- if kindIs "bool" $svc.canary -}}
     {{- $isCanary = $svc.canary -}}
-  {{- else -}}
+  {{- else if and $.Values.canary (kindIs "bool" $.Values.canary.enabled) -}}
     {{- $isCanary = $.Values.canary.enabled -}}
   {{- end -}}
   
