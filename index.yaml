@@ -60,6 +60,16 @@ entries:
   common:
   - apiVersion: v2
     appVersion: 1.17.0
+    created: "2025-07-11T00:50:13.650797675Z"
+    description: Standard Service Template
+    digest: 5af224d249e4bbe05530e9d091e2920c545436c7e22f470f7800d322b2a96548
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.10.4/common-0.10.4.tgz
+    version: 0.10.4
+  - apiVersion: v2
+    appVersion: 1.17.0
     created: "2025-07-10T21:03:59.823578576Z"
     description: Standard Service Template
     digest: 4155eab56a67fdaec27a9ddd216ddb770f43d8b477b76cbfc55b05c1715cface
@@ -500,16 +510,6 @@ entries:
     version: 0.8.9
   - apiVersion: v2
     appVersion: 1.17.0
-    created: "2024-09-18T16:21:03.735084914Z"
-    description: Standard Service Template
-    digest: 7bb442d82472d79639f3a077bf8317ab46a4ae1bf9463a270126f28b1baa1b47
-    name: common
-    type: application
-    urls:
-    - https://github.com/dave-inc/charts/releases/download/common-0.8.9-bei-719/common-0.8.9-bei-719.tgz
-    version: 0.8.9-bei-719
-  - apiVersion: v2
-    appVersion: 1.17.0
     created: "2024-09-18T23:07:53.957992564Z"
     description: Standard Service Template
     digest: c7e242bc43a7734a20e868ad3ad6e13ee5cb946482122f743ff485de32804d62
@@ -533,6 +533,16 @@ entries:
     created: "2024-09-18T02:33:58.165516692Z"
     description: Standard Service Template
     digest: ea5aa7d7405aacbc682f3a8bfffec3b5997a9743adf8fd680f7c81f3a492ee54
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.8.9-bei-719/common-0.8.9-bei-719.tgz
+    version: 0.8.9-bei-719
+  - apiVersion: v2
+    appVersion: 1.17.0
+    created: "2024-09-18T16:21:03.735084914Z"
+    description: Standard Service Template
+    digest: 7bb442d82472d79639f3a077bf8317ab46a4ae1bf9463a270126f28b1baa1b47
     name: common
     type: application
     urls:
@@ -2164,4 +2174,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2025-07-10T21:03:59.825267322Z"
+generated: "2025-07-11T00:50:13.652450188Z"
