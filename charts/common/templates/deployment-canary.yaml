@@ -10,7 +10,7 @@
 ) -}}
 {{- $imageTag := .Values.image.tag   }}
 {{- if and .Values.canary.image .Values.canary.image.tag }}
-{{- $imageTag := .Values.canary.image.tag }}
+{{- $imageTag = .Values.canary.image.tag }}
 {{- end }}
 {{- $sqlProxyVersion := include "common.cloudsqlProxyVersion" . -}}
 {{- $sqlinstanceConnectionName := include "common.instanceConnectionName" . -}}
