@@ -76,6 +76,19 @@ policySets:
             selector:
               matchLabels:
                 kyverno-labels-policy: skip
+    app-labels:
+      category: "SRE Best Practices"
+      severity: medium
+      validationFailureAction: Audit
+      exclude:
+        any:
+        - resources:
+            kinds:
+            - Deployment
+            - CronJob
+            selector:
+              matchLabels:
+                kyverno-labels-policy: skip
     probes:
       category: "SRE Best Practices"
       severity: medium
