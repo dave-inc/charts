@@ -8,7 +8,7 @@ metadata:
     policies.kyverno.io/title: Require Run As Non-Root User
     policies.kyverno.io/category: {{ .Values.policySets.common.securityContext.category }}
     policies.kyverno.io/severity: {{ .Values.policySets.common.securityContext.severity }}
-    policies.kyverno.io/subject: Deployment, Cronjob
+    policies.kyverno.io/subject: Deployment, CronJob
     kyverno.io/kyverno-version: 1.6.0
     kyverno.io/kubernetes-version: "1.22-1.23"
     policies.kyverno.io/description: >-

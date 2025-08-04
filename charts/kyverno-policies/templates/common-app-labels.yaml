@@ -8,7 +8,7 @@ metadata:
     policies.kyverno.io/title: Label `application` is required
     policies.kyverno.io/category: {{ .Values.policySets.common.labels.category }}
     policies.kyverno.io/severity: {{ .Values.policySets.common.labels.severity }}
-    policies.kyverno.io/subject: Deployment, Cronjob
+    policies.kyverno.io/subject: Deployment, CronJob
     policies.kyverno.io/minversion: 1.6.0
     policies.kyverno.io/description: >-
       This policy ensures that Deployments have a required label `application` defined. 
