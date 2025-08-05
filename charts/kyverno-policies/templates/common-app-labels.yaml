@@ -5,54 +5,136 @@ metadata:
   name: app-labels
   namespace: {{ .Values.policySets.common.namespace }}
   annotations:
-    policies.kyverno.io/title: Label `application` is required
-    policies.kyverno.io/category: {{ .Values.policySets.common.labels.category }}
-    policies.kyverno.io/severity: {{ .Values.policySets.common.labels.severity }}
+    policies.kyverno.io/title: Labels `application, env, email and slack` are required
+    policies.kyverno.io/category: {{ .Values.policySets.common.appLabels.category }}
+    policies.kyverno.io/severity: {{ .Values.policySets.common.appLabels.severity }}
     policies.kyverno.io/subject: Deployment, CronJob
     policies.kyverno.io/minversion: 1.6.0
     policies.kyverno.io/description: >-
-      This policy ensures that Deployments have a required label `application` defined. 
-      Assigning a `application` label to Deployments is a best practice for organizational clarity and resource management. 
+      This policy ensures that Deployments/CronJobs have a required `application` labels defined. 
+      Assigning a `application` labels to Deployments/Cronjobs is a best practice for organizational clarity and resource management. 
       It helps in categorizing and identifying resources belonging to specific teams or departments within a Kubernetes cluster.
 spec:
-  validationFailureAction: {{ .Values.policySets.common.app-labels.validationFailureAction }}
+  validationFailureAction: {{ .Values.policySets.common.appLabels.validationFailureAction }}
   rules:
-    - name: label-application-required
+    - name: application-labels-required
       match:
         any:
         - resources:
             kinds:
             - Deployment
       exclude:
-        {{ .Values.policySets.common.app-labels.exclude | toYaml | nindent 8 }}
+        {{ .Values.policySets.common.appLabels.exclude | toYaml | nindent 8 }}
       validate:
-        message: "Label `application` is required."
+        message: "Additional labels for `application, env, email and slack_channel` are required and one or more are missing."
         anyPattern:
         - metadata:
             labels:
               application: "?*"
+              env: "?*"
+              email: "?*"
+              slack_channel: "?*"
         - spec:
             template:
               metadata:
                 labels:
                   application: "?*"
-    - name: cron-label-application-required
+                  env: "?*"
+                  email: "?*"
+                  slack_channel: "?*"
+    - name: cron-app-labels-required
       match:
         any:
           - resources:
               kinds:
               - CronJob
       exclude:
-        {{ .Values.policySets.common.app-labels.exclude | toYaml | nindent 8 }}
+        {{ .Values.policySets.common.appLabels.exclude | toYaml | nindent 8 }}
       validate:
-        message: "Label `application` is required."
+        message: "Additional labels for `application, env, email and slack_channel` are required and one or more are missing."
         anyPattern:
         - metadata:
             labels:
               application: "?*"
+              env: "?*"
+              email: "?*"
+              slack_channel: "?*"
         - spec:
             template:
               metadata:
                 labels:
                   application: "?*"
+                  env: "?*"
+                  email: "?*"
+                  slack_channel: "?*"
+    # New rule: Validate env label values for Deployments
+    - name: deployment-env-label-validation
+      match:
+        any:
+        - resources:
+            kinds:
+            - Deployment
+      exclude:
+        any:
+        - resources:
+            kinds:
+            - Deployment
+            - CronJob
+            selector:
+              matchLabels:
+                kyverno-labels-policy: skip
+      validate:
+        message: "The 'env' label must be either 'staging' or 'production'."
+        anyPattern:
+        - metadata:
+            labels:
+              env: "staging"
+        - metadata:
+            labels:
+              env: "production"
+        - spec:
+            template:
+              metadata:
+                labels:
+                  env: "staging"
+        - spec:
+            template:
+              metadata:
+                labels:
+                  env: "production"
+    # New rule: Validate env label values for CronJobs
+    - name: cronjob-env-label-validation
+      match:
+        any:
+        - resources:
+            kinds:
+            - CronJob
+      exclude:
+        any:
+        - resources:
+            kinds:
+            - Deployment
+            - CronJob
+            selector:
+              matchLabels:
+                kyverno-labels-policy: skip
+      validate:
+        message: "The 'env' label must be either 'staging' or 'production'."
+        anyPattern:
+        - metadata:
+            labels:
+              env: "staging"
+        - metadata:
+            labels:
+              env: "production"
+        - spec:
+            template:
+              metadata:
+                labels:
+                  env: "staging"
+        - spec:
+            template:
+              metadata:
+                labels:
+                  env: "production" 
 {{- end }}

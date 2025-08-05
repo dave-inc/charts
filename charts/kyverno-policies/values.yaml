@@ -76,7 +76,7 @@ policySets:
             selector:
               matchLabels:
                 kyverno-labels-policy: skip
-    app-labels:
+    appLabels:
       category: "SRE Best Practices"
       severity: medium
       validationFailureAction: Audit
