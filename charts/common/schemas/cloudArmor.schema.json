@@ -33,6 +33,9 @@
                     "type": "integer",
                     "minimum": 1,
                     "maximum": 65535
+                  },
+                  "canary": {
+                    "type": "boolean"
                   }
                 },
                 "required": ["name", "port", "targetPort"],
