@@ -88,6 +88,9 @@ spec:
         anyPattern:
         - metadata:
             labels:
+              env: "development"
+        - metadata:
+            labels:
               env: "staging"
         - metadata:
             labels:
@@ -121,6 +124,9 @@ spec:
       validate:
         message: "The 'env' label must be either 'staging' or 'production'."
         anyPattern:
+        - metadata:
+            labels:
+              env: "development"
         - metadata:
             labels:
               env: "staging"
