@@ -10,7 +10,7 @@ metadata:
     policies.kyverno.io/title: Require Requests and Limits
     policies.kyverno.io/category: {{ .Values.policySets.common.resources.category }}
     policies.kyverno.io/severity: {{ .Values.policySets.common.resources.severity }}
-    policies.kyverno.io/subject: Deployment, DaemonSet, Statefulset, Cronjob
+    policies.kyverno.io/subject: Deployment, DaemonSet, StatefulSet, CronJob
     policies.kyverno.io/minversion: 1.6.0
     policies.kyverno.io/description: >-
       As application workloads share cluster resources, it is important to define resources

@@ -10,7 +10,7 @@ metadata:
     policies.kyverno.io/title: Require Limits and Requests
     policies.kyverno.io/category: {{ .Values.policySets.common.forbid.category }}
     policies.kyverno.io/severity: {{ .Values.policySets.common.forbid.severity }}
-    policies.kyverno.io/subject: Cronjob
+    policies.kyverno.io/subject: CronJob
     policies.kyverno.io/minversion: 1.6.0
     policies.kyverno.io/description: >-
       This policy ensures that when the `Forbidden` concurrency policy is applied to CronJobs, there is a `startingDeadlineSeconds` defined. 
