@@ -99,6 +99,11 @@ spec:
             template:
               metadata:
                 labels:
+                  env: "development"
+        - spec:
+            template:
+              metadata:
+                labels:
                   env: "staging"
         - spec:
             template:
@@ -133,6 +138,11 @@ spec:
         - metadata:
             labels:
               env: "production"
+        - spec:
+            template:
+              metadata:
+                labels:
+                  env: "development"
         - spec:
             template:
               metadata:
