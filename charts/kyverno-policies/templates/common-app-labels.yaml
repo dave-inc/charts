@@ -84,7 +84,7 @@ spec:
               matchLabels:
                 kyverno-labels-policy: skip
       validate:
-        message: "The 'env' label must be either 'staging' or 'production'."
+        message: "The 'env' label must be either 'development', 'staging' or 'production'."
         anyPattern:
         - metadata:
             labels:
@@ -127,7 +127,7 @@ spec:
               matchLabels:
                 kyverno-labels-policy: skip
       validate:
-        message: "The 'env' label must be either 'staging' or 'production'."
+        message: "The 'env' label must be either 'development', 'staging' or 'production'."
         anyPattern:
         - metadata:
             labels:
