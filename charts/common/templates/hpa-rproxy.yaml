@@ -1,4 +1,9 @@
 {{- if and .Values.canary.enabled .Values.canary.reverseProxy.autoscaling.enabled }}
+{{- $rpAuto := .Values.canary.reverseProxy.autoscaling -}}
+{{- $rootAuto := .Values.autoscaling -}}
+{{- $min := coalesce $rpAuto.minReplicas $rootAuto.minReplicas -}}
+{{- $max := coalesce $rpAuto.maxReplicas $rootAuto.maxReplicas -}}
+{{- $metrics := coalesce $rpAuto.metrics $rootAuto.metrics -}}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
@@ -10,10 +15,12 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: {{ include "common.reverseProxyName" . }}
-  minReplicas: {{ .Values.autoscaling.minReplicas }}
-  maxReplicas: {{ .Values.autoscaling.maxReplicas }}
+  minReplicas: {{ $min }}
+  maxReplicas: {{ $max }}
+  {{- with $metrics }}
   metrics:
-    {{- toYaml .Values.autoscaling.metrics | nindent 4 }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   {{- if .Values.hpaBehavior.enabled }}
   behavior:
     {{- toYaml .Values.hpaBehavior.behavior | nindent 4 }}
