@@ -10,6 +10,10 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
+      - name: Connect to Twingate
+        uses: twingate/github-action@a8e6c2471f32650531a4683f45e485a2e97e048c # v1.5
+        with:
+          service-key: ${{ secrets.TWINGATE_SERVICE_KEY}}
       - name: Checkout
         uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2
         with:
