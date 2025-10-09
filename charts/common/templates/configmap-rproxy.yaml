@@ -33,7 +33,6 @@ data:
       {{- if ne (toString $canaryWeight) "0" }}
       server ${NGINX_CANARY_HOST} max_fails=0 fail_timeout=0 weight=${NGINX_CANARY_WEIGHT};
       {{- end }}
-      keepalive 32;
     }
     
     # Map the X-Dave-Upstream-Group header to a variable
