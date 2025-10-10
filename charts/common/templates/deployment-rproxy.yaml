@@ -24,7 +24,8 @@ spec:
         {{- /*
         https://helm.sh/docs/howto/charts_tips_and_tricks/#automatically-roll-deployments
         */}}
-        checksum/config: {{ .Values.env | toString | sha256sum }}
+        checksum/env: {{ .Values.env | toString | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/configmap-rproxy.yaml") . | sha256sum }}
         {{- if .Values.podAnnotations }}
         {{- toYaml .Values.podAnnotations | nindent 8 }}
         {{- end }}
