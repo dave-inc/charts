@@ -96,7 +96,11 @@ data:
                         '$status $body_bytes_sent "$http_referer" '
                         '"$http_user_agent" "$http_x_forwarded_for"';
 
+        {{- if .Values.canary.reverseProxy.enableAccessLogs }}
         access_log /dev/stdout main;
+        {{- else }}
+        access_log off;
+        {{- end }}
         error_log /dev/stderr warn;
 
         sendfile on;

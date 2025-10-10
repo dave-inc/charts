@@ -156,6 +156,7 @@ canary:
       control: {}
   # Implementation specific configurations for canary deployment
   reverseProxy:
+    enableAccessLogs: false # WARNING: enabling this will cause every request to be logged. That is a lot of logs.
     livenessProbe:
       initialDelaySeconds: 1
       failureThreshold: 3
