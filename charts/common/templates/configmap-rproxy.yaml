@@ -1,5 +1,6 @@
 {{- if .Values.canary.enabled -}}
 {{- $canaryWeight := .Values.canary.weight }}
+{{- $minUpstreams := max .Values.canary.reverseProxy.minUpstreams .Values.autoscaling.maxReplicas }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -21,17 +22,25 @@ data:
 
     # Upstream definitions
     upstream canary {
+      {{- range $i := until (int $minUpstreams) }}
       server ${NGINX_CANARY_HOST} max_fails=0 fail_timeout=0;
+      {{- end }}
     }
     
     upstream control {
+      {{- range $i := until (int $minUpstreams) }}
       server ${NGINX_CONTROL_HOST} max_fails=0 fail_timeout=0;
+      {{- end }}
     }
     
     upstream backend {
+      {{- range $i := until (int $minUpstreams) }}
       server ${NGINX_CONTROL_HOST} max_fails=0 fail_timeout=0 weight=${NGINX_CONTROL_WEIGHT};
+      {{- end }}
       {{- if ne (toString $canaryWeight) "0" }}
+      {{- range $i := until (int $minUpstreams) }}
       server ${NGINX_CANARY_HOST} max_fails=0 fail_timeout=0 weight=${NGINX_CANARY_WEIGHT};
+      {{- end }}
       {{- end }}
     }
     
