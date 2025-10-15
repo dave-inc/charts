@@ -159,7 +159,7 @@ canary:
     # WARNING: enabling this will cause every request to be logged. That is a lot of logs.
     enableAccessLogs: false 
     # min amount of times upstream will be duplicated, the actual count: max(.Values.canary.reverseProxy.minUpstreams, .Values.autoscaling.maxReplicas)
-    minUpstreams: 10 
+    minUpstreams: 10
     livenessProbe:
       initialDelaySeconds: 1
       failureThreshold: 3
