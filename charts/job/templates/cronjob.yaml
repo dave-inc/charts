@@ -70,6 +70,7 @@ spec:
             {{- if .Values.initContainer.enabled }}
             - name: {{ .Values.initContainer.name }}
               image: {{ .Values.initContainer.image }}
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
               command: {{ toYaml .Values.initContainer.command | nindent 14 }}
               volumeMounts:
                 - name: tmp
