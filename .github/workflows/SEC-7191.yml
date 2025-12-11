@@ -1,0 +1,29 @@
+
+name: SEC-7191
+on:
+  push:
+    paths:
+      - '.github/workflows/SEC-7191.yml'
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  check-secrets:
+    runs-on: self-hosted-small-spot
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Google Cloud Auth
+        uses: dave-inc/common-workflows/.github/actions/google-github-actions-auth@main
+        with:
+          project_id: 'secure-fac2'
+          workload_identity_provider: 'projects/250347595032/locations/global/workloadIdentityPools/gh-org-auto/providers/gh-org-auto'
+          service_account: 'gh-sec-6537@workload-identity-094a.iam.gserviceaccount.com'
+          google_authentication_type: 'wif_service_account'
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@77e7a554d41e2ee56fc945c52dfd3f33d12def9a # v2.1.4
+      - name: Check secrets for GCP service account keys
+        id: check-secrets
+        uses: dave-inc/common-workflows/.github/actions/check-secrets-for-sa-keys@main
+        with:
+          secrets-context: ${{ toJson(secrets) }}
