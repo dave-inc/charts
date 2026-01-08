@@ -157,9 +157,13 @@ canary:
   # Implementation specific configurations for canary deployment
   reverseProxy:
     # WARNING: enabling this will cause every request to be logged. That is a lot of logs.
-    enableAccessLogs: false 
+    enableAccessLogs: false
     # Minimum number of upstreams to duplicate; the actual count: max(.Values.canary.reverseProxy.minUpstreams, .Values.autoscaling.maxReplicas)
     minUpstreams: 10
+    send_timeout: 30s
+    proxy_connect_timeout: 5s
+    proxy_send_timeout: 30s
+    proxy_read_timeout: 30s
     livenessProbe:
       initialDelaySeconds: 1
       failureThreshold: 3
