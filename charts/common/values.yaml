@@ -160,6 +160,8 @@ canary:
     enableAccessLogs: false
     # Minimum number of upstreams to duplicate; the actual count: max(.Values.canary.reverseProxy.minUpstreams, .Values.autoscaling.maxReplicas)
     minUpstreams: 10
+    # Timeouts for the reverse proxy. These defaults are intended for web services. If you would like to use canary for something 
+    # like a GCP task handler you would need to increase these limits
     send_timeout: 30s
     proxy_connect_timeout: 5s
     proxy_send_timeout: 30s
