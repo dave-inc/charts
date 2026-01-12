@@ -230,6 +230,14 @@
                 },
                 "type": {
                   "type": "string"
+                },
+                "timeoutSec": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "checkIntervalSec": {
+                  "type": "integer",
+                  "minimum": 1
                 }
               },
               "required": [
