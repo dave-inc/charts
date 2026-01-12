@@ -25,6 +25,11 @@ dependencies:
 
 ## Validations through JSON schema
 
+> [!WARNING]
+> As it is right now, the `json_schema_bundler.yml` workflow is unable to push commits by itself
+>
+> Reach out to SRE if you need to update the `values.schema.json` file
+
 We use JSON schema to validate our custom charts. To enable that feature a `values.schema.json` file at the root directory for a given chart must be present. e.g. `charts/common/values.schema.json`.
 
 Both `helm template`, `helm lint` are JSON schema aware. `helm template` in specific is what ArgoCD uses to render the kubernetes manifests.
