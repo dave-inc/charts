@@ -170,16 +170,16 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           {{- end }}
-          {{- if .Values.commandCanary }}
+          {{- if .Values.canary.deploymentContainer.command }}
           command:
-            {{- toYaml .Values.commandCanary | nindent 12 }}
+            {{- toYaml .Values.canary.deploymentContainer.command | nindent 12 }}
           {{- else if .Values.deploymentContainer.command }}
           command:
             {{- toYaml .Values.deploymentContainer.command | nindent 12 }}
           {{- end }}
-          {{- if .Values.argsCanary }}
+          {{- if .Values.canary.deploymentContainer.args }}
           args:
-            {{- toYaml .Values.argsCanary | nindent 12 }}
+            {{- toYaml .Values.canary.deploymentContainer.args | nindent 12 }}
           {{- else if .Values.deploymentContainer.args }}
           args:
             {{- toYaml .Values.deploymentContainer.args | nindent 12 }}

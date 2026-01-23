@@ -224,6 +224,9 @@ canary:
   # weight: 5
   # image:
   #  tag: ""
+  # deploymentContainer:
+  #  command: []
+  #  args: []
 
 ingress:
   enabled: false
