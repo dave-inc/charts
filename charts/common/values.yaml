@@ -150,9 +150,9 @@ service:
 canary:
   enabled: false
   weight: 0
-  # deploymentContainer:
-  #  command: []
-  #  args: []
+  deploymentContainer:
+    command: []
+    args: []
   service:
     annotations:
       canary: {}
