@@ -166,7 +166,10 @@ spec:
           startupProbe:
             {{- toYaml .Values.deploymentContainer.customStartupProbe | nindent 12 }}
           {{- end }}
-          {{- if .Values.resources }}
+          {{- if .Values.canary.resources }}
+          resources:
+            {{- toYaml .Values.canary.resources | nindent 12 }}
+          {{- else if .Values.resources }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           {{- end }}
