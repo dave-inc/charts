@@ -50,16 +50,16 @@ deploymentContainer:
   #   timeoutSeconds: 1
 
   # startupProbe:
-    # path: /
-    # port: ""
-    # httpHeaders:
-    #   - name: Custom-Header
-    #     value: Awesome
-    # failureThreshold: 3
-    # initialDelaySeconds: 0
-    # periodSeconds: 10
-    # successThreshold: 1
-    # timeoutSeconds: 1
+  #   path: /
+  #   port: ""
+  #   httpHeaders:
+  #     - name: Custom-Header
+  #       value: Awesome
+  #   failureThreshold: 3
+  #   initialDelaySeconds: 0
+  #   periodSeconds: 10
+  #   successThreshold: 1
+  #   timeoutSeconds: 1
 
   # customlivenessProbe that overrides the default one
   # example:
