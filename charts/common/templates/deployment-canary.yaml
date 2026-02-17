@@ -112,59 +112,86 @@ spec:
             - name: http
               containerPort: {{ .Values.deploymentContainer.port }}
               protocol: TCP
-          {{- if .Values.deploymentContainer.livenessProbe }}
+          {{- $livenessProbe := .Values.deploymentContainer.livenessProbe -}}
+          {{- $customLivenessProbe := .Values.deploymentContainer.customLivenessProbe -}}
+          {{- if .Values.canary.deploymentContainer.livenessProbe -}}
+            {{- $livenessProbe = .Values.canary.deploymentContainer.livenessProbe -}}
+            {{- $customLivenessProbe = nil -}}
+          {{- else if .Values.canary.deploymentContainer.customLivenessProbe -}}
+            {{- $livenessProbe = nil -}}
+            {{- $customLivenessProbe = .Values.canary.deploymentContainer.customLivenessProbe -}}
+          {{- end -}}
+          {{- if $livenessProbe }}
           livenessProbe:
             httpGet:
-              path: {{ .Values.deploymentContainer.livenessProbe.path }}
-              port: {{ .Values.deploymentContainer.livenessProbe.port | default .Values.deploymentContainer.port }}
-              {{- if .Values.deploymentContainer.livenessProbe.httpHeaders }}
+              path: {{ $livenessProbe.path }}
+              port: {{ $livenessProbe.port | default .Values.deploymentContainer.port }}
+              {{- if $livenessProbe.httpHeaders }}
               httpHeaders:
-                {{- toYaml .Values.deploymentContainer.livenessProbe.httpHeaders | nindent 16 }}
+                {{- toYaml $livenessProbe.httpHeaders | nindent 16 }}
               {{- end }}
-            failureThreshold: {{ .Values.deploymentContainer.livenessProbe.failureThreshold }}
-            initialDelaySeconds: {{ .Values.deploymentContainer.livenessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.deploymentContainer.livenessProbe.periodSeconds }}
-            successThreshold: {{ .Values.deploymentContainer.livenessProbe.successThreshold }}
-            timeoutSeconds: {{ .Values.deploymentContainer.livenessProbe.timeoutSeconds }}
-          {{- else if .Values.deploymentContainer.customLivenessProbe }}
+            failureThreshold: {{ $livenessProbe.failureThreshold }}
+            initialDelaySeconds: {{ $livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ $livenessProbe.periodSeconds }}
+            successThreshold: {{ $livenessProbe.successThreshold }}
+            timeoutSeconds: {{ $livenessProbe.timeoutSeconds }}
+          {{- else if $customLivenessProbe }}
           livenessProbe:
-            {{- toYaml .Values.deploymentContainer.customLivenessProbe | nindent 12 }}
+            {{- toYaml $customLivenessProbe | nindent 12 }}
           {{- end }}
-          {{- if .Values.deploymentContainer.readinessProbe }}
+          {{- $readinessProbe := .Values.deploymentContainer.readinessProbe -}}
+          {{- $customReadinessProbe := .Values.deploymentContainer.customReadinessProbe -}}
+          {{- if .Values.canary.deploymentContainer.readinessProbe -}}
+            {{- $readinessProbe = .Values.canary.deploymentContainer.readinessProbe -}}
+            {{- $customReadinessProbe = nil -}}
+          {{- else if .Values.canary.deploymentContainer.customReadinessProbe -}}
+            {{- $readinessProbe = nil -}}
+            {{- $customReadinessProbe = .Values.canary.deploymentContainer.customReadinessProbe -}}
+          {{- end -}}
+          {{- if $readinessProbe }}
           readinessProbe:
             httpGet:
-              path: {{ .Values.deploymentContainer.readinessProbe.path }}
-              port: {{ .Values.deploymentContainer.readinessProbe.port | default .Values.deploymentContainer.port }}
-              {{- if .Values.deploymentContainer.readinessProbe.httpHeaders }}
+              path: {{ $readinessProbe.path }}
+              port: {{ $readinessProbe.port | default .Values.deploymentContainer.port }}
+              {{- if $readinessProbe.httpHeaders }}
               httpHeaders:
-                {{- toYaml .Values.deploymentContainer.readinessProbe.httpHeaders | nindent 16 }}
+                {{- toYaml $readinessProbe.httpHeaders | nindent 16 }}
               {{- end }}
-            failureThreshold: {{ .Values.deploymentContainer.readinessProbe.failureThreshold }}
-            initialDelaySeconds: {{ .Values.deploymentContainer.readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.deploymentContainer.readinessProbe.periodSeconds }}
-            successThreshold: {{ .Values.deploymentContainer.readinessProbe.successThreshold }}
-            timeoutSeconds: {{ .Values.deploymentContainer.readinessProbe.timeoutSeconds }}
-          {{- else if .Values.deploymentContainer.customReadinessProbe }}
+            failureThreshold: {{ $readinessProbe.failureThreshold }}
+            initialDelaySeconds: {{ $readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ $readinessProbe.periodSeconds }}
+            successThreshold: {{ $readinessProbe.successThreshold }}
+            timeoutSeconds: {{ $readinessProbe.timeoutSeconds }}
+          {{- else if $customReadinessProbe }}
           readinessProbe:
-            {{- toYaml .Values.deploymentContainer.customReadinessProbe | nindent 12 }}
+            {{- toYaml $customReadinessProbe | nindent 12 }}
           {{- end }}
-          {{- if .Values.deploymentContainer.startupProbe }}
+          {{- $startupProbe := .Values.deploymentContainer.startupProbe -}}
+          {{- $customStartupProbe := .Values.deploymentContainer.customStartupProbe -}}
+          {{- if .Values.canary.deploymentContainer.startupProbe -}}
+            {{- $startupProbe = .Values.canary.deploymentContainer.startupProbe -}}
+            {{- $customStartupProbe = nil -}}
+          {{- else if .Values.canary.deploymentContainer.customStartupProbe -}}
+            {{- $startupProbe = nil -}}
+            {{- $customStartupProbe = .Values.canary.deploymentContainer.customStartupProbe -}}
+          {{- end -}}
+          {{- if $startupProbe }}
           startupProbe:
             httpGet:
-              path: {{ .Values.deploymentContainer.startupProbe.path }}
-              port: {{ .Values.deploymentContainer.startupProbe.port | default .Values.deploymentContainer.port }}
-              {{- if .Values.deploymentContainer.startupProbe.httpHeaders }}
+              path: {{ $startupProbe.path }}
+              port: {{ $startupProbe.port | default .Values.deploymentContainer.port }}
+              {{- if $startupProbe.httpHeaders }}
               httpHeaders:
-                {{- toYaml .Values.deploymentContainer.startupProbe.httpHeaders | nindent 16 }}
+                {{- toYaml $startupProbe.httpHeaders | nindent 16 }}
               {{- end }}
-            failureThreshold: {{ .Values.deploymentContainer.startupProbe.failureThreshold }}
-            initialDelaySeconds: {{ .Values.deploymentContainer.startupProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.deploymentContainer.startupProbe.periodSeconds }}
-            successThreshold: {{ .Values.deploymentContainer.startupProbe.successThreshold }}
-            timeoutSeconds: {{ .Values.deploymentContainer.startupProbe.timeoutSeconds }}
-          {{- else if .Values.deploymentContainer.customStartupProbe }}
+            failureThreshold: {{ $startupProbe.failureThreshold }}
+            initialDelaySeconds: {{ $startupProbe.initialDelaySeconds }}
+            periodSeconds: {{ $startupProbe.periodSeconds }}
+            successThreshold: {{ $startupProbe.successThreshold }}
+            timeoutSeconds: {{ $startupProbe.timeoutSeconds }}
+          {{- else if $customStartupProbe }}
           startupProbe:
-            {{- toYaml .Values.deploymentContainer.customStartupProbe | nindent 12 }}
+            {{- toYaml $customStartupProbe | nindent 12 }}
           {{- end }}
           {{- if .Values.canary.resources }}
           resources:
