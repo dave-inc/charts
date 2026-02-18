@@ -153,6 +153,14 @@ canary:
   deploymentContainer:
     command: []
     args: []
+    # Optional: override probes for canary only (same structure as deploymentContainer).
+    # If unset, canary uses the main deployment's liveness/readiness/startup probes.
+    # livenessProbe: {}
+    # customLivenessProbe: {}
+    # readinessProbe: {}
+    # customReadinessProbe: {}
+    # startupProbe: {}
+    # customStartupProbe: {}
   resources: {}
   service:
     annotations:
