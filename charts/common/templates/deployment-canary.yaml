@@ -116,9 +116,7 @@ spec:
           {{- $customLivenessProbe := .Values.deploymentContainer.customLivenessProbe -}}
           {{- if .Values.canary.deploymentContainer.livenessProbe -}}
             {{- $livenessProbe = .Values.canary.deploymentContainer.livenessProbe -}}
-            {{- $customLivenessProbe = nil -}}
           {{- else if .Values.canary.deploymentContainer.customLivenessProbe -}}
-            {{- $livenessProbe = nil -}}
             {{- $customLivenessProbe = .Values.canary.deploymentContainer.customLivenessProbe -}}
           {{- end -}}
           {{- if $livenessProbe }}
@@ -143,9 +141,7 @@ spec:
           {{- $customReadinessProbe := .Values.deploymentContainer.customReadinessProbe -}}
           {{- if .Values.canary.deploymentContainer.readinessProbe -}}
             {{- $readinessProbe = .Values.canary.deploymentContainer.readinessProbe -}}
-            {{- $customReadinessProbe = nil -}}
           {{- else if .Values.canary.deploymentContainer.customReadinessProbe -}}
-            {{- $readinessProbe = nil -}}
             {{- $customReadinessProbe = .Values.canary.deploymentContainer.customReadinessProbe -}}
           {{- end -}}
           {{- if $readinessProbe }}
@@ -170,9 +166,7 @@ spec:
           {{- $customStartupProbe := .Values.deploymentContainer.customStartupProbe -}}
           {{- if .Values.canary.deploymentContainer.startupProbe -}}
             {{- $startupProbe = .Values.canary.deploymentContainer.startupProbe -}}
-            {{- $customStartupProbe = nil -}}
           {{- else if .Values.canary.deploymentContainer.customStartupProbe -}}
-            {{- $startupProbe = nil -}}
             {{- $customStartupProbe = .Values.canary.deploymentContainer.customStartupProbe -}}
           {{- end -}}
           {{- if $startupProbe }}
