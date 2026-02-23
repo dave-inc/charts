@@ -1,56 +1,86 @@
-{{- if .Values.ingress.enabled -}}
 {{- $labels := include "common.labels" . -}}
 {{- $svcport := .Values.service.port -}}
-{{- range .Values.ingress.hosts }}
-{{- $hostwithdashes := printf "%s" .host | replace "." "-" -}}
-{{- $hostwithdashestls := printf "%s-tls" .host | replace "." "-" }}
----
+
+{{/* 1. Standard Ingress */}}
+{{- if .Values.ingress.enabled -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ .name | default $hostwithdashes }}
+  name: {{ include "common.fullname" . }}
   labels:
     {{- $labels | nindent 4 }}
-  {{- if .annotations }}
   annotations:
-    {{- with .annotations }}
+    {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-  {{- end }}
 spec:
-  rules:
-  - host: {{ .host | quote }}
-    http:
-      paths:
-      {{- range .paths }}
-      - backend:
-        {{- range $backend, $service := .backend }}
-          service:
-            name: {{ $service.name }}
-            port:
-              {{- if $service.port }}
-              number: {{ $service.port.number }}
-              {{- else }}
-              number: {{ default $svcport }}
-              {{- end }}
-        {{- end }}
-        path: {{ .path | default "/" }}
-        pathType: {{ .pathType | default "ImplementationSpecific" }}
-      {{- end }}
-  {{- if .tls }}
+  ingressClassName: {{ .Values.ingress.ingressClassName | default "nginx-internal" }}
   tls:
-    {{- range .tls }}
-    - hosts:
-        {{- range .hosts }}
-        - {{ . | quote }}
-        {{- end }}
-      secretName: {{ .secretName | default $hostwithdashestls }}
-    {{- end -}}
-  {{- else }}
-  tls:
+    {{- range .Values.ingress.hosts }}
+    {{- /* Naming Helpers for standard hosts */ -}}
+    {{- $hostwithdashestls := printf "%s-tls" .host | replace "." "-" }}
     - hosts:
         - {{ .host | quote }}
-      secretName: {{ $hostwithdashestls }}
-  {{- end -}}
+      secretName: {{ .secretName | default $hostwithdashestls }}
+    {{- end }}
+  rules:
+    {{- range .Values.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType | default "ImplementationSpecific" }}
+            backend:
+              {{- toYaml .backend | nindent 14 }}
+          {{- end }}
+    {{- end }}
 {{- end }}
+
+{{/* 2. Google CAS Ingress */}}
+{{- if and .Values.googleIngress .Values.googleIngress.enabled -}}
+---
+{{- /* Naming Helpers for the CAS host */ -}}
+{{- $hostwithdashes := printf "%s" .Values.googleIngress.host | replace "." "-" -}}
+{{- $hostwithdashestls := printf "%s-tls" .Values.googleIngress.host | replace "." "-" }}
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  # Uses the sanitized host name so ArgoCD sees it as a unique resource
+  name: {{ include "common.fullname" . }}-{{ $hostwithdashes }}
+  labels:
+    {{- $labels | nindent 4 }}
+  annotations:
+    {{- if .Values.googleIngress.issuer-kind }} ## if this is used, we know it is a google-cas signed cert
+    cert-manager.io/issuer-group: {{ .Values.googleIngress.issuer-group | default "cas-issuer.jetstack.io" | quote }}
+    cert-manager.io/issuer-kind: {{ .Values.googleIngress.issuer-kind | default "GoogleCASClusterIssuer" | quote }}
+    cert-manager.io/issuer-name: {{ .Values.googleIngress.issuer-name | default "google-cas-cluster-issuer" | quote }}
+    {{- end }}
+    kubernetes.io/ingress.class: {{ .Values.googleIngress.ingressClass | default "nginx-internal" | quote }}
+    {{- if .Values.googleIngress.tls-acme }} ## if this is used we know it is a public certificate signed by letsencrypt
+    kubernetes.io/tls-acme: {{ .Values.googleIngress.tls-acme | default "true" | quote }}
+    cert-manager.io/cluster-issuer: {{ .Values.googleIngress | default "google-letsencrypt" | quote }}
+    {{- end }}
+    {{- with .Values.googleIngress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.googleIngress.ingressClass | default "nginx-internal" | quote }}
+  tls:
+    - hosts:
+        - {{ .Values.googleIngress.host | quote }}
+      # Defaults to the sanitized name if no secretName is provided in values
+      secretName: {{ .Values.googleIngress.tlsSecretName | default $hostwithdashestls }}
+  rules:
+    - host: {{ .Values.googleIngress.host | quote }}
+      http:
+        paths:
+          - path: {{ .Values.googleIngress.path | default "/" }}
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: {{ include "common.fullname" . }}
+                port:
+                  number: {{ $svcport | default 5000 }}
 {{- end }}
