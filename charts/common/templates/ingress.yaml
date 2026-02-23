@@ -52,15 +52,15 @@ metadata:
   labels:
     {{- $labels | nindent 4 }}
   annotations:
-    {{- if .Values.googleIngress.issuer-kind }} ## if this is used, we know it is a google-cas signed cert
-    cert-manager.io/issuer-group: {{ .Values.googleIngress.issuer-group | default "cas-issuer.jetstack.io" | quote }}
-    cert-manager.io/issuer-kind: {{ .Values.googleIngress.issuer-kind | default "GoogleCASClusterIssuer" | quote }}
-    cert-manager.io/issuer-name: {{ .Values.googleIngress.issuer-name | default "google-cas-cluster-issuer" | quote }}
+    {{- if .Values.googleIngress.issuerKind }} ## if this is used, we know it is a google-cas signed cert
+    cert-manager.io/issuer-group: {{ .Values.googleIngress.issuerGroup | default "cas-issuer.jetstack.io" | quote }}
+    cert-manager.io/issuer-kind: {{ .Values.googleIngress.issuerKind | default "GoogleCASClusterIssuer" | quote }}
+    cert-manager.io/issuer-name: {{ .Values.googleIngress.issuerName | default "google-cas-cluster-issuer" | quote }}
     {{- end }}
     kubernetes.io/ingress.class: {{ .Values.googleIngress.ingressClass | default "nginx-internal" | quote }}
-    {{- if .Values.googleIngress.tls-acme }} ## if this is used we know it is a public certificate signed by letsencrypt
-    kubernetes.io/tls-acme: {{ .Values.googleIngress.tls-acme | default "true" | quote }}
-    cert-manager.io/cluster-issuer: {{ .Values.googleIngress | default "google-letsencrypt" | quote }}
+    {{- if .Values.googleIngress.tlsAcme }} ## if this is used we know it is a public certificate signed by letsencrypt
+    kubernetes.io/tls-acme: {{ .Values.googleIngress.tlsAcme | default "true" | quote }}
+    cert-manager.io/cluster-issuer: {{ .Values.googleIngress.clusterIssuer | default "google-letsencrypt" | quote }}
     {{- end }}
     {{- with .Values.googleIngress.annotations }}
     {{- toYaml . | nindent 4 }}
