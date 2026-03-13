@@ -20,7 +20,7 @@ listenerSpec:
   protocol: HTTPS
 
 ## Each entry in the list below will define a gateway resource
-## The naming of the gateway resource will be determined by "{{ include "gateway-bundle.fullname" . }}-{{ $i }}" (which may include the release name when fullnameOverride is empty)
+## The naming of the gateway resource will be determined by "{{ .Values.fullnameOverride }}-{{ $index }}"
 ##
 ## There are two ways a listener entry can be defined:
 ## 1. A simple string entry, which will be used as the hostname for the listener and will use global gateway and listener configs.
