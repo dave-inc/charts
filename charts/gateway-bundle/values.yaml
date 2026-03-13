@@ -1,0 +1,37 @@
+nameOverride: ""
+fullnameOverride: shared-gw
+
+# labels to be added to all resources created by this chart
+additionalLabels: {}
+
+gatewayAnnotations:
+  cert-manager.io/cluster-issuer: letsencrypt
+
+# global gateway configs
+gatewaySpec:
+  gatewayClassName: gke-l7-rilb
+
+# global gateway listener configs
+listenerSpec:
+  allowedRoutes:
+    namespaces:
+      from: All
+  port: 443
+  protocol: HTTPS
+
+## Each entry in the list below will define a gateway resource
+## The naming of the gateway resource will be determined by "{{ .Values.fullnameOverride }}-{{ $index }}"
+##
+## There are two ways a listener entry can be defined:
+## 1. A simple string entry, which will be used as the hostname for the listener and will use global gateway and listener configs
+## 2. A more complex entry, which allows you to specify gateway and listener specific configs. If a config is not specified, it will fall back to the global configs.
+gateways: []
+#  # gateway specific configs, if not specified, will use global configs
+#  - gatewaySpec:
+#      gatewayClassName: gke-l7-rilb
+#    listeners:
+#      - example1.com
+#      # gateway listener specific configs, if not specified, will use global configs
+#      - listenerSpec: { hostname: "example2.com" }
+#  - listeners:
+#      - example3.com

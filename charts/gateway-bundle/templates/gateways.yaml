@@ -1,0 +1,58 @@
+{{- $gatewayBundleLabels := include "gateway-bundle.labels" . }}
+{{- $gatewayBundleFullname := include "gateway-bundle.fullname" . }}
+
+{{- range $i, $gatewayConfig := .Values.gateways }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: {{ $gatewayBundleFullname }}-{{ $i }}
+  {{- with $gatewayConfig.gatewayAnnotations | default $.Values.gatewayAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    {{- $gatewayBundleLabels | nindent 4 }}
+spec:
+  {{- with $gatewayConfig.gatewaySpec | default $.Values.gatewaySpec }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+  listeners:
+  {{- range $listener := $gatewayConfig.listeners }}
+  {{- if typeIs "string" $listener }}
+  {{- with $.Values.listenerSpec }}
+  - hostname: {{ $listener }}
+    {{- toYaml . | nindent 4 }}
+    name: {{ printf "%s-%s" ($listener | replace "." "-") (lower $.Values.listenerSpec.protocol) }}
+    {{- if $.Values.listenerSpec.protocol | eq "HTTPS" }}
+    tls:
+      certificateRefs:
+        - group: ""
+          kind: Secret
+          name: {{ $listener | replace "." "-" }}-gw-tls
+      mode: Terminate
+    {{- end }}
+    {{- end }}
+    {{- else }}
+    {{- with $listener.listenerSpec }}
+  - hostname: {{ .hostname }}
+    {{- $allowedRoutes := default dict .allowedRoutes }}
+    {{- $namespaces := default dict $allowedRoutes.namespaces }}
+    allowedRoutes:
+      namespaces:
+        from: {{ $namespaces.from | default $.Values.listenerSpec.allowedRoutes.namespaces.from }}
+    name: {{ .name | default (printf "%s-%s" (.hostname | replace "." "-") (lower (.protocol | default $.Values.listenerSpec.protocol))) }}
+    port: {{ .port | default $.Values.listenerSpec.port }}
+    protocol: {{ .protocol | default $.Values.listenerSpec.protocol }}
+    {{- if .protocol | default $.Values.listenerSpec.protocol | eq "HTTPS" }}
+    tls:
+      certificateRefs:
+        - group: ""
+          kind: Secret
+          name: {{ .hostname | replace "." "-" }}-gw-tls
+      mode: Terminate
+    {{- end }}
+    {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}
