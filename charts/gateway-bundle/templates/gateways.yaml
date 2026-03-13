@@ -21,11 +21,9 @@ spec:
   {{- range $listener := $gatewayConfig.listeners }}
   {{- if typeIs "string" $listener }}
   - hostname: {{ $listener }}
-    {{- $allowedRoutes := default dict $.Values.listenerSpec.allowedRoutes }}
-    {{- $namespaces := default dict $allowedRoutes.namespaces }}
     allowedRoutes:
       namespaces:
-        from: {{ $namespaces.from | default $.Values.listenerSpec.allowedRoutes.namespaces.from }}
+        from: {{ $.Values.listenerSpec.allowedRoutes.namespaces.from }}
     name: {{ printf "%s-%s" ($listener | replace "." "-") (lower $.Values.listenerSpec.protocol) }}
     port: {{ $.Values.listenerSpec.port }}
     protocol: {{ $.Values.listenerSpec.protocol }}
