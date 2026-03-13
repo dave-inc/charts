@@ -1,0 +1,46 @@
+nameOverride: ""
+fullnameOverride: shared-gw
+
+# labels to be added to all resources created by this chart
+additionalLabels: {}
+
+gatewayAnnotations:
+  cert-manager.io/cluster-issuer: letsencrypt
+
+# global gateway configs
+gatewaySpec:
+  gatewayClassName: gke-l7-rilb
+
+# global gateway listener configs
+listenerSpec:
+  allowedRoutes:
+    namespaces:
+      from: All
+  port: 443
+  protocol: HTTPS
+
+## Each entry in the list below will define a gateway resource
+## The naming of the gateway resource will be determined by "{{ .Values.fullnameOverride }}-{{ $index }}"
+##
+## There are two ways a listener entry can be defined:
+## 1. A simple string entry, which will be used as the hostname for the listener and will use global gateway and listener configs.
+## 2. A more complex entry, which allows you to override a limited set of listener-specific fields. Supported listener overrides are:
+##    - listenerSpec.hostname
+##    - listenerSpec.name
+##    - listenerSpec.port
+##    - listenerSpec.protocol
+##    - listenerSpec.allowedRoutes.namespaces.from
+##    TLS certificateRefs are configured by the chart templates and are not currently overridable per-listener via listenerSpec.
+gateways: []
+#  # gateway specific configs, if not specified, will use global configs
+#  - gatewaySpec:
+#      gatewayClassName: gke-l7-rilb
+#    listeners:
+#      # simple listener: uses this hostname with global listenerSpec values
+#      - example1.com
+#      # complex listener: override selected listenerSpec fields (see supported list above)
+#      - listenerSpec:
+#          hostname: example2.com
+#          # name, port, protocol, and allowedRoutes.namespaces.from may also be set here
+#  - listeners:
+#      - example3.com
