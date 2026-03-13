@@ -20,10 +20,15 @@ spec:
   listeners:
   {{- range $listener := $gatewayConfig.listeners }}
   {{- if typeIs "string" $listener }}
-  {{- with $.Values.listenerSpec }}
   - hostname: {{ $listener }}
-    {{- toYaml . | nindent 4 }}
+    {{- $allowedRoutes := default dict $.Values.listenerSpec.allowedRoutes }}
+    {{- $namespaces := default dict $allowedRoutes.namespaces }}
+    allowedRoutes:
+      namespaces:
+        from: {{ $namespaces.from | default $.Values.listenerSpec.allowedRoutes.namespaces.from }}
     name: {{ printf "%s-%s" ($listener | replace "." "-") (lower $.Values.listenerSpec.protocol) }}
+    port: {{ $.Values.listenerSpec.port }}
+    protocol: {{ $.Values.listenerSpec.protocol }}
     {{- if $.Values.listenerSpec.protocol | eq "HTTPS" }}
     tls:
       certificateRefs:
@@ -31,7 +36,6 @@ spec:
           kind: Secret
           name: {{ $listener | replace "." "-" }}-{{ $.Values.fullnameOverride }}-tls
       mode: Terminate
-    {{- end }}
     {{- end }}
     {{- else }}
     {{- with $listener.listenerSpec }}
