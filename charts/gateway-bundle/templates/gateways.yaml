@@ -29,7 +29,7 @@ spec:
       certificateRefs:
         - group: ""
           kind: Secret
-          name: {{ $listener | replace "." "-" }}-gw-tls
+          name: {{ $listener | replace "." "-" }}-{{ $.Values.fullnameOverride }}-tls
       mode: Terminate
     {{- end }}
     {{- end }}
