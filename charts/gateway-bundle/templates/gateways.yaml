@@ -20,7 +20,7 @@ spec:
   listeners:
   {{- range $listener := $gatewayConfig.listeners }}
   {{- if typeIs "string" $listener }}
-  - hostname: {{ $listener }}
+  - hostname: {{ $listener | quote }}
     allowedRoutes:
       namespaces:
         from: {{ $.Values.listenerSpec.allowedRoutes.namespaces.from }}
@@ -32,12 +32,12 @@ spec:
       certificateRefs:
         - group: ""
           kind: Secret
-          name: {{ $listener | replace "." "-" }}-{{ $.Values.fullnameOverride }}-tls
+          name: {{ $listener | replace "." "-" }}-{{ $gatewayBundleFullname }}-tls
       mode: Terminate
     {{- end }}
     {{- else }}
     {{- with $listener.listenerSpec }}
-  - hostname: {{ .hostname }}
+  - hostname: {{ .hostname | quote }}
     {{- $allowedRoutes := default dict .allowedRoutes }}
     {{- $namespaces := default dict $allowedRoutes.namespaces }}
     allowedRoutes:
@@ -51,7 +51,7 @@ spec:
       certificateRefs:
         - group: ""
           kind: Secret
-          name: {{ .hostname | replace "." "-" }}-gw-tls
+          name: {{ .hostname | replace "." "-" }}-{{ $gatewayBundleFullname }}-tls
       mode: Terminate
     {{- end }}
     {{- end }}
