@@ -24,7 +24,7 @@ spec:
     allowedRoutes:
       namespaces:
         from: {{ $.Values.listenerSpec.allowedRoutes.namespaces.from }}
-    name: {{ printf "%s-%s" ($listener | replace "." "-") (lower $.Values.listenerSpec.protocol) }}
+    name: {{ printf "%s-%s" ($listener | lower | trimPrefix "*." | replace "." "-") (lower $.Values.listenerSpec.protocol) | regexReplaceAll "[^a-z0-9-]" "-" | trunc 63 | trimSuffix "-" | trimPrefix "-" }}
     port: {{ $.Values.listenerSpec.port }}
     protocol: {{ $.Values.listenerSpec.protocol }}
     {{- if $.Values.listenerSpec.protocol | eq "HTTPS" }}
@@ -43,7 +43,7 @@ spec:
     allowedRoutes:
       namespaces:
         from: {{ $namespaces.from | default $.Values.listenerSpec.allowedRoutes.namespaces.from }}
-    name: {{ .name | default (printf "%s-%s" (.hostname | replace "." "-") (lower (.protocol | default $.Values.listenerSpec.protocol))) }}
+    name: {{ .name | default (printf "%s-%s" (.hostname | lower | trimPrefix "*." | replace "." "-") (lower (.protocol | default $.Values.listenerSpec.protocol)) | regexReplaceAll "[^a-z0-9-]" "-" | trunc 63 | trimSuffix "-" | trimPrefix "-") }}
     port: {{ .port | default $.Values.listenerSpec.port }}
     protocol: {{ .protocol | default $.Values.listenerSpec.protocol }}
     {{- if .protocol | default $.Values.listenerSpec.protocol | eq "HTTPS" }}
