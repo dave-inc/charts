@@ -1755,6 +1755,18 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/dave-npd-0.1.0-beta.0/dave-npd-0.1.0-beta.0.tgz
     version: 0.1.0-beta.0
+  gateway-bundle:
+  - apiVersion: v2
+    appVersion: 0.1.0
+    created: "2026-03-13T18:25:52.220880973Z"
+    description: 'Bundles together many Gateway resources into a single chart to be
+      deployed as one unit. '
+    digest: ddca905fa9f70771d4fd3ca9ec408b73986770453a76da6d70e9217cf6ff1f02
+    name: gateway-bundle
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/gateway-bundle-0.1.0/gateway-bundle-0.1.0.tgz
+    version: 0.1.0
   job:
   - apiVersion: v2
     appVersion: 1.0.0
@@ -2414,4 +2426,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2026-02-19T00:25:06.431153841Z"
+generated: "2026-03-13T18:25:52.222663733Z"
