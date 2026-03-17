@@ -1,0 +1,19 @@
+{{- if and .Values.gatewayapi .Values.gatewayapi.enabled }}
+{{- $labels := include "common.labels" . }}
+{{- $commonName := include "common.name" . }}
+{{- range $routeName, $routeDefinition := .Values.gatewayapi.routes }}
+{{- if eq $routeDefinition.kind "HTTPRoute" }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  labels:
+    {{- $labels | nindent 4 }}
+  name: {{ $commonName }}-{{ $routeName }}
+spec:
+{{- if and $routeDefinition.spec $routeDefinition.rawSpec }}
+{{ toYaml $routeDefinition.spec | indent 2 }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
