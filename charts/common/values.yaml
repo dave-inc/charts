@@ -237,6 +237,29 @@ canary:
   # image:
   #  tag: ""
 
+# Disclaimer: The gatewayapi configuration is in early stages and might change in the future.
+gatewayapi:
+  enabled: false
+  gateways:
+    standalone: {}
+    shared:
+      defaultNamespace: shared-gateways
+      refs:
+        - name: shared-gw-0
+          # Overrides defaultNamespace for this reference
+          namespace: shared-gateways
+  healthCheckPolicies:
+    main:
+      rawSpec: false
+      spec: {}
+      config: {}
+  routes:
+    main:
+      kind: HTTPRoute # GRPCRoute being another option
+      rawSpec: false
+      spec: {}
+      config: {}
+
 ingress:
   enabled: false
   hosts:
