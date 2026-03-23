@@ -1,0 +1,33 @@
+type: object
+properties:
+  listenerSpec:
+    type: object
+    properties:
+      allowedRoutes:
+        type: object
+        properties:
+          namespaces:
+            type: object
+            properties:
+              from:
+                type: string
+                enum:
+                  - All
+                  - Same
+            additionalProperties: false
+        additionalProperties: false
+      port:
+        type: integer
+      protocol:
+        type: string
+        enum:
+          - HTTP
+          - HTTPS
+      hostname:
+        type: string
+        pattern: "^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\\.)*(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
+      name:
+        type: string
+    required:
+      - hostname
+    additionalProperties: false

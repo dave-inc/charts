@@ -1,0 +1,30 @@
+type: object
+properties:
+  globalListenerSpec:
+    type: object
+    properties:
+      allowedRoutes:
+        type: object
+        properties:
+          namespaces:
+            type: object
+            properties:
+              from:
+                type: string
+                enum:
+                  - All
+                  - Same
+            additionalProperties: false
+        additionalProperties: false
+      port:
+        type: integer
+      protocol:
+        type: string
+        enum:
+          - HTTP
+          - HTTPS
+    required:
+      - allowedRoutes
+      - port
+      - protocol
+    additionalProperties: false
