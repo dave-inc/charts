@@ -15,3 +15,5 @@ properties:
     $ref: ./deploymentContainer.schema.yaml#/properties/deploymentContainer
   ingress:
     $ref: ./ingress.schema.yaml#/properties/ingress
+  gatewayapi:
+    $ref: ./gatewayapi.schema.yaml#/properties/gatewayapi
