@@ -250,14 +250,50 @@ gatewayapi:
           namespace: shared-gateways
   healthCheckPolicies:
     main:
-      rawSpec: false
-      spec: {}
-      config: {}
+      rawSpec: true
+      spec:
+        default:
+          checkIntervalSec: 10
+          config:
+            httpHealthCheck:
+              # This needs to be the pod's port, or targetPort in the svc
+              port: 8080
+              requestPath: /
+            type: HTTP
+          healthyThreshold: 1
+          logConfig:
+            enabled: true
+          timeoutSec: 1
+          unhealthyThreshold: 3
+        targetRef:
+          group: ""
+          kind: Service
+          name: example-service
   routes:
     main:
       kind: HTTPRoute # GRPCRoute being another option
-      rawSpec: false
-      spec: {}
+      rawSpec: true
+      spec:
+        hostnames:
+          - example-service.daveapi.io
+          - example-service.daveapi.com
+        parentRefs:
+          - group: gateway.networking.k8s.io
+            kind: Gateway
+            name: shared-gw-0
+            namespace: shared-gateways
+        rules:
+          - backendRefs:
+            - group: ""
+              kind: Service
+              name: example-service
+              # This needs to be the svc port
+              port: 80
+              weight: 1
+            matches:
+            - path:
+                type: PathPrefix
+                value: /
       config: {}
 
 ingress:
