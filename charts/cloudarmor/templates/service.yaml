@@ -5,16 +5,18 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ .serviceName }}
-  {{- with $.Values.labels }}
   labels:
+    {{- include "cloudarmor.labels" $ | nindent 4 }}
+    {{- with $.Values.labels }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- end }}
   annotations:
     argocd.argoproj.io/sync-wave: "1"
-    cloud.google.com/backend-config: '{"ports": {"{{ .port }}":"{{ $backendConfigName }}"}}'
-{{- if .iap }}
+    {{- if .iap }}
     cloud.google.com/backend-config: '{"ports": {"{{ .port }}":"{{ $backendConfigName }}"}, "default":"{{ $backendConfigName }}"}'
-{{- end }}
+    {{- else }}
+    cloud.google.com/backend-config: '{"ports": {"{{ .port }}":"{{ $backendConfigName }}"}}'
+    {{- end }}
 spec:
   type: {{ .serviceType | default "NodePort" }}
   ports:
