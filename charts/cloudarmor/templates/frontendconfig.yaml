@@ -1,0 +1,11 @@
+apiVersion: networking.gke.io/v1beta1
+kind: FrontendConfig
+metadata:
+  name: {{ include "cloudarmor.name" . }}
+  labels:
+    {{- include "cloudarmor.labels" . | nindent 4 }}
+    {{- with .Values.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- toYaml .Values.frontendConfig | nindent 2 }}

@@ -1,0 +1,70 @@
+# Name used for BackendConfig, FrontendConfig, and Certificate.
+# Ingress name in paths mode: <name>-ca
+# Defaults to .Release.Name if not set.
+name: ""
+
+# Optional labels applied to all resources
+labels: {}
+
+# --- Backends: one NodePort Service per entry, each with backend-config annotation ---
+backends: []
+#  - serviceName: myapp-ca
+#    port: 80
+#    targetPort: 8080
+#    serviceType: NodePort
+#    selector:
+#      app.kubernetes.io/name: myapp
+#      app.kubernetes.io/instance: myapp
+#    iap: false
+
+# --- BackendConfig (GCP; securityPolicy = Cloud Armor policy) ---
+backendConfig:
+  healthCheck:
+    requestPath: /
+    type: HTTP
+  securityPolicy:
+    name: default-ca-policy
+#  iap:
+#    enabled: false
+#    oauthclientCredentials:
+#      secretName: ""
+
+# --- FrontendConfig (HTTPS redirect, sslPolicy) ---
+frontendConfig:
+  redirectToHttps:
+    enabled: true
+    responseCodeName: PERMANENT_REDIRECT
+#  sslPolicy: min-tls-12
+
+# --- Certificate (cert-manager) ---
+certificate:
+  host: example.trydave.com
+  secretName: ""   # default: <host>-ca-tls (dots replaced with dashes)
+  issuer: letsencrypt
+  alternativeDnsNames: []
+
+# --- Ingress ---
+ingress:
+  # staticIpName and annotations apply to the paths-mode Ingress (Option B).
+  staticIpName: ""
+  annotations: {}
+
+  # Option A: hosts — one Ingress per host; supports explicit Ingress name.
+  # Takes priority over paths when non-empty.
+  hosts: []
+  #  - host: api.example.com
+  #    name: api-example-com-ca    # explicit Ingress name (defaults to <host>-ca)
+  #    staticIpName: api-example-com-ca
+  #    annotations: {}
+  #    paths:
+  #      - backendServiceName: myapp-ca
+  #        backendPort: 80
+  #        path: /*
+  #        pathType: ImplementationSpecific
+
+  # Option B: paths — single Ingress, no host in spec.
+  paths: []
+  #  - backendServiceName: myapp-ca
+  #    backendPort: 80
+  #    path: /*
+  #    pathType: ImplementationSpecific

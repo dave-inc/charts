@@ -1,0 +1,29 @@
+{{- $backendConfigName := include "cloudarmor.name" . }}
+{{- range .Values.backends }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .serviceName }}
+  labels:
+    {{- include "cloudarmor.labels" $ | nindent 4 }}
+    {{- with $.Values.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    {{- if .iap }}
+    cloud.google.com/backend-config: '{"ports": {"{{ .port }}":"{{ $backendConfigName }}"}, "default":"{{ $backendConfigName }}"}'
+    {{- else }}
+    cloud.google.com/backend-config: '{"ports": {"{{ .port }}":"{{ $backendConfigName }}"}}'
+    {{- end }}
+spec:
+  type: {{ .serviceType | default "NodePort" }}
+  ports:
+    - port: {{ .port }}
+      targetPort: {{ .targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- toYaml .selector | nindent 4 }}
+{{- end }}

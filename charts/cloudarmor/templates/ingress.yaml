@@ -1,0 +1,71 @@
+{{- $frontendConfigName := include "cloudarmor.name" . }}
+{{- $tlsSecretName := include "cloudarmor.tlsSecret" . }}
+{{/* hosts takes priority over paths */}}
+{{- if .Values.ingress.hosts }}
+{{- range .Values.ingress.hosts }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .name | default (printf "%s-ca" .host | replace "." "-") }}
+  labels:
+    {{- include "cloudarmor.labels" $ | nindent 4 }}
+    {{- with $.Values.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  annotations:
+    {{- with .annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    kubernetes.io/ingress.global-static-ip-name: {{ .staticIpName }}
+    networking.gke.io/v1beta1.FrontendConfig: {{ $frontendConfigName }}
+spec:
+  rules:
+  - host: {{ .host | quote }}
+    http:
+      paths:
+      {{- range .paths }}
+      - path: {{ .path | default "/*" }}
+        pathType: {{ .pathType | default "ImplementationSpecific" }}
+        backend:
+          service:
+            name: {{ .backendServiceName }}
+            port:
+              number: {{ .backendPort | default 80 }}
+      {{- end }}
+  tls:
+    - secretName: {{ $tlsSecretName }}
+{{- end }}
+{{- else if .Values.ingress.paths }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "cloudarmor.name" . }}-ca
+  labels:
+    {{- include "cloudarmor.labels" . | nindent 4 }}
+    {{- with .Values.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  annotations:
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    kubernetes.io/ingress.global-static-ip-name: {{ .Values.ingress.staticIpName | default (include "cloudarmor.name" .) }}
+    networking.gke.io/v1beta1.FrontendConfig: {{ $frontendConfigName }}
+spec:
+  rules:
+  - http:
+      paths:
+      {{- range .Values.ingress.paths }}
+      - path: {{ .path | default "/*" }}
+        pathType: {{ .pathType | default "ImplementationSpecific" }}
+        backend:
+          service:
+            name: {{ .backendServiceName }}
+            port:
+              number: {{ .backendPort | default 80 }}
+      {{- end }}
+  tls:
+    - secretName: {{ $tlsSecretName }}
+{{- end }}
