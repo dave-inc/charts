@@ -1,0 +1,6 @@
+apiVersion: v2
+name: cloudarmor
+description: GKE Ingress with Cloud Armor (BackendConfig, FrontendConfig, Certificate, CA Services, Ingress). Deploy separately from service charts; backends reference app pods by selector.
+type: application
+version: 0.2.0
+appVersion: 0.2.0
