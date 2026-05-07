@@ -1,5 +1,18 @@
 apiVersion: v1
 entries:
+  cloudarmor:
+  - apiVersion: v2
+    appVersion: 0.1.0
+    created: "2026-05-07T18:19:19.539852938Z"
+    description: GKE Ingress with Cloud Armor (BackendConfig, FrontendConfig, Certificate,
+      CA Services, Ingress). Deploy separately from service charts; backends reference
+      app pods by selector.
+    digest: dcefda47eaa0d31adc869df530542d4ef27c38ee67a1bb9a20cdad536597864b
+    name: cloudarmor
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/cloudarmor-0.1.1/cloudarmor-0.1.1.tgz
+    version: 0.1.1
   cloudsql-proxy:
   - apiVersion: v2
     appVersion: 1.1.0
@@ -2457,4 +2470,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2026-03-24T23:32:22.394132836Z"
+generated: "2026-05-07T18:19:19.541708607Z"
