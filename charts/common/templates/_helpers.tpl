@@ -4,7 +4,7 @@
 Expand the name of the chart.
 */}}
 {{- define "common.name" -}}
-{{- default .Release.Name ( required ".Values.name is missing, this can be caused by a mismatch in chart alias reference" .Values.name ) | trunc 63 | trimSuffix "-" }}
+{{- default .Release.Name ( required ".Values.name is missing, this can be caused by a mismatch in chart alias reference" .Values.global.name ) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
@@ -38,9 +38,9 @@ helm.sh/chart: {{ include "common.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- if .Values.additionalLabels }}
+{{- if .Values.global.additionalLabels }}
   {{- println "" }}
-  {{- toYaml .Values.additionalLabels }}
+  {{- toYaml .Values.global.additionalLabels }}
 {{- end }}
 {{- end }}
 

@@ -610,6 +610,14 @@
           "type": "boolean",
           "default": false
         },
+        "fromCommon": {
+          "type": "object",
+          "properties": {}
+        },
+        "global": {
+          "type": "object",
+          "properties": {}
+        },
         "hosts": {
           "type": "array",
           "items": {

@@ -1,3 +1,10 @@
+global:
+  name: null
+
+  #  This is used to apply additional labels on deployment, pods and services
+  #  to properly tag the team and environment
+  additionalLabels: {}
+
 # Default values for common.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
@@ -707,11 +714,6 @@ verticalPodAutoscaler:
 #  used mostly only when importing legacy deployments.
 
 podSelectorLabelsOverride: {}
-
-#  This is used to apply additional labels on deployment, pods and services
-#  to properly tag the team and environment
-
-additionalLabels: {}
 
 # This section enables by default the topologySpreadConstraits to spread same deployment pods to multiple nodes
 # and multiple AZ when possible, rules are soft enforced by default.
