@@ -1,6 +1,7 @@
 {{- $gatewayBundleLabels := include "gateway-bundle.labels" . }}
 {{- $gatewayBundleFullname := include "gateway-bundle.fullname" . }}
 
+{{- /* Ensure that all gateway names are unique within the release, whether specified by the user or defaulted by the chart. */ -}}
 {{- $seenNames := dict }}
 {{- range $i, $gatewayConfig := .Values.gateways }}
   {{- $resolvedName := $gatewayConfig.name | default (printf "%s-%d" $gatewayBundleFullname $i) }}
@@ -10,6 +11,7 @@
   {{- $_ := set $seenNames $resolvedName true }}
 {{- end }}
 
+{{- /* Generate a Gateway resource for each gateway configuration, using the specified name or a default name based on the release and index. */ -}}
 {{- range $i, $gatewayConfig := .Values.gateways }}
 {{- $gatewayName := $gatewayConfig.name | default (printf "%s-%d" $gatewayBundleFullname $i) }}
 ---
