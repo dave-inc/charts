@@ -1,6 +1,15 @@
 {{- $gatewayBundleLabels := include "gateway-bundle.labels" . }}
 {{- $gatewayBundleFullname := include "gateway-bundle.fullname" . }}
 
+{{- $seenNames := dict }}
+{{- range $i, $gatewayConfig := .Values.gateways }}
+  {{- $resolvedName := $gatewayConfig.name | default (printf "%s-%d" $gatewayBundleFullname $i) }}
+  {{- if hasKey $seenNames $resolvedName }}
+    {{- fail (printf "duplicate gateway name %q at gateways[%d]; names must be unique within a release" $resolvedName $i) }}
+  {{- end }}
+  {{- $_ := set $seenNames $resolvedName true }}
+{{- end }}
+
 {{- range $i, $gatewayConfig := .Values.gateways }}
 ---
 apiVersion: gateway.networking.k8s.io/v1
