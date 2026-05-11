@@ -35,6 +35,8 @@ properties:
     items:
       type: object
       properties:
+        name:
+          type: string
         additionalLabels:
           type: object
           additionalProperties:
