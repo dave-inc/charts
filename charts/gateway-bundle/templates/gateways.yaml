@@ -6,11 +6,7 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  {{- if $gatewayConfig.name }}
-  name: {{ $gatewayConfig.name }}
-  {{- else }}
-  name: {{ $gatewayBundleFullname }}-{{ $i }}
-  {{- end }}
+  name: {{ $gatewayConfig.name | default (printf "%s-%d" $gatewayBundleFullname $i) }}
   {{- with $gatewayConfig.gatewayAnnotations | default $.Values.gatewayAnnotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
