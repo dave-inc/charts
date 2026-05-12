@@ -59,18 +59,24 @@ properties:
           # Hard limit on the number of listeners per gateway
           maxItems: 64
           items:
-            oneOf:
+            # if/then/else (instead of oneOf) so a malformed object listener surfaces a
+            # specific error (e.g. missing listenerSpec, unknown property) rather than
+            # the opaque "did not match any schema in oneOf".
+            if:
+              type: string
+            then:
               # simple listener: string entry used as hostname with global listenerSpec values
-              - type: string
-                pattern: "^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\\.)*(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
+              type: string
+              pattern: "^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\\.)*(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
+            else:
               # complex listener: override selected listenerSpec fields
-              - type: object
-                properties:
-                  listenerSpec:
-                    $ref: ./listenerSpec.schema.yaml#/properties/listenerSpec
-                additionalProperties: false
-                required:
-                  - listenerSpec
+              type: object
+              properties:
+                listenerSpec:
+                  $ref: ./listenerSpec.schema.yaml#/properties/listenerSpec
+              additionalProperties: false
+              required:
+                - listenerSpec
       additionalProperties: false
       required:
         - listeners
