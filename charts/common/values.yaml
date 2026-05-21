@@ -652,8 +652,8 @@ cloudsqlProxy:
       secondsAfterCompletion: 2592000 # Time to live after workflow is completed, replaces ttlSecondsAfterFinished
       secondsAfterSuccess: 2592000 # Time to live after workflow is successful
       secondsAfterFailure: 2592000 # Time to live after workflow fails
-    # If `secretsFetch` is enabled, a step will run before the migration to fetch secrets
-    # using the same image as the migration container.
+    # If `secretsFetch` is enabled, the fetch command is prepended to the migration command
+    # and run inline in the same container (e.g. `yarn secrets:fetch && knex migrate:latest`).
     secretsFetch:
       enabled: false
       command: ["yarn"]
