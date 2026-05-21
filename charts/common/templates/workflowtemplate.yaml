@@ -32,7 +32,8 @@ spec:
         arguments:
           parameters:
           - name: cmd
-            value: export DB_HOST={{`{{ steps.cloudsql-proxy.ip }}`}} && {{`{{workflow.parameters.command}}`}}
+            value: |-
+              {{ if .Values.cloudsqlProxy.migrationTemplate.secretsFetch.enabled }}{{ concat .Values.cloudsqlProxy.migrationTemplate.secretsFetch.command .Values.cloudsqlProxy.migrationTemplate.secretsFetch.args | join " " }} && {{ end }}export DB_HOST={{`{{ steps.cloudsql-proxy.ip }}`}} && {{`{{workflow.parameters.command}}`}}
 
   - name: log-parameters
     container:
@@ -58,9 +59,11 @@ spec:
       image: "{{`{{workflow.parameters.image}}`}}:{{`{{workflow.parameters.tag}}`}}"
       command: [sh, -c]
       args: ["{{`{{ inputs.parameters.cmd }}`}}"]
+      {{- if not .Values.cloudsqlProxy.migrationTemplate.secretsFetch.enabled }}
       envFrom:
       - secretRef:
           name: {{ .Values.cloudsqlProxy.migrationTemplate.secretName }}
+      {{- end }}
       env:
       - name: NODE_ENV
         value: {{ .Values.environment }}
