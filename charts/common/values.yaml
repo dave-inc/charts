@@ -652,6 +652,12 @@ cloudsqlProxy:
       secondsAfterCompletion: 2592000 # Time to live after workflow is completed, replaces ttlSecondsAfterFinished
       secondsAfterSuccess: 2592000 # Time to live after workflow is successful
       secondsAfterFailure: 2592000 # Time to live after workflow fails
+    # If `secretsFetch` is enabled, a step will run before the migration to fetch secrets
+    # using the same image as the migration container.
+    secretsFetch:
+      enabled: false
+      command: ["yarn"]
+      args: ["secrets:fetch"]
 
 # Generic mechanism to introduce arbitrary config files backed by a k8s ConfigMap.
 # If the file already exists on the given `path`, this will overwrite it.

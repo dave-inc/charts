@@ -32,7 +32,7 @@ spec:
         arguments:
           parameters:
           - name: cmd
-            value: export DB_HOST={{`{{ steps.cloudsql-proxy.ip }}`}} && {{`{{workflow.parameters.command}}`}}
+            value: {{ if .Values.cloudsqlProxy.migrationTemplate.secretsFetch.enabled }}{{ concat .Values.cloudsqlProxy.migrationTemplate.secretsFetch.command .Values.cloudsqlProxy.migrationTemplate.secretsFetch.args | join " " }} && {{ end }}export DB_HOST={{`{{ steps.cloudsql-proxy.ip }}`}} && {{`{{workflow.parameters.command}}`}}
 
   - name: log-parameters
     container:
