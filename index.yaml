@@ -73,6 +73,16 @@ entries:
   common:
   - apiVersion: v2
     appVersion: 1.17.0
+    created: "2026-05-21T20:41:35.751181341Z"
+    description: Standard Service Template
+    digest: 8152a273b5787fb8c29d59d4b0e54fde4aea89823997199d1cc1f950eac96006
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.11.1-beta.8/common-0.11.1-beta.8.tgz
+    version: 0.11.1-beta.8
+  - apiVersion: v2
+    appVersion: 1.17.0
     created: "2026-03-24T23:32:22.391310057Z"
     description: Standard Service Template
     digest: c27f8b3b43171e7175e8b389a66350eeb3a7f28578814ece183ab0a19921114b
@@ -763,9 +773,9 @@ entries:
     version: 0.8.9
   - apiVersion: v2
     appVersion: 1.17.0
-    created: "2024-09-18T23:07:53.957992564Z"
+    created: "2024-09-18T16:21:03.735084914Z"
     description: Standard Service Template
-    digest: c7e242bc43a7734a20e868ad3ad6e13ee5cb946482122f743ff485de32804d62
+    digest: 7bb442d82472d79639f3a077bf8317ab46a4ae1bf9463a270126f28b1baa1b47
     name: common
     type: application
     urls:
@@ -783,9 +793,9 @@ entries:
     version: 0.8.9-bei-719
   - apiVersion: v2
     appVersion: 1.17.0
-    created: "2024-09-18T02:33:58.165516692Z"
+    created: "2024-09-18T23:07:53.957992564Z"
     description: Standard Service Template
-    digest: ea5aa7d7405aacbc682f3a8bfffec3b5997a9743adf8fd680f7c81f3a492ee54
+    digest: c7e242bc43a7734a20e868ad3ad6e13ee5cb946482122f743ff485de32804d62
     name: common
     type: application
     urls:
@@ -793,9 +803,9 @@ entries:
     version: 0.8.9-bei-719
   - apiVersion: v2
     appVersion: 1.17.0
-    created: "2024-09-18T16:21:03.735084914Z"
+    created: "2024-09-18T02:33:58.165516692Z"
     description: Standard Service Template
-    digest: 7bb442d82472d79639f3a077bf8317ab46a4ae1bf9463a270126f28b1baa1b47
+    digest: ea5aa7d7405aacbc682f3a8bfffec3b5997a9743adf8fd680f7c81f3a492ee54
     name: common
     type: application
     urls:
@@ -2470,4 +2480,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2026-05-07T18:19:19.541708607Z"
+generated: "2026-05-21T20:41:35.754177656Z"
