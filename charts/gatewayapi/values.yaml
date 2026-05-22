@@ -1,0 +1,81 @@
+# Default values for the gatewayapi chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Optional override for the resource name prefix. If empty, Release.Name is used.
+name: ""
+
+# Master toggle. When false, no Gateway API resources are rendered.
+enabled: true
+
+# Additional labels applied to all resources created by this chart.
+additionalLabels: {}
+
+# Gateways the routes in this chart will reference. The chart does not currently
+# create Gateway resources itself; gateways are typically created and managed by
+# the `gateway-bundle` chart in the `shared-gateways` namespace.
+gateways:
+  standalone: {}
+  shared:
+    defaultNamespace: shared-gateways
+    refs:
+      - name: shared-gw-0
+        # Overrides defaultNamespace for this reference
+        namespace: shared-gateways
+
+# HealthCheckPolicies map. Each key becomes the suffix of the rendered resource
+# (e.g. `<release>-<key>`). Each entry must have `rawSpec: true` and a `spec`
+# block whose contents are passed through verbatim to a
+# networking.gke.io/v1 HealthCheckPolicy.
+healthCheckPolicies:
+  main:
+    rawSpec: true
+    spec:
+      default:
+        checkIntervalSec: 10
+        config:
+          httpHealthCheck:
+            # This needs to be the pod's port, or targetPort in the svc
+            port: 8080
+            requestPath: /
+          type: HTTP
+        healthyThreshold: 1
+        logConfig:
+          enabled: true
+        timeoutSec: 1
+        unhealthyThreshold: 3
+      targetRef:
+        group: ""
+        kind: Service
+        name: example-service
+
+# Routes map. Each key becomes the suffix of the rendered route resource
+# (e.g. `<release>-<key>`). Each entry must declare its `kind` (HTTPRoute or
+# GRPCRoute), `rawSpec: true`, and a `spec` block passed through verbatim to
+# the rendered resource.
+routes:
+  main:
+    kind: HTTPRoute # GRPCRoute being another option
+    rawSpec: true
+    spec:
+      hostnames:
+        - example-service.daveapi.io
+        - example-service.daveapi.com
+      parentRefs:
+        - group: gateway.networking.k8s.io
+          kind: Gateway
+          name: shared-gw-0
+          namespace: shared-gateways
+      rules:
+        - backendRefs:
+            - group: ""
+              kind: Service
+              name: example-service
+              # This needs to be the svc port
+              port: 80
+              weight: 1
+          matches:
+            - path:
+                type: PathPrefix
+                value: /
+      config: {}

@@ -1,0 +1,17 @@
+{{- if .Values.enabled }}
+{{- $labels := include "gatewayapi.labels" . }}
+{{- $commonName := include "gatewayapi.name" . }}
+{{- range $healthCheckPolicyName, $healthCheckPolicyDefinition := .Values.healthCheckPolicies }}
+---
+apiVersion: networking.gke.io/v1
+kind: HealthCheckPolicy
+metadata:
+  labels:
+    {{- $labels | nindent 4 }}
+  name: {{ $commonName }}-{{ $healthCheckPolicyName }}
+spec:
+{{- if and $healthCheckPolicyDefinition.spec $healthCheckPolicyDefinition.rawSpec }}
+{{ toYaml $healthCheckPolicyDefinition.spec | indent 2 }}
+{{- end }}
+{{- end }}
+{{- end }}
