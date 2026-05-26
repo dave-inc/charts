@@ -77,6 +77,11 @@
       "items": {
         "type": "object",
         "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 63,
+            "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$"
+          },
           "additionalLabels": {
             "type": "object",
             "additionalProperties": {
@@ -103,71 +108,73 @@
             "minItems": 1,
             "maxItems": 64,
             "items": {
-              "oneOf": [
-                {
-                  "type": "string",
-                  "pattern": "^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\\.)*(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "listenerSpec": {
-                      "type": "object",
-                      "properties": {
-                        "allowedRoutes": {
-                          "type": "object",
-                          "properties": {
-                            "namespaces": {
-                              "type": "object",
-                              "properties": {
-                                "from": {
-                                  "type": "string",
-                                  "enum": [
-                                    "All",
-                                    "Same"
-                                  ]
-                                }
-                              },
-                              "additionalProperties": false
-                            }
-                          },
-                          "additionalProperties": false
+              "if": {
+                "type": "string"
+              },
+              "then": {
+                "type": "string",
+                "pattern": "^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\\.)*(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
+              },
+              "else": {
+                "type": "object",
+                "properties": {
+                  "listenerSpec": {
+                    "type": "object",
+                    "properties": {
+                      "allowedRoutes": {
+                        "type": "object",
+                        "properties": {
+                          "namespaces": {
+                            "type": "object",
+                            "properties": {
+                              "from": {
+                                "type": "string",
+                                "enum": [
+                                  "All",
+                                  "Same"
+                                ]
+                              }
+                            },
+                            "additionalProperties": false
+                          }
                         },
-                        "port": {
-                          "type": "integer"
-                        },
-                        "protocol": {
-                          "type": "string",
-                          "enum": [
-                            "HTTP",
-                            "HTTPS"
-                          ]
-                        },
-                        "hostname": {
-                          "type": "string",
-                          "pattern": "^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\\.)*(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
-                        },
-                        "name": {
-                          "type": "string"
-                        }
+                        "additionalProperties": false
                       },
-                      "required": [
-                        "hostname"
-                      ],
-                      "additionalProperties": false
-                    }
-                  },
-                  "additionalProperties": false,
-                  "required": [
-                    "listenerSpec"
-                  ]
-                }
-              ]
+                      "port": {
+                        "type": "integer"
+                      },
+                      "protocol": {
+                        "type": "string",
+                        "enum": [
+                          "HTTP",
+                          "HTTPS"
+                        ]
+                      },
+                      "hostname": {
+                        "type": "string",
+                        "pattern": "^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\\.)*(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "hostname"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "listenerSpec"
+                ]
+              }
             }
           }
         },
         "additionalProperties": false,
         "required": [
+          "name",
           "listeners"
         ]
       }
