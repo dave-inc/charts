@@ -37,8 +37,8 @@ properties:
       properties:
         name:
           type: string
-          maxLength: 253
-          pattern: "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$"
+          maxLength: 63
+          pattern: "^[a-z]([-a-z0-9]*[a-z0-9])?$"
         additionalLabels:
           type: object
           additionalProperties:
