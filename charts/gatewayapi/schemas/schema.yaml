@@ -1,0 +1,17 @@
+$schema: http://json-schema.org/draft-07/schema#
+type: object
+properties:
+  name:
+    type: string
+  enabled:
+    type: boolean
+  additionalLabels:
+    type: object
+    additionalProperties:
+      type: string
+  gateways:
+    $ref: ./gatewayapi.schema.yaml#/properties/gateways
+  routes:
+    $ref: ./gatewayapi.schema.yaml#/properties/routes
+  healthCheckPolicies:
+    $ref: ./gatewayapi.schema.yaml#/properties/healthCheckPolicies
