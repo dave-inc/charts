@@ -6,7 +6,7 @@
 name: ""
 
 # Master toggle. When false, no Gateway API resources are rendered.
-enabled: true
+enabled: false
 
 # Additional labels applied to all resources created by this chart.
 additionalLabels: {}
