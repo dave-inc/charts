@@ -773,26 +773,6 @@ entries:
     version: 0.8.9
   - apiVersion: v2
     appVersion: 1.17.0
-    created: "2024-09-18T16:21:03.735084914Z"
-    description: Standard Service Template
-    digest: 7bb442d82472d79639f3a077bf8317ab46a4ae1bf9463a270126f28b1baa1b47
-    name: common
-    type: application
-    urls:
-    - https://github.com/dave-inc/charts/releases/download/common-0.8.9-bei-719/common-0.8.9-bei-719.tgz
-    version: 0.8.9-bei-719
-  - apiVersion: v2
-    appVersion: 1.17.0
-    created: "2024-09-17T17:51:00.885390099Z"
-    description: Standard Service Template
-    digest: 3d1b70a5c8e1bda6322e7edfec75b0234f66b5cc0ba5526637451b462ec58dbc
-    name: common
-    type: application
-    urls:
-    - https://github.com/dave-inc/charts/releases/download/common-0.8.9-bei-719/common-0.8.9-bei-719.tgz
-    version: 0.8.9-bei-719
-  - apiVersion: v2
-    appVersion: 1.17.0
     created: "2024-09-18T23:07:53.957992564Z"
     description: Standard Service Template
     digest: c7e242bc43a7734a20e868ad3ad6e13ee5cb946482122f743ff485de32804d62
@@ -806,6 +786,26 @@ entries:
     created: "2024-09-18T02:33:58.165516692Z"
     description: Standard Service Template
     digest: ea5aa7d7405aacbc682f3a8bfffec3b5997a9743adf8fd680f7c81f3a492ee54
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.8.9-bei-719/common-0.8.9-bei-719.tgz
+    version: 0.8.9-bei-719
+  - apiVersion: v2
+    appVersion: 1.17.0
+    created: "2024-09-18T16:21:03.735084914Z"
+    description: Standard Service Template
+    digest: 7bb442d82472d79639f3a077bf8317ab46a4ae1bf9463a270126f28b1baa1b47
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.8.9-bei-719/common-0.8.9-bei-719.tgz
+    version: 0.8.9-bei-719
+  - apiVersion: v2
+    appVersion: 1.17.0
+    created: "2024-09-17T17:51:00.885390099Z"
+    description: Standard Service Template
+    digest: 3d1b70a5c8e1bda6322e7edfec75b0234f66b5cc0ba5526637451b462ec58dbc
     name: common
     type: application
     urls:
@@ -1801,6 +1801,17 @@ entries:
   gateway-bundle:
   - apiVersion: v2
     appVersion: 0.1.0
+    created: "2026-05-26T18:46:02.545113699Z"
+    description: 'Bundles together many Gateway resources into a single chart to be
+      deployed as one unit. '
+    digest: 92f7f66a82f662b965f6db048c64dce25061d2ce3c6c4bbc5c907aba046eb2c8
+    name: gateway-bundle
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/gateway-bundle-1.0.0/gateway-bundle-1.0.0.tgz
+    version: 1.0.0
+  - apiVersion: v2
+    appVersion: 0.1.0
     created: "2026-03-24T20:32:57.784038438Z"
     description: 'Bundles together many Gateway resources into a single chart to be
       deployed as one unit. '
@@ -2480,4 +2491,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2026-05-21T20:41:35.754177656Z"
+generated: "2026-05-26T18:46:02.547127931Z"
