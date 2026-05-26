@@ -1,24 +1,21 @@
 {{- $gatewayBundleLabels := include "gateway-bundle.labels" . }}
-{{- $gatewayBundleFullname := include "gateway-bundle.fullname" . }}
 
 {{- /* Ensure that all gateway names are unique within the release, whether specified by the user or defaulted by the chart. */ -}}
 {{- $seenNames := dict }}
 {{- range $i, $gatewayConfig := .Values.gateways }}
-  {{- $resolvedName := $gatewayConfig.name | default (printf "%s-%d" $gatewayBundleFullname $i) }}
-  {{- if hasKey $seenNames $resolvedName }}
-    {{- fail (printf "duplicate gateway name %q at gateways[%d]; names must be unique within a release" $resolvedName $i) }}
+  {{- if hasKey $seenNames $gatewayConfig.name }}
+    {{- fail (printf "duplicate gateway name %q at gateways[%d]; names must be unique within a release" $gatewayConfig.name $i) }}
   {{- end }}
-  {{- $_ := set $seenNames $resolvedName true }}
+  {{- $_ := set $seenNames $gatewayConfig.name true }}
 {{- end }}
 
 {{- /* Generate a Gateway resource for each gateway configuration, using the specified name or a default name based on the release and index. */ -}}
 {{- range $i, $gatewayConfig := .Values.gateways }}
-{{- $gatewayName := $gatewayConfig.name | default (printf "%s-%d" $gatewayBundleFullname $i) }}
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: {{ $gatewayName }}
+  name: {{ $gatewayConfig.name }}
   {{- with $gatewayConfig.gatewayAnnotations | default $.Values.gatewayAnnotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -44,7 +41,7 @@ spec:
       certificateRefs:
         - group: ""
           kind: Secret
-          name: {{ (printf "%s-%s-tls" $listener $gatewayName) | replace "." "-" | trunc 63 }}
+          name: {{ (printf "%s-%s-tls" $listener $gatewayConfig.name) | replace "." "-" | trunc 63 }}
       mode: Terminate
     {{- end }}
     {{- else }}
@@ -63,8 +60,7 @@ spec:
       certificateRefs:
         - group: ""
           kind: Secret
-          name: {{ .hostname | replace "." "-" }}-{{ $gatewayName }}-tls
-          name: {{ (printf "%s-%s-tls" .hostname $gatewayName) | replace "." "-" | trunc 63 }}
+          name: {{ (printf "%s-%s-tls" .hostname $gatewayConfig.name) | replace "." "-" | trunc 63 }}
       mode: Terminate
     {{- end }}
     {{- end }}

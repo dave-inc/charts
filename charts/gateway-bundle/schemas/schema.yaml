@@ -79,4 +79,5 @@ properties:
                 - listenerSpec
       additionalProperties: false
       required:
+        - name
         - listeners
