@@ -78,4 +78,3 @@ routes:
             - path:
                 type: PathPrefix
                 value: /
-      config: {}
