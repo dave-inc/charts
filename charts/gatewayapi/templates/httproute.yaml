@@ -11,8 +11,39 @@ metadata:
     {{- $labels | nindent 4 }}
   name: {{ $commonName }}-{{ $routeName }}
 spec:
-{{- if and $routeDefinition.spec $routeDefinition.rawSpec }}
-{{ toYaml $routeDefinition.spec | indent 2 }}
+{{- if (and $routeDefinition.spec $routeDefinition.rawSpec) }}
+  {{- toYaml $routeDefinition.spec | nindent 2 -}}
+{{- else }}
+  hostnames:
+    {{- range $routeDefinition.spec.hostnames }}
+    - {{ . }}
+    {{- end }}
+  parentRefs:
+    {{- range $routeDefinition.spec.parentRefs }}
+  - group: {{ .group | default "gateway.networking.k8s.io" }}
+    kind: {{ .kind | default "Gateway" }}
+    name: {{ .name | default "shared-gw-0" }}
+    namespace: {{ .namespace | default "shared-gateways" }}
+    {{- end }}
+  rules:
+    {{- range $routeDefinition.spec.rules }}
+    - backendRefs:
+        {{- range .backendRefs }}
+      - group: {{ .group | default "" }}
+        kind: {{ .kind | default "Service" }}
+        name: {{ .name }}
+        port: {{ .port }}
+        weight: {{ .weight | default 1 }}
+        {{- end }}
+      {{- if .matches }}
+      matches:
+        {{- range .matches }}
+        - path:
+            type: {{ .path.type | default "PathPrefix" }}
+            value: {{ .path.value | default "/" }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
