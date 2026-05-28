@@ -1,17 +1,17 @@
 {{- if .Values.enabled }}
 {{- $labels := include "gatewayapi.labels" . }}
 {{- $commonName := include "gatewayapi.name" . }}
-{{- range $healthCheckPolicyName, $healthCheckPolicyDefinition := .Values.healthCheckPolicies }}
+{{- range $healthCheckPolicyDefinition := .Values.healthCheckPolicies }}
 ---
 apiVersion: networking.gke.io/v1
 kind: HealthCheckPolicy
 metadata:
   labels:
     {{- $labels | nindent 4 }}
-  name: {{ $commonName }}-{{ $healthCheckPolicyName }}
+  name: {{ $commonName }}-{{ $healthCheckPolicyDefinition.name }}
 spec:
 {{- if and $healthCheckPolicyDefinition.spec $healthCheckPolicyDefinition.rawSpec }}
-  {{- toYaml $healthCheckPolicyDefinition.spec | indent 2 }}
+  {{- toYaml $healthCheckPolicyDefinition.spec | nindent 2 }}
 {{- else }}
   default:
     config:
@@ -20,13 +20,13 @@ spec:
         requestPath: {{ $healthCheckPolicyDefinition.spec.default.config.httpHealthCheck.requestPath }}
       type: {{ $healthCheckPolicyDefinition.spec.default.config.type | default "HTTP" }}
     logConfig:
-      enabled: {{ $healthCheckPolicyDefinition.spec.default.logConfig.enabled | default true }}
-    checkIntervalSec: {{ $healthCheckPolicyDefinition.spec.default.checkIntervalSec | default 30 }}
-    timeouteSec: {{ $healthCheckPolicyDefinition.spec.default.timeoutSec | default 10 }}
-    healthThreshold: {{ $healthCheckPolicyDefinition.spec.default.healthThreshold | default 1 }}
+      enabled: {{ dig "logConfig" "enabled" true $healthCheckPolicyDefinition.spec.default }}
+    checkIntervalSec: {{ $healthCheckPolicyDefinition.spec.default.checkIntervalSec | default 10 }}
+    timeoutSec: {{ $healthCheckPolicyDefinition.spec.default.timeoutSec | default 1 }}
+    healthyThreshold: {{ $healthCheckPolicyDefinition.spec.default.healthyThreshold | default 1 }}
     unhealthyThreshold: {{ $healthCheckPolicyDefinition.spec.default.unhealthyThreshold | default 3 }}
   targetRef:
-    group: {{ $healthCheckPolicyDefinition.spec.targetRef.group | default "" }}
+    group: {{ $healthCheckPolicyDefinition.spec.targetRef.group | default "" | quote }}
     kind: {{ $healthCheckPolicyDefinition.spec.targetRef.kind | default "Service" }}
     name: {{ $healthCheckPolicyDefinition.spec.targetRef.name }}
 {{- end }}
