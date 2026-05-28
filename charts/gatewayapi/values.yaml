@@ -55,8 +55,14 @@ healthCheckPolicies:
 # the rendered resource.
 routes:
   main:
-    kind: HTTPRoute # GRPCRoute being another option
-    rawSpec: true
+    # GRPCRoute being another option
+    kind: HTTPRoute
+    # If set to true, no defaults will be used and the spec block will be
+    # passed through verbatim.
+    #
+    # If false, the spec block will be merged with some defaults
+    # (e.g. parentRefs) that can be overridden by the user.
+    rawSpec: false
     spec:
       hostnames:
         - example-service.daveapi.io

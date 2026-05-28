@@ -31,8 +31,7 @@
               ]
             },
             "rawSpec": {
-              "type": "boolean",
-              "const": true
+              "type": "boolean"
             },
             "spec": {
               "type": "object",
@@ -60,11 +59,7 @@
                         "type": "string",
                         "const": "shared-gateways"
                       }
-                    },
-                    "required": [
-                      "name",
-                      "namespace"
-                    ]
+                    }
                   }
                 },
                 "rules": {
@@ -101,8 +96,7 @@
                           },
                           "required": [
                             "name",
-                            "port",
-                            "weight"
+                            "port"
                           ],
                           "additionalProperties": false
                         }
@@ -128,10 +122,6 @@
                                   "type": "string"
                                 }
                               },
-                              "required": [
-                                "type",
-                                "value"
-                              ],
                               "additionalProperties": false
                             }
                           },
@@ -153,7 +143,57 @@
             "kind",
             "rawSpec",
             "spec"
-          ]
+          ],
+          "if": {
+            "properties": {
+              "rawSpec": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "properties": {
+                  "parentRefs": {
+                    "items": {
+                      "required": [
+                        "name",
+                        "namespace"
+                      ]
+                    }
+                  },
+                  "rules": {
+                    "items": {
+                      "properties": {
+                        "backendRefs": {
+                          "items": {
+                            "required": [
+                              "name",
+                              "port",
+                              "weight"
+                            ]
+                          }
+                        },
+                        "matches": {
+                          "items": {
+                            "properties": {
+                              "path": {
+                                "required": [
+                                  "type",
+                                  "value"
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       },
       "additionalProperties": {
@@ -167,8 +207,7 @@
             ]
           },
           "rawSpec": {
-            "type": "boolean",
-            "const": true
+            "type": "boolean"
           },
           "spec": {
             "type": "object",
@@ -196,11 +235,7 @@
                       "type": "string",
                       "const": "shared-gateways"
                     }
-                  },
-                  "required": [
-                    "name",
-                    "namespace"
-                  ]
+                  }
                 }
               },
               "rules": {
@@ -237,8 +272,7 @@
                         },
                         "required": [
                           "name",
-                          "port",
-                          "weight"
+                          "port"
                         ],
                         "additionalProperties": false
                       }
@@ -264,10 +298,6 @@
                                 "type": "string"
                               }
                             },
-                            "required": [
-                              "type",
-                              "value"
-                            ],
                             "additionalProperties": false
                           }
                         },
@@ -289,7 +319,57 @@
           "kind",
           "rawSpec",
           "spec"
-        ]
+        ],
+        "if": {
+          "properties": {
+            "rawSpec": {
+              "const": true
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "spec": {
+              "properties": {
+                "parentRefs": {
+                  "items": {
+                    "required": [
+                      "name",
+                      "namespace"
+                    ]
+                  }
+                },
+                "rules": {
+                  "items": {
+                    "properties": {
+                      "backendRefs": {
+                        "items": {
+                          "required": [
+                            "name",
+                            "port",
+                            "weight"
+                          ]
+                        }
+                      },
+                      "matches": {
+                        "items": {
+                          "properties": {
+                            "path": {
+                              "required": [
+                                "type",
+                                "value"
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       "required": [
         "main"
