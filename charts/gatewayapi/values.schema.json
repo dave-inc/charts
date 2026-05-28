@@ -193,7 +193,8 @@
                 }
               }
             }
-          }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": {
@@ -369,7 +370,8 @@
               }
             }
           }
-        }
+        },
+        "additionalProperties": false
       },
       "required": [
         "main"
@@ -454,22 +456,7 @@
                             "port"
                           ]
                         }
-                      },
-                      "required": [
-                        "type"
-                      ],
-                      "anyOf": [
-                        {
-                          "required": [
-                            "httpHealthCheck"
-                          ]
-                        },
-                        {
-                          "required": [
-                            "grpcHealthCheck"
-                          ]
-                        }
-                      ]
+                      }
                     }
                   }
                 },
@@ -489,8 +476,6 @@
                     }
                   },
                   "required": [
-                    "group",
-                    "kind",
                     "name"
                   ]
                 }
@@ -505,7 +490,71 @@
           "required": [
             "rawSpec",
             "spec"
-          ]
+          ],
+          "if": {
+            "properties": {
+              "rawSpec": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "properties": {
+                  "targetRef": {
+                    "required": [
+                      "group",
+                      "kind",
+                      "name"
+                    ]
+                  },
+                  "default": {
+                    "properties": {
+                      "config": {
+                        "required": [
+                          "type"
+                        ],
+                        "anyOf": [
+                          {
+                            "required": [
+                              "httpHealthCheck"
+                            ]
+                          },
+                          {
+                            "required": [
+                              "grpcHealthCheck"
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "spec": {
+                "properties": {
+                  "default": {
+                    "required": [
+                      "config"
+                    ],
+                    "properties": {
+                      "config": {
+                        "required": [
+                          "httpHealthCheck"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": {
@@ -584,22 +633,7 @@
                           "port"
                         ]
                       }
-                    },
-                    "required": [
-                      "type"
-                    ],
-                    "anyOf": [
-                      {
-                        "required": [
-                          "httpHealthCheck"
-                        ]
-                      },
-                      {
-                        "required": [
-                          "grpcHealthCheck"
-                        ]
-                      }
-                    ]
+                    }
                   }
                 }
               },
@@ -619,8 +653,6 @@
                   }
                 },
                 "required": [
-                  "group",
-                  "kind",
                   "name"
                 ]
               }
@@ -635,7 +667,71 @@
         "required": [
           "rawSpec",
           "spec"
-        ]
+        ],
+        "if": {
+          "properties": {
+            "rawSpec": {
+              "const": true
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "spec": {
+              "properties": {
+                "targetRef": {
+                  "required": [
+                    "group",
+                    "kind",
+                    "name"
+                  ]
+                },
+                "default": {
+                  "properties": {
+                    "config": {
+                      "required": [
+                        "type"
+                      ],
+                      "anyOf": [
+                        {
+                          "required": [
+                            "httpHealthCheck"
+                          ]
+                        },
+                        {
+                          "required": [
+                            "grpcHealthCheck"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "else": {
+          "properties": {
+            "spec": {
+              "properties": {
+                "default": {
+                  "required": [
+                    "config"
+                  ],
+                  "properties": {
+                    "config": {
+                      "required": [
+                        "httpHealthCheck"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "additionalProperties": false
       },
       "required": [
         "main"

@@ -79,13 +79,6 @@ $defs:
                         type: integer
                     required:
                       - port
-                required:
-                  - type
-                anyOf:
-                  - required:
-                      - httpHealthCheck
-                  - required:
-                      - grpcHealthCheck
           targetRef:
             type: object
             properties:
@@ -98,8 +91,6 @@ $defs:
               name:
                 type: string
             required:
-              - group
-              - kind
               - name
         additionalProperties: false
         required:
@@ -108,6 +99,41 @@ $defs:
     required:
       - rawSpec
       - spec
+    if:
+      properties:
+        rawSpec:
+          const: true
+    then:
+      properties:
+        spec:
+          properties:
+            targetRef:
+              required:
+                - group
+                - kind
+                - name
+            default:
+              properties:
+                config:
+                  required:
+                    - type
+                  anyOf:
+                    - required:
+                        - httpHealthCheck
+                    - required:
+                        - grpcHealthCheck
+    else:
+      properties:
+        spec:
+          properties:
+            default:
+              required:
+                - config
+              properties:
+                config:
+                  required:
+                    - httpHealthCheck
+    additionalProperties: false
   route:
     type: object
     properties:
@@ -231,4 +257,5 @@ $defs:
                           required:
                             - type
                             - value
+    additionalProperties: false
 additionalProperties: false
