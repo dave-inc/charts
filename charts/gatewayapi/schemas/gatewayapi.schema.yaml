@@ -28,7 +28,6 @@ $defs:
     properties:
       rawSpec:
         type: boolean
-        const: true
       spec:
         type: object
         properties:

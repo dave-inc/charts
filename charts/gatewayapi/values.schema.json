@@ -382,8 +382,7 @@
           "type": "object",
           "properties": {
             "rawSpec": {
-              "type": "boolean",
-              "const": true
+              "type": "boolean"
             },
             "spec": {
               "type": "object",
@@ -513,8 +512,7 @@
         "type": "object",
         "properties": {
           "rawSpec": {
-            "type": "boolean",
-            "const": true
+            "type": "boolean"
           },
           "spec": {
             "type": "object",

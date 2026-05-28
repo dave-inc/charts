@@ -29,7 +29,7 @@ gateways:
 # networking.gke.io/v1 HealthCheckPolicy.
 healthCheckPolicies:
   main:
-    rawSpec: true
+    rawSpec: false
     spec:
       default:
         checkIntervalSec: 10

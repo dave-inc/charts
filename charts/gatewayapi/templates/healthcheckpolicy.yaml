@@ -11,7 +11,24 @@ metadata:
   name: {{ $commonName }}-{{ $healthCheckPolicyName }}
 spec:
 {{- if and $healthCheckPolicyDefinition.spec $healthCheckPolicyDefinition.rawSpec }}
-{{ toYaml $healthCheckPolicyDefinition.spec | indent 2 }}
+  {{- toYaml $healthCheckPolicyDefinition.spec | indent 2 }}
+{{- else }}
+  default:
+    config:
+      httpHealthCheck:
+        port: {{ $healthCheckPolicyDefinition.spec.default.config.httpHealthCheck.port }}
+        requestPath: {{ $healthCheckPolicyDefinition.spec.default.config.httpHealthCheck.requestPath }}
+      type: {{ $healthCheckPolicyDefinition.spec.default.config.type | default "HTTP" }}
+    logConfig:
+      enabled: {{ $healthCheckPolicyDefinition.spec.default.logConfig.enabled | default true }}
+    checkIntervalSec: {{ $healthCheckPolicyDefinition.spec.default.checkIntervalSec | default 30 }}
+    timeouteSec: {{ $healthCheckPolicyDefinition.spec.default.timeoutSec | default 10 }}
+    healthThreshold: {{ $healthCheckPolicyDefinition.spec.default.healthThreshold | default 1 }}
+    unhealthyThreshold: {{ $healthCheckPolicyDefinition.spec.default.unhealthyThreshold | default 3 }}
+  targetRef:
+    group: {{ $healthCheckPolicyDefinition.spec.targetRef.group | default "" }}
+    kind: {{ $healthCheckPolicyDefinition.spec.targetRef.kind | default "Service" }}
+    name: {{ $healthCheckPolicyDefinition.spec.targetRef.name }}
 {{- end }}
 {{- end }}
 {{- end }}
