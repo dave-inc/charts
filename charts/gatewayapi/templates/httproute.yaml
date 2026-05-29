@@ -1,4 +1,11 @@
 {{- if .Values.enabled }}
+{{- $seen := dict }}
+{{- range $routeDefinition := .Values.routes }}
+{{- if hasKey $seen $routeDefinition.name }}
+{{- fail (printf "Route names must be unique: '%s' is duplicated" $routeDefinition.name) }}
+{{- end }}
+{{- $_ := set $seen $routeDefinition.name true }}
+{{- end }}
 {{- $labels := include "gatewayapi.labels" . }}
 {{- $commonName := include "gatewayapi.name" . }}
 {{- range $routeDefinition := .Values.routes }}

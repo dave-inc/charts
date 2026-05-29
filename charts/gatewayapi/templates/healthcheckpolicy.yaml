@@ -1,4 +1,11 @@
 {{- if .Values.enabled }}
+{{- $seen := dict }}
+{{- range $healthCheckPolicyDefinition := .Values.healthCheckPolicies }}
+{{- if hasKey $seen $healthCheckPolicyDefinition.name }}
+{{- fail (printf "HealthCheckPolicy names must be unique: '%s' is duplicated" $healthCheckPolicyDefinition.name) }}
+{{- end }}
+{{- $_ := set $seen $healthCheckPolicyDefinition.name true }}
+{{- end }}
 {{- $labels := include "gatewayapi.labels" . }}
 {{- $commonName := include "gatewayapi.name" . }}
 {{- range $healthCheckPolicyDefinition := .Values.healthCheckPolicies }}
