@@ -28,10 +28,10 @@ spec:
       type: {{ $healthCheckPolicyDefinition.spec.default.config.type | default "HTTP" }}
     logConfig:
       enabled: {{ dig "logConfig" "enabled" true $healthCheckPolicyDefinition.spec.default }}
-    checkIntervalSec: {{ $healthCheckPolicyDefinition.spec.default.checkIntervalSec | default 10 }}
+    checkIntervalSec: {{ $healthCheckPolicyDefinition.spec.default.checkIntervalSec | default 5 }}
     timeoutSec: {{ $healthCheckPolicyDefinition.spec.default.timeoutSec | default 1 }}
-    healthyThreshold: {{ $healthCheckPolicyDefinition.spec.default.healthyThreshold | default 1 }}
-    unhealthyThreshold: {{ $healthCheckPolicyDefinition.spec.default.unhealthyThreshold | default 3 }}
+    healthyThreshold: {{ $healthCheckPolicyDefinition.spec.default.healthyThreshold | default 2 }}
+    unhealthyThreshold: {{ $healthCheckPolicyDefinition.spec.default.unhealthyThreshold | default 2 }}
   targetRef:
     group: {{ $healthCheckPolicyDefinition.spec.targetRef.group | default "" | quote }}
     kind: {{ $healthCheckPolicyDefinition.spec.targetRef.kind | default "Service" }}

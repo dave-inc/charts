@@ -54,6 +54,14 @@
                 "items": {
                   "type": "object",
                   "properties": {
+                    "group": {
+                      "type": "string",
+                      "const": "gateway.networking.k8s.io"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "Gateway"
+                    },
                     "name": {
                       "type": "string",
                       "pattern": "^shared-gw-\\d+$"
@@ -62,7 +70,8 @@
                       "type": "string",
                       "const": "shared-gateways"
                     }
-                  }
+                  },
+                  "additionalProperties": false
                 }
               },
               "rules": {
@@ -82,7 +91,9 @@
                             "type": "string"
                           },
                           "port": {
-                            "type": "integer"
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 65535
                           },
                           "weight": {
                             "type": "integer",
@@ -131,14 +142,16 @@
                         "additionalProperties": false
                       }
                     }
-                  }
+                  },
+                  "additionalProperties": false
                 }
               }
             },
             "required": [
               "hostnames",
               "rules"
-            ]
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -158,6 +171,9 @@
         "then": {
           "properties": {
             "spec": {
+              "required": [
+                "parentRefs"
+              ],
               "properties": {
                 "parentRefs": {
                   "items": {
@@ -261,7 +277,9 @@
                         "type": "object",
                         "properties": {
                           "port": {
-                            "type": "integer"
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 65535
                           },
                           "requestPath": {
                             "type": "string"
@@ -270,22 +288,28 @@
                         "required": [
                           "port",
                           "requestPath"
-                        ]
+                        ],
+                        "additionalProperties": false
                       },
                       "grpcHealthCheck": {
                         "type": "object",
                         "properties": {
                           "port": {
-                            "type": "integer"
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 65535
                           }
                         },
                         "required": [
                           "port"
-                        ]
+                        ],
+                        "additionalProperties": false
                       }
-                    }
+                    },
+                    "additionalProperties": false
                   }
-                }
+                },
+                "additionalProperties": false
               },
               "targetRef": {
                 "type": "object",
@@ -304,7 +328,8 @@
                 },
                 "required": [
                   "name"
-                ]
+                ],
+                "additionalProperties": false
               }
             },
             "additionalProperties": false,

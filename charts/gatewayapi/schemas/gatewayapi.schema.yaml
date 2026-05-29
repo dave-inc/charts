@@ -61,18 +61,26 @@ $defs:
                     properties:
                       port:
                         type: integer
+                        minimum: 1
+                        maximum: 65535
                       requestPath:
                         type: string
                     required:
                       - port
                       - requestPath
+                    additionalProperties: false
                   grpcHealthCheck:
                     type: object
                     properties:
                       port:
                         type: integer
+                        minimum: 1
+                        maximum: 65535
                     required:
                       - port
+                    additionalProperties: false
+                additionalProperties: false
+            additionalProperties: false
           targetRef:
             type: object
             properties:
@@ -86,6 +94,7 @@ $defs:
                 type: string
             required:
               - name
+            additionalProperties: false
         additionalProperties: false
         required:
           - default
@@ -159,12 +168,19 @@ $defs:
             items:
               type: object
               properties:
+                group:
+                  type: string
+                  const: "gateway.networking.k8s.io"
+                kind:
+                  type: string
+                  const: Gateway
                 name:
                   type: string
                   pattern: "^shared-gw-\\d+$"
                 namespace:
                   type: string
                   const: shared-gateways
+              additionalProperties: false
           rules:
             type: array
             minItems: 1
@@ -184,6 +200,8 @@ $defs:
                         type: string
                       port:
                         type: integer
+                        minimum: 1
+                        maximum: 65535
                       weight:
                         type: integer
                         # For the time being, we only support a single backend ref per rule,
@@ -218,9 +236,11 @@ $defs:
                             type: string
                         additionalProperties: false
                     additionalProperties: false
+              additionalProperties: false
         required:
           - hostnames
           - rules
+        additionalProperties: false
     required:
       - name
       - spec
@@ -233,6 +253,8 @@ $defs:
     then:
       properties:
         spec:
+          required:
+            - parentRefs
           properties:
             parentRefs:
               items:
