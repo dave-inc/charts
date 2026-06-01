@@ -1,6 +1,6 @@
 {{- if .Values.enabled }}
 {{- $seen := dict }}
-{{- range $routeDefinition := .Values.routes }}
+{{- range $routeDefinition := .Values.routes.entries }}
 {{- if hasKey $seen $routeDefinition.name }}
 {{- fail (printf "Route names must be unique: '%s' is duplicated" $routeDefinition.name) }}
 {{- end }}
@@ -8,7 +8,7 @@
 {{- end }}
 {{- $labels := include "gatewayapi.labels" . }}
 {{- $commonName := include "gatewayapi.name" . }}
-{{- range $routeDefinition := .Values.routes }}
+{{- range $routeDefinition := .Values.routes.entries }}
 {{- if (and (ne $routeDefinition.enabled false) (eq (default "HTTPRoute" $routeDefinition.kind) "HTTPRoute")) }}
 ---
 apiVersion: gateway.networking.k8s.io/v1
@@ -28,38 +28,38 @@ spec:
   parentRefs:
   {{- if $routeDefinition.spec.parentRefs }}
     {{- range $routeDefinition.spec.parentRefs }}
-  - group: {{ .group | default "gateway.networking.k8s.io" }}
-    kind: {{ .kind | default "Gateway" }}
-    name: {{ .name | default "shared-gw-0" }}
-    namespace: {{ .namespace | default "shared-gateways" }}
+  - group: {{ .group | default $.Values.routes.default.spec.parentRef.group }}
+    kind: {{ .kind | default $.Values.routes.default.spec.parentRef.kind }}
+    name: {{ .name | default $.Values.routes.default.spec.parentRef.name }}
+    namespace: {{ .namespace | default $.Values.routes.default.spec.parentRef.namespace }}
     {{- end }}
   {{- else }}
-  - group: gateway.networking.k8s.io
-    kind: Gateway
-    name: shared-gw-0
-    namespace: shared-gateways
+  - group: {{ $.Values.routes.default.spec.parentRef.group }}
+    kind: {{ $.Values.routes.default.spec.parentRef.kind }}
+    name: {{ $.Values.routes.default.spec.parentRef.name }}
+    namespace: {{ $.Values.routes.default.spec.parentRef.namespace }}
   {{- end }}
   rules:
     {{- range $routeDefinition.spec.rules }}
     - backendRefs:
         {{- range .backendRefs }}
-      - group: {{ .group | default "" | quote }}
-        kind: {{ .kind | default "Service" }}
+      - group: {{ .group | default $.Values.routes.default.spec.rule.backendRef.group | quote }}
+        kind: {{ .kind | default $.Values.routes.default.spec.rule.backendRef.kind }}
         name: {{ .name }}
         port: {{ .port }}
-        weight: {{ .weight | default 1 }}
+        weight: {{ .weight | default $.Values.routes.default.spec.rule.backendRef.weight }}
         {{- end }}
       matches:
         {{- if .matches }}
         {{- range .matches }}
         - path:
-            type: {{ .path.type | default "PathPrefix" }}
-            value: {{ .path.value | default "/" }}
+            type: {{ .path.type | default $.Values.routes.default.spec.rule.match.path.type }}
+            value: {{ .path.value | default $.Values.routes.default.spec.rule.match.path.value }}
         {{- end }}
         {{- else }}
         - path:
-            type: PathPrefix
-            value: /
+            type: {{ $.Values.routes.default.spec.rule.match.path.type }}
+            value: {{ $.Values.routes.default.spec.rule.match.path.value }}
         {{- end }}
     {{- end }}
 {{- end }}

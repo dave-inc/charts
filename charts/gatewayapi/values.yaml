@@ -26,6 +26,21 @@ gateways:
 # HealthCheckPolicies list. Each item's `name` becomes the suffix of the rendered
 # resource (e.g. `<release>-<name>`). Names must be unique across items.
 healthCheckPolicies:
+  default:
+    spec:
+      default:
+        config:
+          type: HTTP
+        logConfig:
+          enabled: true
+        checkIntervalSec: 5
+        timeoutSec: 1
+        healthyThreshold: 2
+        unhealthyThreshold: 2
+      targetRef:
+        group: ""
+        kind: Service
+  entries:
   - name: main
     # If true, the policy will be rendered. If false, it will be omitted.
     enabled: true
@@ -53,6 +68,23 @@ healthCheckPolicies:
 # (e.g. `<release>-<name>`). Names must be unique across items. Each entry must
 # declare its `kind` (HTTPRoute or GRPCRoute) and a `spec` block.
 routes:
+  default:
+    spec:
+      parentRef:
+        group: gateway.networking.k8s.io
+        kind: Gateway
+        name: shared-gw-0
+        namespace: shared-gateways
+      rule:
+        backendRef:
+          group: ""
+          kind: Service
+          weight: 1
+        match:
+          path:
+            type: PathPrefix
+            value: "/"
+  entries:
   - name: main
     # If true, the route will be rendered. If false, it will be omitted.
     enabled: true

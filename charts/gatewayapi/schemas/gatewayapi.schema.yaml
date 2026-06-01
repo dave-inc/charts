@@ -5,15 +5,30 @@ properties:
   gateways:
     type: object
   routes:
-    type: array
-    minItems: 1
-    items:
-      $ref: "#/$defs/route"
+    type: object
+    properties:
+      default:
+        $ref: "#/$defs/routeDefault"
+      entries:
+        type: array
+        minItems: 1
+        items:
+          $ref: "#/$defs/route"
+    additionalProperties: false
   healthCheckPolicies:
-    type: array
-    minItems: 1
-    items:
-      $ref: "#/$defs/healthCheckPolicy"
+    type: object
+    properties:
+      default:
+        $ref: "#/$defs/healthCheckPolicyDefault"
+      entries:
+        type: array
+        minItems: 1
+        items:
+          $ref: "#/$defs/healthCheckPolicy"
+    additionalProperties: false
+required:
+  - routes
+
 $defs:
   healthCheckPolicy:
     type: object
@@ -281,5 +296,111 @@ $defs:
                           required:
                             - type
                             - value
+    additionalProperties: false
+  routeDefault:
+    type: object
+    properties:
+      spec:
+        type: object
+        properties:
+          parentRef:
+            type: object
+            properties:
+              group:
+                type: string
+                const: "gateway.networking.k8s.io"
+              kind:
+                type: string
+                const: Gateway
+              name:
+                type: string
+                pattern: "^shared-gw-\\d+$"
+              namespace:
+                type: string
+                const: shared-gateways
+            additionalProperties: false
+          rule:
+            type: object
+            properties:
+              backendRef:
+                type: object
+                properties:
+                  group:
+                    type: string
+                    const: ""
+                  kind:
+                    type: string
+                    const: Service
+                  weight:
+                    type: integer
+                    const: 1
+                additionalProperties: false
+              match:
+                type: object
+                properties:
+                  path:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        enum:
+                          - PathPrefix
+                          - PathExact
+                          - PathRegex
+                      value:
+                        type: string
+                    additionalProperties: false
+                additionalProperties: false
+            additionalProperties: false
+        additionalProperties: false
+    additionalProperties: false
+  healthCheckPolicyDefault:
+    type: object
+    properties:
+      spec:
+        type: object
+        properties:
+          default:
+            type: object
+            properties:
+              checkIntervalSec:
+                type: integer
+                minimum: 1
+              timeoutSec:
+                type: integer
+                minimum: 1
+              healthyThreshold:
+                type: integer
+                minimum: 1
+              unhealthyThreshold:
+                type: integer
+                minimum: 1
+              logConfig:
+                type: object
+                properties:
+                  enabled:
+                    type: boolean
+                additionalProperties: false
+              config:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum:
+                      - HTTP
+                      - GRPC
+                additionalProperties: false
+            additionalProperties: false
+          targetRef:
+            type: object
+            properties:
+              group:
+                type: string
+                const: ""
+              kind:
+                type: string
+                const: Service
+            additionalProperties: false
+        additionalProperties: false
     additionalProperties: false
 additionalProperties: false

@@ -18,43 +18,15 @@
       "type": "object"
     },
     "routes": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "enabled": {
-            "type": "boolean"
-          },
-          "kind": {
-            "type": "string",
-            "enum": [
-              "HTTPRoute",
-              "GRPCRoute"
-            ]
-          },
-          "rawSpec": {
-            "type": "boolean"
-          },
-          "spec": {
-            "type": "object",
-            "properties": {
-              "hostnames": {
-                "type": "array",
-                "minItems": 1,
-                "items": {
-                  "type": "string",
-                  "pattern": "^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\\.)*(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
-                }
-              },
-              "parentRefs": {
-                "type": "array",
-                "minItems": 1,
-                "maxItems": 1,
-                "items": {
+      "type": "object",
+      "properties": {
+        "default": {
+          "type": "object",
+          "properties": {
+            "spec": {
+              "type": "object",
+              "properties": {
+                "parentRef": {
                   "type": "object",
                   "properties": {
                     "group": {
@@ -75,137 +47,251 @@
                     }
                   },
                   "additionalProperties": false
-                }
-              },
-              "rules": {
-                "type": "array",
-                "minItems": 1,
-                "items": {
+                },
+                "rule": {
                   "type": "object",
                   "properties": {
-                    "backendRefs": {
-                      "type": "array",
-                      "minItems": 1,
-                      "maxItems": 1,
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "name": {
-                            "type": "string"
-                          },
-                          "port": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "maximum": 65535
-                          },
-                          "weight": {
-                            "type": "integer",
-                            "const": 1
-                          },
-                          "group": {
-                            "type": "string",
-                            "const": ""
-                          },
-                          "kind": {
-                            "type": "string",
-                            "const": "Service"
-                          }
+                    "backendRef": {
+                      "type": "object",
+                      "properties": {
+                        "group": {
+                          "type": "string",
+                          "const": ""
                         },
-                        "required": [
-                          "name",
-                          "port"
-                        ],
-                        "additionalProperties": false
-                      }
+                        "kind": {
+                          "type": "string",
+                          "const": "Service"
+                        },
+                        "weight": {
+                          "type": "integer",
+                          "const": 1
+                        }
+                      },
+                      "additionalProperties": false
                     },
-                    "matches": {
-                      "type": "array",
-                      "minItems": 1,
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "path": {
-                            "type": "object",
-                            "properties": {
-                              "type": {
-                                "type": "string",
-                                "enum": [
-                                  "PathPrefix",
-                                  "PathExact",
-                                  "PathRegex"
-                                ]
-                              },
-                              "value": {
-                                "type": "string"
-                              }
+                    "match": {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "PathPrefix",
+                                "PathExact",
+                                "PathRegex"
+                              ]
                             },
-                            "additionalProperties": false
-                          }
-                        },
-                        "additionalProperties": false
-                      }
+                            "value": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
                     }
                   },
                   "additionalProperties": false
                 }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "entries": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "HTTPRoute",
+                  "GRPCRoute"
+                ]
+              },
+              "rawSpec": {
+                "type": "boolean"
+              },
+              "spec": {
+                "type": "object",
+                "properties": {
+                  "hostnames": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string",
+                      "pattern": "^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\\.)*(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
+                    }
+                  },
+                  "parentRefs": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 1,
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "group": {
+                          "type": "string",
+                          "const": "gateway.networking.k8s.io"
+                        },
+                        "kind": {
+                          "type": "string",
+                          "const": "Gateway"
+                        },
+                        "name": {
+                          "type": "string",
+                          "pattern": "^shared-gw-\\d+$"
+                        },
+                        "namespace": {
+                          "type": "string",
+                          "const": "shared-gateways"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "rules": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "backendRefs": {
+                          "type": "array",
+                          "minItems": 1,
+                          "maxItems": 1,
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "port": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 65535
+                              },
+                              "weight": {
+                                "type": "integer",
+                                "const": 1
+                              },
+                              "group": {
+                                "type": "string",
+                                "const": ""
+                              },
+                              "kind": {
+                                "type": "string",
+                                "const": "Service"
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "port"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "matches": {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "PathPrefix",
+                                      "PathExact",
+                                      "PathRegex"
+                                    ]
+                                  },
+                                  "value": {
+                                    "type": "string"
+                                  }
+                                },
+                                "additionalProperties": false
+                              }
+                            },
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "hostnames",
+                  "rules"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
-              "hostnames",
-              "rules"
+              "name",
+              "spec"
             ],
-            "additionalProperties": false
-          }
-        },
-        "required": [
-          "name",
-          "spec"
-        ],
-        "if": {
-          "required": [
-            "rawSpec"
-          ],
-          "properties": {
-            "rawSpec": {
-              "const": true
-            }
-          }
-        },
-        "then": {
-          "properties": {
-            "spec": {
+            "if": {
               "required": [
-                "parentRefs"
+                "rawSpec"
               ],
               "properties": {
-                "parentRefs": {
-                  "items": {
-                    "required": [
-                      "name",
-                      "namespace"
-                    ]
-                  }
-                },
-                "rules": {
-                  "items": {
-                    "properties": {
-                      "backendRefs": {
-                        "items": {
-                          "required": [
-                            "name",
-                            "port",
-                            "weight"
-                          ]
-                        }
-                      },
-                      "matches": {
-                        "items": {
-                          "properties": {
-                            "path": {
+                "rawSpec": {
+                  "const": true
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "spec": {
+                  "required": [
+                    "parentRefs"
+                  ],
+                  "properties": {
+                    "parentRefs": {
+                      "items": {
+                        "required": [
+                          "name",
+                          "namespace"
+                        ]
+                      }
+                    },
+                    "rules": {
+                      "items": {
+                        "properties": {
+                          "backendRefs": {
+                            "items": {
                               "required": [
-                                "type",
-                                "value"
+                                "name",
+                                "port",
+                                "weight"
                               ]
+                            }
+                          },
+                          "matches": {
+                            "items": {
+                              "properties": {
+                                "path": {
+                                  "required": [
+                                    "type",
+                                    "value"
+                                  ]
+                                }
+                              }
                             }
                           }
                         }
@@ -214,209 +300,286 @@
                   }
                 }
               }
-            }
+            },
+            "additionalProperties": false
           }
-        },
-        "additionalProperties": false
-      }
+        }
+      },
+      "additionalProperties": false
     },
     "healthCheckPolicies": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
+      "type": "object",
+      "properties": {
+        "default": {
+          "type": "object",
+          "properties": {
+            "spec": {
+              "type": "object",
+              "properties": {
+                "default": {
+                  "type": "object",
+                  "properties": {
+                    "checkIntervalSec": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "timeoutSec": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "healthyThreshold": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "unhealthyThreshold": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "logConfig": {
+                      "type": "object",
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "config": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "HTTP",
+                            "GRPC"
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "targetRef": {
+                  "type": "object",
+                  "properties": {
+                    "group": {
+                      "type": "string",
+                      "const": ""
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "Service"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
           },
-          "enabled": {
-            "type": "boolean"
-          },
-          "rawSpec": {
-            "type": "boolean"
-          },
-          "spec": {
+          "additionalProperties": false
+        },
+        "entries": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
             "type": "object",
             "properties": {
-              "default": {
+              "name": {
+                "type": "string"
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "rawSpec": {
+                "type": "boolean"
+              },
+              "spec": {
                 "type": "object",
                 "properties": {
-                  "checkIntervalSec": {
-                    "type": "integer",
-                    "minimum": 1
-                  },
-                  "timeoutSec": {
-                    "type": "integer",
-                    "minimum": 1
-                  },
-                  "healthyThreshold": {
-                    "type": "integer",
-                    "minimum": 1
-                  },
-                  "unhealthyThreshold": {
-                    "type": "integer",
-                    "minimum": 1
-                  },
-                  "logConfig": {
+                  "default": {
                     "type": "object",
                     "properties": {
-                      "enabled": {
-                        "type": "boolean"
+                      "checkIntervalSec": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "timeoutSec": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "healthyThreshold": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "unhealthyThreshold": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "logConfig": {
+                        "type": "object",
+                        "properties": {
+                          "enabled": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "HTTP",
+                              "GRPC"
+                            ]
+                          },
+                          "httpHealthCheck": {
+                            "type": "object",
+                            "properties": {
+                              "port": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 65535
+                              },
+                              "requestPath": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "port",
+                              "requestPath"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "grpcHealthCheck": {
+                            "type": "object",
+                            "properties": {
+                              "port": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 65535
+                              }
+                            },
+                            "required": [
+                              "port"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "targetRef": {
+                    "type": "object",
+                    "properties": {
+                      "group": {
+                        "type": "string",
+                        "const": ""
+                      },
+                      "kind": {
+                        "type": "string",
+                        "const": "Service"
+                      },
+                      "name": {
+                        "type": "string"
                       }
                     },
                     "required": [
-                      "enabled"
+                      "name"
                     ],
                     "additionalProperties": false
-                  },
-                  "config": {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "enum": [
-                          "HTTP",
-                          "GRPC"
-                        ]
-                      },
-                      "httpHealthCheck": {
-                        "type": "object",
-                        "properties": {
-                          "port": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "maximum": 65535
-                          },
-                          "requestPath": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "port",
-                          "requestPath"
-                        ],
-                        "additionalProperties": false
-                      },
-                      "grpcHealthCheck": {
-                        "type": "object",
-                        "properties": {
-                          "port": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "maximum": 65535
-                          }
-                        },
-                        "required": [
-                          "port"
-                        ],
-                        "additionalProperties": false
-                      }
-                    },
-                    "additionalProperties": false
                   }
                 },
-                "additionalProperties": false
-              },
-              "targetRef": {
-                "type": "object",
-                "properties": {
-                  "group": {
-                    "type": "string",
-                    "const": ""
-                  },
-                  "kind": {
-                    "type": "string",
-                    "const": "Service"
-                  },
-                  "name": {
-                    "type": "string"
-                  }
-                },
+                "additionalProperties": false,
                 "required": [
-                  "name"
-                ],
-                "additionalProperties": false
+                  "default",
+                  "targetRef"
+                ]
               }
             },
-            "additionalProperties": false,
             "required": [
-              "default",
-              "targetRef"
-            ]
-          }
-        },
-        "required": [
-          "name",
-          "spec"
-        ],
-        "if": {
-          "required": [
-            "rawSpec"
-          ],
-          "properties": {
-            "rawSpec": {
-              "const": true
-            }
-          }
-        },
-        "then": {
-          "properties": {
-            "spec": {
+              "name",
+              "spec"
+            ],
+            "if": {
+              "required": [
+                "rawSpec"
+              ],
               "properties": {
-                "targetRef": {
-                  "required": [
-                    "group",
-                    "kind",
-                    "name"
-                  ]
-                },
-                "default": {
+                "rawSpec": {
+                  "const": true
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "spec": {
                   "properties": {
-                    "config": {
+                    "targetRef": {
                       "required": [
-                        "type"
+                        "group",
+                        "kind",
+                        "name"
+                      ]
+                    },
+                    "default": {
+                      "properties": {
+                        "config": {
+                          "required": [
+                            "type"
+                          ],
+                          "anyOf": [
+                            {
+                              "required": [
+                                "httpHealthCheck"
+                              ]
+                            },
+                            {
+                              "required": [
+                                "grpcHealthCheck"
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "spec": {
+                  "properties": {
+                    "default": {
+                      "required": [
+                        "config"
                       ],
-                      "anyOf": [
-                        {
+                      "properties": {
+                        "config": {
                           "required": [
                             "httpHealthCheck"
                           ]
-                        },
-                        {
-                          "required": [
-                            "grpcHealthCheck"
-                          ]
                         }
-                      ]
+                      }
                     }
                   }
                 }
               }
-            }
+            },
+            "additionalProperties": false
           }
-        },
-        "else": {
-          "properties": {
-            "spec": {
-              "properties": {
-                "default": {
-                  "required": [
-                    "config"
-                  ],
-                  "properties": {
-                    "config": {
-                      "required": [
-                        "httpHealthCheck"
-                      ]
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "additionalProperties": false
-      }
+        }
+      },
+      "additionalProperties": false
     }
   }
 }
