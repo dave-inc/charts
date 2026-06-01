@@ -9,6 +9,7 @@
 {{- $labels := include "gatewayapi.labels" . }}
 {{- $commonName := include "gatewayapi.name" . }}
 {{- range $healthCheckPolicyDefinition := .Values.healthCheckPolicies }}
+{{- if (ne $healthCheckPolicyDefinition.enabled false) }}
 ---
 apiVersion: networking.gke.io/v1
 kind: HealthCheckPolicy
@@ -36,6 +37,7 @@ spec:
     group: {{ $healthCheckPolicyDefinition.spec.targetRef.group | default "" | quote }}
     kind: {{ $healthCheckPolicyDefinition.spec.targetRef.kind | default "Service" }}
     name: {{ $healthCheckPolicyDefinition.spec.targetRef.name }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

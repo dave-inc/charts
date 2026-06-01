@@ -26,6 +26,9 @@
           "name": {
             "type": "string"
           },
+          "enabled": {
+            "type": "boolean"
+          },
           "kind": {
             "type": "string",
             "enum": [
@@ -225,6 +228,9 @@
         "properties": {
           "name": {
             "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
           },
           "rawSpec": {
             "type": "boolean"

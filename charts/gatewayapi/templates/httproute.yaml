@@ -9,7 +9,7 @@
 {{- $labels := include "gatewayapi.labels" . }}
 {{- $commonName := include "gatewayapi.name" . }}
 {{- range $routeDefinition := .Values.routes }}
-{{- if eq (default "HTTPRoute" $routeDefinition.kind) "HTTPRoute" }}
+{{- if (and (ne $routeDefinition.enabled false) (eq (default "HTTPRoute" $routeDefinition.kind) "HTTPRoute")) }}
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
