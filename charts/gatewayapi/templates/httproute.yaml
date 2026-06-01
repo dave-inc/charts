@@ -1,18 +1,67 @@
 {{- if .Values.enabled }}
+{{- $seen := dict }}
+{{- range $routeDefinition := .Values.routes }}
+{{- if hasKey $seen $routeDefinition.name }}
+{{- fail (printf "Route names must be unique: '%s' is duplicated" $routeDefinition.name) }}
+{{- end }}
+{{- $_ := set $seen $routeDefinition.name true }}
+{{- end }}
 {{- $labels := include "gatewayapi.labels" . }}
 {{- $commonName := include "gatewayapi.name" . }}
-{{- range $routeName, $routeDefinition := .Values.routes }}
-{{- if eq $routeDefinition.kind "HTTPRoute" }}
+{{- range $routeDefinition := .Values.routes }}
+{{- if (and (ne $routeDefinition.enabled false) (eq (default "HTTPRoute" $routeDefinition.kind) "HTTPRoute")) }}
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   labels:
     {{- $labels | nindent 4 }}
-  name: {{ $commonName }}-{{ $routeName }}
+  name: {{ $commonName }}-{{ $routeDefinition.name }}
 spec:
-{{- if and $routeDefinition.spec $routeDefinition.rawSpec }}
-{{ toYaml $routeDefinition.spec | indent 2 }}
+{{- if (and $routeDefinition.spec $routeDefinition.rawSpec) }}
+  {{- toYaml $routeDefinition.spec | nindent 2 -}}
+{{- else }}
+  hostnames:
+    {{- range $routeDefinition.spec.hostnames }}
+    - {{ . }}
+    {{- end }}
+  parentRefs:
+  {{- if $routeDefinition.spec.parentRefs }}
+    {{- range $routeDefinition.spec.parentRefs }}
+  - group: {{ .group | default "gateway.networking.k8s.io" }}
+    kind: {{ .kind | default "Gateway" }}
+    name: {{ .name | default "shared-gw-0" }}
+    namespace: {{ .namespace | default "shared-gateways" }}
+    {{- end }}
+  {{- else }}
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: shared-gw-0
+    namespace: shared-gateways
+  {{- end }}
+  rules:
+    {{- range $routeDefinition.spec.rules }}
+    - backendRefs:
+        {{- range .backendRefs }}
+      - group: {{ .group | default "" | quote }}
+        kind: {{ .kind | default "Service" }}
+        name: {{ .name }}
+        port: {{ .port }}
+        weight: {{ .weight | default 1 }}
+        {{- end }}
+      matches:
+        {{- if .matches }}
+        {{- range .matches }}
+        - path:
+            type: {{ .path.type | default "PathPrefix" }}
+            value: {{ .path.value | default "/" }}
+        {{- end }}
+        {{- else }}
+        - path:
+            type: PathPrefix
+            value: /
+        {{- end }}
+    {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

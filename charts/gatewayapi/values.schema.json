@@ -18,147 +18,17 @@
       "type": "object"
     },
     "routes": {
-      "type": "object",
-      "properties": {
-        "main": {
-          "type": "object",
-          "properties": {
-            "kind": {
-              "type": "string",
-              "enum": [
-                "HTTPRoute",
-                "GRPCRoute"
-              ]
-            },
-            "rawSpec": {
-              "type": "boolean",
-              "const": true
-            },
-            "spec": {
-              "type": "object",
-              "properties": {
-                "hostnames": {
-                  "type": "array",
-                  "minItems": 1,
-                  "items": {
-                    "type": "string",
-                    "pattern": "^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\\.)*(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
-                  }
-                },
-                "parentRefs": {
-                  "type": "array",
-                  "minItems": 1,
-                  "maxItems": 1,
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "name": {
-                        "type": "string",
-                        "pattern": "^shared-gw-\\d+$"
-                      },
-                      "namespace": {
-                        "type": "string",
-                        "const": "shared-gateways"
-                      }
-                    },
-                    "required": [
-                      "name",
-                      "namespace"
-                    ]
-                  }
-                },
-                "rules": {
-                  "type": "array",
-                  "minItems": 1,
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "backendRefs": {
-                        "type": "array",
-                        "minItems": 1,
-                        "maxItems": 1,
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "name": {
-                              "type": "string"
-                            },
-                            "port": {
-                              "type": "integer"
-                            },
-                            "weight": {
-                              "type": "integer",
-                              "const": 1
-                            },
-                            "group": {
-                              "type": "string",
-                              "const": ""
-                            },
-                            "kind": {
-                              "type": "string",
-                              "const": "Service"
-                            }
-                          },
-                          "required": [
-                            "name",
-                            "port",
-                            "weight"
-                          ],
-                          "additionalProperties": false
-                        }
-                      },
-                      "matches": {
-                        "type": "array",
-                        "minItems": 1,
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "path": {
-                              "type": "object",
-                              "properties": {
-                                "type": {
-                                  "type": "string",
-                                  "enum": [
-                                    "PathPrefix",
-                                    "PathExact",
-                                    "PathRegex"
-                                  ]
-                                },
-                                "value": {
-                                  "type": "string"
-                                }
-                              },
-                              "required": [
-                                "type",
-                                "value"
-                              ],
-                              "additionalProperties": false
-                            }
-                          },
-                          "additionalProperties": false
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              "required": [
-                "hostnames",
-                "parentRefs",
-                "rules"
-              ]
-            }
-          },
-          "required": [
-            "kind",
-            "rawSpec",
-            "spec"
-          ]
-        }
-      },
-      "additionalProperties": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
         "type": "object",
         "properties": {
+          "name": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
           "kind": {
             "type": "string",
             "enum": [
@@ -167,8 +37,7 @@
             ]
           },
           "rawSpec": {
-            "type": "boolean",
-            "const": true
+            "type": "boolean"
           },
           "spec": {
             "type": "object",
@@ -188,6 +57,14 @@
                 "items": {
                   "type": "object",
                   "properties": {
+                    "group": {
+                      "type": "string",
+                      "const": "gateway.networking.k8s.io"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "Gateway"
+                    },
                     "name": {
                       "type": "string",
                       "pattern": "^shared-gw-\\d+$"
@@ -197,10 +74,7 @@
                       "const": "shared-gateways"
                     }
                   },
-                  "required": [
-                    "name",
-                    "namespace"
-                  ]
+                  "additionalProperties": false
                 }
               },
               "rules": {
@@ -220,7 +94,9 @@
                             "type": "string"
                           },
                           "port": {
-                            "type": "integer"
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 65535
                           },
                           "weight": {
                             "type": "integer",
@@ -237,8 +113,7 @@
                         },
                         "required": [
                           "name",
-                          "port",
-                          "weight"
+                          "port"
                         ],
                         "additionalProperties": false
                       }
@@ -264,177 +139,101 @@
                                 "type": "string"
                               }
                             },
-                            "required": [
-                              "type",
-                              "value"
-                            ],
                             "additionalProperties": false
                           }
                         },
                         "additionalProperties": false
                       }
                     }
-                  }
+                  },
+                  "additionalProperties": false
                 }
               }
             },
             "required": [
               "hostnames",
-              "parentRefs",
               "rules"
-            ]
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
-          "kind",
-          "rawSpec",
+          "name",
           "spec"
-        ]
-      },
-      "required": [
-        "main"
-      ]
-    },
-    "healthCheckPolicies": {
-      "type": "object",
-      "properties": {
-        "main": {
-          "type": "object",
+        ],
+        "if": {
+          "required": [
+            "rawSpec"
+          ],
           "properties": {
             "rawSpec": {
-              "type": "boolean",
               "const": true
-            },
+            }
+          }
+        },
+        "then": {
+          "properties": {
             "spec": {
-              "type": "object",
+              "required": [
+                "parentRefs"
+              ],
               "properties": {
-                "default": {
-                  "type": "object",
-                  "properties": {
-                    "checkIntervalSec": {
-                      "type": "integer",
-                      "minimum": 1
-                    },
-                    "timeoutSec": {
-                      "type": "integer",
-                      "minimum": 1
-                    },
-                    "healthyThreshold": {
-                      "type": "integer",
-                      "minimum": 1
-                    },
-                    "unhealthyThreshold": {
-                      "type": "integer",
-                      "minimum": 1
-                    },
-                    "logConfig": {
-                      "type": "object",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean"
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "config": {
-                      "type": "object",
-                      "properties": {
-                        "type": {
-                          "type": "string",
-                          "enum": [
-                            "HTTP",
-                            "GRPC"
-                          ]
-                        },
-                        "httpHealthCheck": {
-                          "type": "object",
-                          "properties": {
-                            "port": {
-                              "type": "integer"
-                            },
-                            "requestPath": {
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "port",
-                            "requestPath"
-                          ]
-                        },
-                        "grpcHealthCheck": {
-                          "type": "object",
-                          "properties": {
-                            "port": {
-                              "type": "integer"
-                            }
-                          },
-                          "required": [
-                            "port"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "type"
-                      ],
-                      "anyOf": [
-                        {
-                          "required": [
-                            "httpHealthCheck"
-                          ]
-                        },
-                        {
-                          "required": [
-                            "grpcHealthCheck"
-                          ]
-                        }
-                      ]
-                    }
+                "parentRefs": {
+                  "items": {
+                    "required": [
+                      "name",
+                      "namespace"
+                    ]
                   }
                 },
-                "targetRef": {
-                  "type": "object",
-                  "properties": {
-                    "group": {
-                      "type": "string",
-                      "const": ""
-                    },
-                    "kind": {
-                      "type": "string",
-                      "const": "Service"
-                    },
-                    "name": {
-                      "type": "string"
+                "rules": {
+                  "items": {
+                    "properties": {
+                      "backendRefs": {
+                        "items": {
+                          "required": [
+                            "name",
+                            "port",
+                            "weight"
+                          ]
+                        }
+                      },
+                      "matches": {
+                        "items": {
+                          "properties": {
+                            "path": {
+                              "required": [
+                                "type",
+                                "value"
+                              ]
+                            }
+                          }
+                        }
+                      }
                     }
-                  },
-                  "required": [
-                    "group",
-                    "kind",
-                    "name"
-                  ]
+                  }
                 }
-              },
-              "additionalProperties": false,
-              "required": [
-                "default",
-                "targetRef"
-              ]
+              }
             }
-          },
-          "required": [
-            "rawSpec",
-            "spec"
-          ]
-        }
-      },
-      "additionalProperties": {
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "healthCheckPolicies": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
         "type": "object",
         "properties": {
+          "name": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
           "rawSpec": {
-            "type": "boolean",
-            "const": true
+            "type": "boolean"
           },
           "spec": {
             "type": "object",
@@ -484,7 +283,9 @@
                         "type": "object",
                         "properties": {
                           "port": {
-                            "type": "integer"
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 65535
                           },
                           "requestPath": {
                             "type": "string"
@@ -493,37 +294,28 @@
                         "required": [
                           "port",
                           "requestPath"
-                        ]
+                        ],
+                        "additionalProperties": false
                       },
                       "grpcHealthCheck": {
                         "type": "object",
                         "properties": {
                           "port": {
-                            "type": "integer"
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 65535
                           }
                         },
                         "required": [
                           "port"
-                        ]
+                        ],
+                        "additionalProperties": false
                       }
                     },
-                    "required": [
-                      "type"
-                    ],
-                    "anyOf": [
-                      {
-                        "required": [
-                          "httpHealthCheck"
-                        ]
-                      },
-                      {
-                        "required": [
-                          "grpcHealthCheck"
-                        ]
-                      }
-                    ]
+                    "additionalProperties": false
                   }
-                }
+                },
+                "additionalProperties": false
               },
               "targetRef": {
                 "type": "object",
@@ -541,10 +333,9 @@
                   }
                 },
                 "required": [
-                  "group",
-                  "kind",
                   "name"
-                ]
+                ],
+                "additionalProperties": false
               }
             },
             "additionalProperties": false,
@@ -555,13 +346,77 @@
           }
         },
         "required": [
-          "rawSpec",
+          "name",
           "spec"
-        ]
-      },
-      "required": [
-        "main"
-      ]
+        ],
+        "if": {
+          "required": [
+            "rawSpec"
+          ],
+          "properties": {
+            "rawSpec": {
+              "const": true
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "spec": {
+              "properties": {
+                "targetRef": {
+                  "required": [
+                    "group",
+                    "kind",
+                    "name"
+                  ]
+                },
+                "default": {
+                  "properties": {
+                    "config": {
+                      "required": [
+                        "type"
+                      ],
+                      "anyOf": [
+                        {
+                          "required": [
+                            "httpHealthCheck"
+                          ]
+                        },
+                        {
+                          "required": [
+                            "grpcHealthCheck"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "else": {
+          "properties": {
+            "spec": {
+              "properties": {
+                "default": {
+                  "required": [
+                    "config"
+                  ],
+                  "properties": {
+                    "config": {
+                      "required": [
+                        "httpHealthCheck"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      }
     }
   }
 }

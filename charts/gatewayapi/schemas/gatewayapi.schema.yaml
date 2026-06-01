@@ -5,30 +5,25 @@ properties:
   gateways:
     type: object
   routes:
-    type: object
-    properties:
-      main:
-        $ref: "#/$defs/route"
-    additionalProperties:
+    type: array
+    minItems: 1
+    items:
       $ref: "#/$defs/route"
-    required:
-      - main
   healthCheckPolicies:
-    type: object
-    properties:
-      main:
-        $ref: "#/$defs/healthCheckPolicy"
-    additionalProperties:
+    type: array
+    minItems: 1
+    items:
       $ref: "#/$defs/healthCheckPolicy"
-    required:
-      - main
 $defs:
   healthCheckPolicy:
     type: object
     properties:
+      name:
+        type: string
+      enabled:
+        type: boolean
       rawSpec:
         type: boolean
-        const: true
       spec:
         type: object
         properties:
@@ -68,25 +63,26 @@ $defs:
                     properties:
                       port:
                         type: integer
+                        minimum: 1
+                        maximum: 65535
                       requestPath:
                         type: string
                     required:
                       - port
                       - requestPath
+                    additionalProperties: false
                   grpcHealthCheck:
                     type: object
                     properties:
                       port:
                         type: integer
+                        minimum: 1
+                        maximum: 65535
                     required:
                       - port
-                required:
-                  - type
-                anyOf:
-                  - required:
-                      - httpHealthCheck
-                  - required:
-                      - grpcHealthCheck
+                    additionalProperties: false
+                additionalProperties: false
+            additionalProperties: false
           targetRef:
             type: object
             properties:
@@ -99,19 +95,59 @@ $defs:
               name:
                 type: string
             required:
-              - group
-              - kind
               - name
+            additionalProperties: false
         additionalProperties: false
         required:
           - default
           - targetRef
     required:
-      - rawSpec
+      - name
       - spec
+    if:
+      required:
+        - rawSpec
+      properties:
+        rawSpec:
+          const: true
+    then:
+      properties:
+        spec:
+          properties:
+            targetRef:
+              required:
+                - group
+                - kind
+                - name
+            default:
+              properties:
+                config:
+                  required:
+                    - type
+                  anyOf:
+                    - required:
+                        - httpHealthCheck
+                    - required:
+                        - grpcHealthCheck
+    else:
+      properties:
+        spec:
+          properties:
+            default:
+              required:
+                - config
+              properties:
+                config:
+                  required:
+                    - httpHealthCheck
+    additionalProperties: false
   route:
     type: object
     properties:
+      name:
+        type: string
+      enabled:
+        type: boolean
       kind:
         type: string
         enum:
@@ -119,7 +155,6 @@ $defs:
           - GRPCRoute
       rawSpec:
         type: boolean
-        const: true
       spec:
         type: object
         properties:
@@ -137,15 +172,19 @@ $defs:
             items:
               type: object
               properties:
+                group:
+                  type: string
+                  const: "gateway.networking.k8s.io"
+                kind:
+                  type: string
+                  const: Gateway
                 name:
                   type: string
                   pattern: "^shared-gw-\\d+$"
                 namespace:
                   type: string
                   const: shared-gateways
-              required:
-                - name
-                - namespace
+              additionalProperties: false
           rules:
             type: array
             minItems: 1
@@ -165,6 +204,8 @@ $defs:
                         type: string
                       port:
                         type: integer
+                        minimum: 1
+                        maximum: 65535
                       weight:
                         type: integer
                         # For the time being, we only support a single backend ref per rule,
@@ -179,7 +220,6 @@ $defs:
                     required:
                       - name
                       - port
-                      - weight
                     additionalProperties: false
                 matches:
                   type: array
@@ -198,17 +238,48 @@ $defs:
                               - PathRegex
                           value:
                             type: string
-                        required:
-                          - type
-                          - value
                         additionalProperties: false
                     additionalProperties: false
+              additionalProperties: false
         required:
           - hostnames
-          - parentRefs
           - rules
+        additionalProperties: false
     required:
-      - kind
-      - rawSpec
+      - name
       - spec
+    if:
+      required:
+        - rawSpec
+      properties:
+        rawSpec:
+          const: true
+    then:
+      properties:
+        spec:
+          required:
+            - parentRefs
+          properties:
+            parentRefs:
+              items:
+                required:
+                  - name
+                  - namespace
+            rules:
+              items:
+                properties:
+                  backendRefs:
+                    items:
+                      required:
+                        - name
+                        - port
+                        - weight
+                  matches:
+                    items:
+                      properties:
+                        path:
+                          required:
+                            - type
+                            - value
+    additionalProperties: false
 additionalProperties: false

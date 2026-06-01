@@ -23,12 +23,12 @@ gateways:
         # Overrides defaultNamespace for this reference
         namespace: shared-gateways
 
-# HealthCheckPolicies map. Each key becomes the suffix of the rendered resource
-# (e.g. `<release>-<key>`). Each entry must have `rawSpec: true` and a `spec`
-# block whose contents are passed through verbatim to a
-# networking.gke.io/v1 HealthCheckPolicy.
+# HealthCheckPolicies list. Each item's `name` becomes the suffix of the rendered
+# resource (e.g. `<release>-<name>`). Names must be unique across items.
 healthCheckPolicies:
-  main:
+  - name: main
+    # If true, the policy will be rendered. If false, it will be omitted.
+    enabled: true
     rawSpec: true
     spec:
       default:
@@ -49,13 +49,20 @@ healthCheckPolicies:
         kind: Service
         name: example-service
 
-# Routes map. Each key becomes the suffix of the rendered route resource
-# (e.g. `<release>-<key>`). Each entry must declare its `kind` (HTTPRoute or
-# GRPCRoute), `rawSpec: true`, and a `spec` block passed through verbatim to
-# the rendered resource.
+# Routes list. Each item's `name` becomes the suffix of the rendered route resource
+# (e.g. `<release>-<name>`). Names must be unique across items. Each entry must
+# declare its `kind` (HTTPRoute or GRPCRoute) and a `spec` block.
 routes:
-  main:
-    kind: HTTPRoute # GRPCRoute being another option
+  - name: main
+    # If true, the route will be rendered. If false, it will be omitted.
+    enabled: true
+    # GRPCRoute being another option
+    kind: HTTPRoute
+    # If set to true, no defaults will be used and the spec block will be
+    # passed through verbatim.
+    #
+    # If false, the spec block will be merged with some defaults
+    # (e.g. parentRefs) that can be overridden by the user.
     rawSpec: true
     spec:
       hostnames:
