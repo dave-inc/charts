@@ -41,26 +41,30 @@ spec:
   {{- end }}
   rules:
     {{- range $routeDefinition.spec.rules }}
-    - backendRefs:
+    -
+      {{- if .backendRefs }}
+      backendRefs:
         {{- range .backendRefs }}
-      - group: {{ .group | default $.Values.routes.default.spec.rule.backendRef.group | quote }}
-        kind: {{ .kind | default $.Values.routes.default.spec.rule.backendRef.kind }}
-        name: {{ .name }}
-        port: {{ .port }}
-        weight: {{ .weight | default $.Values.routes.default.spec.rule.backendRef.weight }}
+        - group: {{ .group | default $.Values.routes.default.spec.rule.backendRef.group | quote }}
+          kind: {{ .kind | default $.Values.routes.default.spec.rule.backendRef.kind }}
+          name: {{ .name }}
+          port: {{ .port }}
+          weight: {{ .weight | default $.Values.routes.default.spec.rule.backendRef.weight }}
         {{- end }}
+      {{- end }}
+      {{- if .matches }}
       matches:
-        {{- if .matches }}
         {{- range .matches }}
         - path:
             type: {{ .path.type | default $.Values.routes.default.spec.rule.match.path.type }}
             value: {{ .path.value | default $.Values.routes.default.spec.rule.match.path.value }}
         {{- end }}
-        {{- else }}
+      {{- else }}
+      matches:
         - path:
             type: {{ $.Values.routes.default.spec.rule.match.path.type }}
             value: {{ $.Values.routes.default.spec.rule.match.path.value }}
-        {{- end }}
+      {{- end }}
     {{- end }}
 {{- end }}
 {{- end }}
