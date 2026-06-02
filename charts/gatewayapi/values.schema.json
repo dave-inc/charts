@@ -94,6 +94,43 @@
                         }
                       },
                       "additionalProperties": false
+                    },
+                    "filter": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "RequestRedirect"
+                          ]
+                        },
+                        "requestRedirect": {
+                          "type": "object",
+                          "properties": {
+                            "scheme": {
+                              "type": "string",
+                              "enum": [
+                                "http",
+                                "https"
+                              ]
+                            },
+                            "hostname": {
+                              "type": "string"
+                            },
+                            "statusCode": {
+                              "type": "integer",
+                              "enum": [
+                                301,
+                                302,
+                                307,
+                                308
+                              ]
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
                     }
                   },
                   "additionalProperties": false
@@ -231,6 +268,47 @@
                             },
                             "additionalProperties": false
                           }
+                        },
+                        "filters": {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "RequestRedirect"
+                                ]
+                              },
+                              "requestRedirect": {
+                                "type": "object",
+                                "properties": {
+                                  "scheme": {
+                                    "type": "string",
+                                    "enum": [
+                                      "http",
+                                      "https"
+                                    ]
+                                  },
+                                  "hostname": {
+                                    "type": "string"
+                                  },
+                                  "statusCode": {
+                                    "type": "integer",
+                                    "enum": [
+                                      301,
+                                      302,
+                                      307,
+                                      308
+                                    ]
+                                  }
+                                },
+                                "additionalProperties": false
+                              }
+                            },
+                            "additionalProperties": false
+                          }
                         }
                       },
                       "additionalProperties": false
@@ -294,6 +372,25 @@
                                     "value"
                                   ]
                                 }
+                              }
+                            }
+                          },
+                          "filters": {
+                            "items": {
+                              "required": [
+                                "type"
+                              ],
+                              "if": {
+                                "properties": {
+                                  "type": {
+                                    "const": "RequestRedirect"
+                                  }
+                                }
+                              },
+                              "then": {
+                                "required": [
+                                  "requestRedirect"
+                                ]
                               }
                             }
                           }
