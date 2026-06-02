@@ -101,7 +101,7 @@
           },
           "additionalProperties": false
         },
-        "entries": {
+        "items": {
           "type": "array",
           "minItems": 1,
           "items": {
@@ -380,7 +380,7 @@
           },
           "additionalProperties": false
         },
-        "entries": {
+        "items": {
           "type": "array",
           "minItems": 1,
           "items": {

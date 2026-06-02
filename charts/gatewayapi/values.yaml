@@ -40,7 +40,7 @@ healthCheckPolicies:
       targetRef:
         group: ""
         kind: Service
-  entries:
+  items:
   - name: main
     # If true, the policy will be rendered. If false, it will be omitted.
     enabled: true
@@ -84,7 +84,7 @@ routes:
           path:
             type: PathPrefix
             value: "/"
-  entries:
+  items:
   - name: main
     # If true, the route will be rendered. If false, it will be omitted.
     enabled: true

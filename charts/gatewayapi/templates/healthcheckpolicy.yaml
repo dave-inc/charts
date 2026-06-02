@@ -1,6 +1,6 @@
 {{- if .Values.enabled }}
 {{- $seen := dict }}
-{{- range $healthCheckPolicyDefinition := .Values.healthCheckPolicies.entries }}
+{{- range $healthCheckPolicyDefinition := .Values.healthCheckPolicies.items }}
 {{- if hasKey $seen $healthCheckPolicyDefinition.name }}
 {{- fail (printf "HealthCheckPolicy names must be unique: '%s' is duplicated" $healthCheckPolicyDefinition.name) }}
 {{- end }}
@@ -8,7 +8,7 @@
 {{- end }}
 {{- $labels := include "gatewayapi.labels" . }}
 {{- $commonName := include "gatewayapi.name" . }}
-{{- range $healthCheckPolicyDefinition := .Values.healthCheckPolicies.entries }}
+{{- range $healthCheckPolicyDefinition := .Values.healthCheckPolicies.items }}
 {{- if (ne $healthCheckPolicyDefinition.enabled false) }}
 ---
 apiVersion: networking.gke.io/v1

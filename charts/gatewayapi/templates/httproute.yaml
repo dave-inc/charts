@@ -1,6 +1,6 @@
 {{- if .Values.enabled }}
 {{- $seen := dict }}
-{{- range $routeDefinition := .Values.routes.entries }}
+{{- range $routeDefinition := .Values.routes.items }}
 {{- if hasKey $seen $routeDefinition.name }}
 {{- fail (printf "Route names must be unique: '%s' is duplicated" $routeDefinition.name) }}
 {{- end }}
@@ -8,7 +8,7 @@
 {{- end }}
 {{- $labels := include "gatewayapi.labels" . }}
 {{- $commonName := include "gatewayapi.name" . }}
-{{- range $routeDefinition := .Values.routes.entries }}
+{{- range $routeDefinition := .Values.routes.items }}
 {{- if (and (ne $routeDefinition.enabled false) (eq (default "HTTPRoute" $routeDefinition.kind) "HTTPRoute")) }}
 ---
 apiVersion: gateway.networking.k8s.io/v1

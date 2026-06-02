@@ -9,7 +9,7 @@ properties:
     properties:
       default:
         $ref: "#/$defs/routeDefault"
-      entries:
+      items:
         type: array
         minItems: 1
         items:
@@ -20,7 +20,7 @@ properties:
     properties:
       default:
         $ref: "#/$defs/healthCheckPolicyDefault"
-      entries:
+      items:
         type: array
         minItems: 1
         items:
