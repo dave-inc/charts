@@ -32,6 +32,7 @@ properties:
     additionalProperties: false
 required:
   - routes
+  - healthCheckPolicies
 
 $defs:
   healthCheckPolicy:
