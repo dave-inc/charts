@@ -86,6 +86,10 @@ routes:
           path:
             type: PathPrefix
             value: "/"
+        filter:
+          type: RequestRedirect
+          requestRedirect:
+            scheme: https
   items:
   - name: main
     # If true, the route will be rendered. If false, it will be omitted.

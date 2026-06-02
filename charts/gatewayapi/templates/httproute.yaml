@@ -65,6 +65,18 @@ spec:
             type: {{ $.Values.routes.default.spec.rule.match.path.type }}
             value: {{ $.Values.routes.default.spec.rule.match.path.value }}
       {{- end }}
+      {{- if .filters }}
+      filters:
+        {{- range .filters }}
+        - type: {{ .type | default $.Values.routes.default.spec.rule.filter.type }}
+          {{- if (eq (default $.Values.routes.default.spec.rule.filter.type .type) "RequestRedirect") }}
+          requestRedirect:
+            scheme: {{ .requestRedirect.scheme | default $.Values.routes.default.spec.rule.filter.requestRedirect.scheme }}
+            hostname: {{ .requestRedirect.hostname }}
+            statusCode: {{ .requestRedirect.statusCode }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
     {{- end }}
 {{- end }}
 {{- end }}
