@@ -1,4 +1,4 @@
-{{- if .Values.enabled }}
+{{- if (and .Values.enabled .Values.routes.enabled) }}
 {{- $seen := dict }}
 {{- range $routeDefinition := .Values.routes.items }}
 {{- if hasKey $seen $routeDefinition.name }}

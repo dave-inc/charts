@@ -20,6 +20,9 @@
     "routes": {
       "type": "object",
       "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
         "default": {
           "type": "object",
           "properties": {
@@ -310,6 +313,9 @@
     "healthCheckPolicies": {
       "type": "object",
       "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
         "default": {
           "type": "object",
           "properties": {

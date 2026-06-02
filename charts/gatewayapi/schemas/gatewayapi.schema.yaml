@@ -7,6 +7,8 @@ properties:
   routes:
     type: object
     properties:
+      enabled:
+        type: boolean
       default:
         $ref: "#/$defs/routeDefault"
       items:
@@ -18,6 +20,8 @@ properties:
   healthCheckPolicies:
     type: object
     properties:
+      enabled:
+        type: boolean
       default:
         $ref: "#/$defs/healthCheckPolicyDefault"
       items:

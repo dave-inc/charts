@@ -26,6 +26,7 @@ gateways:
 # HealthCheckPolicies list. Each item's `name` becomes the suffix of the rendered
 # resource (e.g. `<release>-<name>`). Names must be unique across items.
 healthCheckPolicies:
+  enabled: true
   default:
     spec:
       default:
@@ -68,6 +69,7 @@ healthCheckPolicies:
 # (e.g. `<release>-<name>`). Names must be unique across items. Each entry must
 # declare its `kind` (HTTPRoute or GRPCRoute) and a `spec` block.
 routes:
+  enabled: true
   default:
     spec:
       parentRef:

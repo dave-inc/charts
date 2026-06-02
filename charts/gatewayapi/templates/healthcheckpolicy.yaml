@@ -1,4 +1,4 @@
-{{- if .Values.enabled }}
+{{- if (and .Values.enabled .Values.healthCheckPolicies.enabled) }}
 {{- $seen := dict }}
 {{- range $healthCheckPolicyDefinition := .Values.healthCheckPolicies.items }}
 {{- if hasKey $seen $healthCheckPolicyDefinition.name }}
