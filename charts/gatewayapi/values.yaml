@@ -19,7 +19,7 @@ gateways:
   shared:
     defaultNamespace: shared-gateways
     refs:
-      - name: shared-gw-0
+      - name: default
         # Overrides defaultNamespace for this reference
         namespace: shared-gateways
 
@@ -91,7 +91,7 @@ routes:
       parentRef:
         group: gateway.networking.k8s.io
         kind: Gateway
-        name: shared-gw-0
+        name: default
         namespace: shared-gateways
       rule:
         backendRef:
@@ -137,7 +137,7 @@ routes:
 #      parentRefs:
 #        - group: gateway.networking.k8s.io
 #          kind: Gateway
-#          name: shared-gw-0
+#          name: default
 #          namespace: shared-gateways
 #      rules:
 #        - backendRefs:

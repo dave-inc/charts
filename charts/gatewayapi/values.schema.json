@@ -42,7 +42,8 @@
                     },
                     "name": {
                       "type": "string",
-                      "pattern": "^shared-gw-\\d+$"
+                      "maxLength": 63,
+                      "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$"
                     },
                     "namespace": {
                       "type": "string",
@@ -191,7 +192,8 @@
                         },
                         "name": {
                           "type": "string",
-                          "pattern": "^shared-gw-\\d+$"
+                          "maxLength": 63,
+                          "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$"
                         },
                         "namespace": {
                           "type": "string",
