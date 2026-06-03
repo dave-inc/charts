@@ -16,61 +16,63 @@ gateways:
         port: 443
         protocol: HTTPS
   # Each item creates a Gateway resource.
-  items:
-    # This is the simplest case where the Gateway will be created using the
-    # default spec defined in gateways.default, and only the hostname field
-    # is specified.
-    #
-    # In common practice, by convention default will ideally be the main and
-    # only Gateway, in the hopes that ListenerSet from GEP-1713 support will
-    # eventually land, and more than 64 listeners can be added.
-    - name: default
-      spec:
-        listeners:
-          - hostname: example-service-0.trydave.com
-    - name: extra-gw-1
-      # rawSpec is implied to be false, but we can explicitly set it to false
-      # to make it clear that this item will use the gateways.default spec as
-      # a template and only override the fields specified in this item.
-      rawSpec: false
-      spec:
-        listeners:
-          # The missing fields will be filled by using gateways.default as a
-          # template.
-          - hostname: example-service-1.trydave.com
-          - hostname: example-service-2.trydave.com
-          # This listener has all fields specified, so it will not use any
-          # defaults from gateways.default.
-          - name: example-service-3-trydave-com-https
-            hostname: example-service-3.trydave.com
-            port: 443
-            protocol: HTTPS
-            allowedRoutes:
-              namespaces:
-                from: All
-            tls:
-              certificateRefs:
-              - group: ""
-                kind: Secret
-                name: example-service-3-trydave-com-extra-gw-1-tls
-              mode: Terminate
-    # The Gateway created by this item will not use any defaults from
-    # gateways.default because rawSpec is set to true, they will be ignored
-    # and the spec in this item will be used as-is.
-    - name: extra-gw-2
-      rawSpec: true
-      spec:
-        gatewayClassName: gke-l7-rilb
-        listeners:
-         -  name: example-service-4-trydave-com-https
-            hostname: example-service-4.trydave.com
-            port: 443
-            protocol: HTTPS
-            allowedRoutes:
-              namespaces:
-                from: All
-            tls:
-              certificateRefs:
-              - group: ""
-                kind: Secret
-                name: example-service-4-trydave-com-extra-gw-2-tls
+  items: []
+## This is the simplest case where the Gateway will be created using the
+## default spec defined in gateways.default, and only the hostname field
+## is specified.
+##
+## In common practice, by convention default will ideally be the main and
+## only Gateway, in the hopes that ListenerSet from GEP-1713 support will
+## eventually land, and more than 64 listeners can be added.
+#   - name: default
+#     spec:
+#       listeners:
+#         - hostname: example-service-0.trydave.com
+
+## rawSpec is implied to be false, but we can explicitly set it to false
+## to make it clear that this item will use the gateways.default spec as
+## a template and only override the fields specified in this item.
+#   - name: extra-gw-1
+#     rawSpec: false
+#     spec:
+#       listeners:
+#         # The missing fields will be filled by using gateways.default as a
+#         # template.
+#         - hostname: example-service-1.trydave.com
+#         - hostname: example-service-2.trydave.com
+#         # This listener has all fields specified, so it will not use any
+#         # defaults from gateways.default.
+#         - name: example-service-3-trydave-com-https
+#           hostname: example-service-3.trydave.com
+#           port: 443
+#           protocol: HTTPS
+#           allowedRoutes:
+#             namespaces:
+#               from: All
+#           tls:
+#             certificateRefs:
+#             - group: ""
+#               kind: Secret
+#               name: example-service-3-trydave-com-extra-gw-1-tls
+#             mode: Terminate
+
+## The Gateway created by this item will not use any defaults from
+## gateways.default because rawSpec is set to true, they will be ignored
+## and the spec in this item will be used as-is.
+#   - name: extra-gw-2
+#     rawSpec: true
+#     spec:
+#       gatewayClassName: gke-l7-rilb
+#       listeners:
+#        -  name: example-service-4-trydave-com-https
+#           hostname: example-service-4.trydave.com
+#           port: 443
+#           protocol: HTTPS
+#           allowedRoutes:
+#             namespaces:
+#               from: All
+#           tls:
+#             certificateRefs:
+#             - group: ""
+#               kind: Secret
+#               name: example-service-4-trydave-com-extra-gw-2-tls
