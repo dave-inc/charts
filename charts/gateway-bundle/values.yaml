@@ -28,7 +28,7 @@ gateways:
       spec:
         listeners:
           - hostname: example-service-0.trydave.com
-    - name: extra-1
+    - name: extra-gw-1
       # rawSpec is implied to be false, but we can explicitly set it to false
       # to make it clear that this item will use the gateways.default spec as
       # a template and only override the fields specified in this item.
@@ -52,12 +52,12 @@ gateways:
               certificateRefs:
               - group: ""
                 kind: Secret
-                name: example-service-3-trydave-com-shared-gw-0-tls
+                name: example-service-3-trydave-com-extra-gw-1-tls
               mode: Terminate
     # The Gateway created by this item will not use any defaults from
     # gateways.default because rawSpec is set to true, they will be ignored
     # and the spec in this item will be used as-is.
-    - name: extra-2
+    - name: extra-gw-2
       rawSpec: true
       spec:
         gatewayClassName: gke-l7-rilb
@@ -73,4 +73,4 @@ gateways:
               certificateRefs:
               - group: ""
                 kind: Secret
-                name: example-service-4-trydave-com-extra-gw-0-tls
+                name: example-service-4-trydave-com-extra-gw-2-tls

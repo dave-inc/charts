@@ -1,12 +1,12 @@
-# Minimal Gateway deployment: creates a single Gateway named `shared-gw-0`
+# Minimal Gateway deployment: creates a single Gateway named `default`
 # with one HTTPS listener for `example-service.trydave.com`. Relies on chart
 # defaults for `gatewayClassName`, `port`, `protocol`, `allowedRoutes`, and an
 # auto-generated `tls.certificateRefs` entry (named
-# `example-service-trydave-com-shared-gw-0-tls`).
+# `example-service-trydave-com-default-tls`).
 enabled: true
 gateways:
   items:
-    - name: shared-gw-0
+    - name: default
       spec:
         listeners:
           - hostname: example-service.trydave.com
