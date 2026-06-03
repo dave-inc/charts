@@ -151,3 +151,8 @@ routes:
 #            - path:
 #                type: PathPrefix
 #                value: /
+#          timeouts:
+#            # Duration values follow GEP-2257 (e.g. "30s", "1m", "500ms").
+#            # At least one of `request` or `backendRequest` must be set.
+#            request: 30s
+#            backendRequest: 10s

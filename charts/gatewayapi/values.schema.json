@@ -314,10 +314,12 @@
                           "type": "object",
                           "properties": {
                             "backendRequest": {
-                              "type": "string"
+                              "type": "string",
+                              "pattern": "^([0-9]{1,5}(h|m|s|ms)){1,4}$"
                             },
                             "request": {
-                              "type": "string"
+                              "type": "string",
+                              "pattern": "^([0-9]{1,5}(h|m|s|ms)){1,4}$"
                             }
                           },
                           "anyOf": [
