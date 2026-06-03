@@ -1,83 +1,16 @@
 $schema: http://json-schema.org/draft-07/schema#
 type: object
 properties:
-  nameOverride:
+  name:
     type: string
-
-  fullnameOverride:
-    type: string
-
+  enabled:
+    type: boolean
   additionalLabels:
     type: object
     additionalProperties:
       type: string
-
-  gatewayAnnotations:
-    type: object
-    additionalProperties:
-      type: string
-
-  gatewaySpec:
-    type: object
-    properties:
-      gatewayClassName:
-        type: string
-    additionalProperties: false
-
-    required:
-      - gatewayClassName
-
-  listenerSpec:
-    $ref: ./globalListenerSpec.schema.yaml#/properties/globalListenerSpec
-
   gateways:
-    type: array
-    items:
-      type: object
-      properties:
-        name:
-          type: string
-          maxLength: 63
-          pattern: "^[a-z]([-a-z0-9]*[a-z0-9])?$"
-        additionalLabels:
-          type: object
-          additionalProperties:
-            type: string
-        gatewayAnnotations:
-          type: object
-          additionalProperties:
-            type: string
-        gatewaySpec:
-          type: object
-          properties:
-            gatewayClassName:
-              type: string
-          additionalProperties: false
-        listeners:
-          type: array
-          minItems: 1
-          # Hard limit on the number of listeners per gateway
-          maxItems: 64
-          items:
-            # if/then/else (instead of oneOf) so a malformed object listener surfaces a
-            # specific error (e.g. missing listenerSpec, unknown property) rather than
-            # the opaque "did not match any schema in oneOf".
-            if:
-              type: string
-            then:
-              # simple listener: string entry used as hostname with global listenerSpec values
-              type: string
-              pattern: "^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\\.)*(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
-            else:
-              # complex listener: override selected listenerSpec fields
-              type: object
-              properties:
-                listenerSpec:
-                  $ref: ./listenerSpec.schema.yaml#/properties/listenerSpec
-              additionalProperties: false
-              required:
-                - listenerSpec
-      additionalProperties: false
-      required:
-        - name
-        - listeners
+    $ref: ./gateway-bundle.schema.yaml#/properties/gateways
+required:
+  - enabled
+  - gateways

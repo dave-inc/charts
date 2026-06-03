@@ -1,46 +1,78 @@
-nameOverride: ""
-fullnameOverride: ""
+enabled: false
 
-# labels to be added to all resources created by this chart
 additionalLabels: {}
 
-gatewayAnnotations:
-  cert-manager.io/cluster-issuer: letsencrypt
-
-# global gateway configs
-gatewaySpec:
-  gatewayClassName: gke-l7-rilb
-
-# global gateway listener configs
-listenerSpec:
-  allowedRoutes:
-    namespaces:
-      from: All
-  port: 443
-  protocol: HTTPS
-
-## Each entry in the list below will define a gateway resource.
+gateways:
+  default:
+    metadata:
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt
+    spec:
+      gatewayClassName: gke-l7-rilb
+      listener:
+        allowedRoutes:
+          namespaces:
+            from: All
+        port: 443
+        protocol: HTTPS
+  # Each item creates a Gateway resource.
+  items: []
+## This is the simplest case where the Gateway will be created using the
+## default spec defined in gateways.default, and only the hostname field
+## is specified.
 ##
-## There are two ways a listener entry can be defined:
-## 1. A simple string entry, which will be used as the hostname for the listener and will use global gateway and listener configs.
-## 2. A more complex entry, which allows you to override a limited set of listener-specific fields. Supported listener overrides are:
-##    - listenerSpec.hostname
-##    - listenerSpec.name
-##    - listenerSpec.port
-##    - listenerSpec.protocol
-##    - listenerSpec.allowedRoutes.namespaces.from
-##    TLS certificateRefs are configured by the chart templates and are not currently overridable per-listener via listenerSpec.
-gateways: []
-#  - name: my-gateway
-#  # gateway specific configs, if not specified, will use global configs
-#    gatewaySpec:
-#      gatewayClassName: gke-l7-rilb
-#    listeners:
-#      # simple listener: uses this hostname with global listenerSpec values
-#      - example1.com
-#      # complex listener: override selected listenerSpec fields (see supported list above)
-#      - listenerSpec:
-#          hostname: example2.com
-#          # name, port, protocol, and allowedRoutes.namespaces.from may also be set here
-#  - listeners:
-#      - example3.com
+## In common practice, by convention default will ideally be the main and
+## only Gateway, in the hopes that ListenerSet from GEP-1713 support will
+## eventually land, and more than 64 listeners can be added.
+#   - name: default
+#     spec:
+#       listeners:
+#         - hostname: example-service-0.trydave.com
+
+## rawSpec is implied to be false, but we can explicitly set it to false
+## to make it clear that this item will use the gateways.default spec as
+## a template and only override the fields specified in this item.
+#   - name: extra-gw-1
+#     rawSpec: false
+#     spec:
+#       listeners:
+#         # The missing fields will be filled by using gateways.default as a
+#         # template.
+#         - hostname: example-service-1.trydave.com
+#         - hostname: example-service-2.trydave.com
+#         # This listener has all fields specified, so it will not use any
+#         # defaults from gateways.default.
+#         - name: example-service-3-trydave-com-https
+#           hostname: example-service-3.trydave.com
+#           port: 443
+#           protocol: HTTPS
+#           allowedRoutes:
+#             namespaces:
+#               from: All
+#           tls:
+#             certificateRefs:
+#             - group: ""
+#               kind: Secret
+#               name: example-service-3-trydave-com-extra-gw-1-tls
+#             mode: Terminate
+
+## The Gateway created by this item will not use any defaults from
+## gateways.default because rawSpec is set to true, they will be ignored
+## and the spec in this item will be used as-is.
+#   - name: extra-gw-2
+#     rawSpec: true
+#     spec:
+#       gatewayClassName: gke-l7-rilb
+#       listeners:
+#        -  name: example-service-4-trydave-com-https
+#           hostname: example-service-4.trydave.com
+#           port: 443
+#           protocol: HTTPS
+#           allowedRoutes:
+#             namespaces:
+#               from: All
+#           tls:
+#             certificateRefs:
+#             - group: ""
+#               kind: Secret
+#               name: example-service-4-trydave-com-extra-gw-2-tls
