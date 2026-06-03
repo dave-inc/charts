@@ -5,15 +5,35 @@ properties:
   gateways:
     type: object
   routes:
-    type: array
-    minItems: 1
-    items:
-      $ref: "#/$defs/route"
+    type: object
+    properties:
+      enabled:
+        type: boolean
+      default:
+        $ref: "#/$defs/routeDefault"
+      items:
+        type: array
+        minItems: 0
+        items:
+          $ref: "#/$defs/route"
+    additionalProperties: false
   healthCheckPolicies:
-    type: array
-    minItems: 1
-    items:
-      $ref: "#/$defs/healthCheckPolicy"
+    type: object
+    properties:
+      enabled:
+        type: boolean
+      default:
+        $ref: "#/$defs/healthCheckPolicyDefault"
+      items:
+        type: array
+        minItems: 0
+        items:
+          $ref: "#/$defs/healthCheckPolicy"
+    additionalProperties: false
+required:
+  - routes
+  - healthCheckPolicies
+
 $defs:
   healthCheckPolicy:
     type: object
@@ -240,6 +260,50 @@ $defs:
                             type: string
                         additionalProperties: false
                     additionalProperties: false
+                filters:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        enum:
+                          - RequestRedirect
+                      requestRedirect:
+                        type: object
+                        properties:
+                          scheme:
+                            type: string
+                            enum:
+                              - http
+                              - https
+                          hostname:
+                            type: string
+                          statusCode:
+                            type: integer
+                            enum:
+                              - 301
+                              - 302
+                              - 307
+                              - 308
+                        additionalProperties: false
+                    additionalProperties: false
+                timeouts:
+                  type: object
+                  properties:
+                    backendRequest:
+                      type: string
+                      pattern: "^([0-9]{1,5}(h|m|s|ms)){1,4}$"
+                    request:
+                      type: string
+                      pattern: "^([0-9]{1,5}(h|m|s|ms)){1,4}$"
+                  anyOf:
+                    - required:
+                        - backendRequest
+                    - required:
+                        - request
+                  additionalProperties: false
               additionalProperties: false
         required:
           - hostnames
@@ -281,5 +345,148 @@ $defs:
                           required:
                             - type
                             - value
+                  filters:
+                    items:
+                      required:
+                        - type
+                      if:
+                        properties:
+                          type:
+                            const: RequestRedirect
+                      then:
+                        required:
+                          - requestRedirect
+    additionalProperties: false
+  routeDefault:
+    type: object
+    properties:
+      spec:
+        type: object
+        properties:
+          parentRef:
+            type: object
+            properties:
+              group:
+                type: string
+                const: "gateway.networking.k8s.io"
+              kind:
+                type: string
+                const: Gateway
+              name:
+                type: string
+                pattern: "^shared-gw-\\d+$"
+              namespace:
+                type: string
+                const: shared-gateways
+            additionalProperties: false
+          rule:
+            type: object
+            properties:
+              backendRef:
+                type: object
+                properties:
+                  group:
+                    type: string
+                    const: ""
+                  kind:
+                    type: string
+                    const: Service
+                  weight:
+                    type: integer
+                    const: 1
+                additionalProperties: false
+              match:
+                type: object
+                properties:
+                  path:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        enum:
+                          - PathPrefix
+                          - PathExact
+                          - PathRegex
+                      value:
+                        type: string
+                    additionalProperties: false
+                additionalProperties: false
+              filter:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum:
+                      - RequestRedirect
+                  requestRedirect:
+                    type: object
+                    properties:
+                      scheme:
+                        type: string
+                        enum:
+                          - http
+                          - https
+                      hostname:
+                        type: string
+                      statusCode:
+                        type: integer
+                        enum:
+                          - 301
+                          - 302
+                          - 307
+                          - 308
+                    additionalProperties: false
+                additionalProperties: false
+            additionalProperties: false
+        additionalProperties: false
+    additionalProperties: false
+  healthCheckPolicyDefault:
+    type: object
+    properties:
+      spec:
+        type: object
+        properties:
+          default:
+            type: object
+            properties:
+              checkIntervalSec:
+                type: integer
+                minimum: 1
+              timeoutSec:
+                type: integer
+                minimum: 1
+              healthyThreshold:
+                type: integer
+                minimum: 1
+              unhealthyThreshold:
+                type: integer
+                minimum: 1
+              logConfig:
+                type: object
+                properties:
+                  enabled:
+                    type: boolean
+                additionalProperties: false
+              config:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum:
+                      - HTTP
+                      - GRPC
+                additionalProperties: false
+            additionalProperties: false
+          targetRef:
+            type: object
+            properties:
+              group:
+                type: string
+                const: ""
+              kind:
+                type: string
+                const: Service
+            additionalProperties: false
+        additionalProperties: false
     additionalProperties: false
 additionalProperties: false

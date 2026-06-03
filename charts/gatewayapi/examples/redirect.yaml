@@ -1,0 +1,20 @@
+# Redirects all traffic from `redirect-me.trydave.com` to
+# `example-service.trydave.com` using an HTTP 301. No backend service is
+# configured, since the route only issues redirects.
+enabled: true
+routes:
+  items:
+    - name: redirect-me
+      spec:
+        hostnames:
+          - redirect-me.trydave.com
+        rules:
+          - filters:
+              - type: RequestRedirect
+                requestRedirect:
+                  hostname: example-service.trydave.com
+                  # Use the status code that best fits your use case.
+                  statusCode: 301
+healthCheckPolicies:
+  # A HealthCheckPolicy resource is not really necessary for a redirect-only route.
+  enabled: false

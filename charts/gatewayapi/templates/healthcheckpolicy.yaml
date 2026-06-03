@@ -1,6 +1,6 @@
-{{- if .Values.enabled }}
+{{- if (and .Values.enabled .Values.healthCheckPolicies.enabled) }}
 {{- $seen := dict }}
-{{- range $healthCheckPolicyDefinition := .Values.healthCheckPolicies }}
+{{- range $healthCheckPolicyDefinition := .Values.healthCheckPolicies.items }}
 {{- if hasKey $seen $healthCheckPolicyDefinition.name }}
 {{- fail (printf "HealthCheckPolicy names must be unique: '%s' is duplicated" $healthCheckPolicyDefinition.name) }}
 {{- end }}
@@ -8,7 +8,7 @@
 {{- end }}
 {{- $labels := include "gatewayapi.labels" . }}
 {{- $commonName := include "gatewayapi.name" . }}
-{{- range $healthCheckPolicyDefinition := .Values.healthCheckPolicies }}
+{{- range $healthCheckPolicyDefinition := .Values.healthCheckPolicies.items }}
 {{- if (ne $healthCheckPolicyDefinition.enabled false) }}
 ---
 apiVersion: networking.gke.io/v1
@@ -26,16 +26,16 @@ spec:
       httpHealthCheck:
         port: {{ $healthCheckPolicyDefinition.spec.default.config.httpHealthCheck.port }}
         requestPath: {{ $healthCheckPolicyDefinition.spec.default.config.httpHealthCheck.requestPath }}
-      type: {{ $healthCheckPolicyDefinition.spec.default.config.type | default "HTTP" }}
+      type: {{ $healthCheckPolicyDefinition.spec.default.config.type | default $.Values.healthCheckPolicies.default.spec.default.config.type }}
     logConfig:
-      enabled: {{ dig "logConfig" "enabled" true $healthCheckPolicyDefinition.spec.default }}
-    checkIntervalSec: {{ $healthCheckPolicyDefinition.spec.default.checkIntervalSec | default 5 }}
-    timeoutSec: {{ $healthCheckPolicyDefinition.spec.default.timeoutSec | default 1 }}
-    healthyThreshold: {{ $healthCheckPolicyDefinition.spec.default.healthyThreshold | default 2 }}
-    unhealthyThreshold: {{ $healthCheckPolicyDefinition.spec.default.unhealthyThreshold | default 2 }}
+      enabled: {{ dig "logConfig" "enabled" $.Values.healthCheckPolicies.default.spec.default.logConfig.enabled $healthCheckPolicyDefinition.spec.default }}
+    checkIntervalSec: {{ $healthCheckPolicyDefinition.spec.default.checkIntervalSec | default $.Values.healthCheckPolicies.default.spec.default.checkIntervalSec }}
+    timeoutSec: {{ $healthCheckPolicyDefinition.spec.default.timeoutSec | default $.Values.healthCheckPolicies.default.spec.default.timeoutSec }}
+    healthyThreshold: {{ $healthCheckPolicyDefinition.spec.default.healthyThreshold | default $.Values.healthCheckPolicies.default.spec.default.healthyThreshold }}
+    unhealthyThreshold: {{ $healthCheckPolicyDefinition.spec.default.unhealthyThreshold | default $.Values.healthCheckPolicies.default.spec.default.unhealthyThreshold }}
   targetRef:
-    group: {{ $healthCheckPolicyDefinition.spec.targetRef.group | default "" | quote }}
-    kind: {{ $healthCheckPolicyDefinition.spec.targetRef.kind | default "Service" }}
+    group: {{ $healthCheckPolicyDefinition.spec.targetRef.group | default $.Values.healthCheckPolicies.default.spec.targetRef.group | quote }}
+    kind: {{ $healthCheckPolicyDefinition.spec.targetRef.kind | default $.Values.healthCheckPolicies.default.spec.targetRef.kind }}
     name: {{ $healthCheckPolicyDefinition.spec.targetRef.name }}
 {{- end }}
 {{- end }}

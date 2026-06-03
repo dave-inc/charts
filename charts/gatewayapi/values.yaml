@@ -26,62 +26,133 @@ gateways:
 # HealthCheckPolicies list. Each item's `name` becomes the suffix of the rendered
 # resource (e.g. `<release>-<name>`). Names must be unique across items.
 healthCheckPolicies:
-  - name: main
-    # If true, the policy will be rendered. If false, it will be omitted.
-    enabled: true
-    rawSpec: true
+  enabled: true
+  # When an items entry rawSpec is false, the spec block will be merged with defaults defined here.
+  default:
     spec:
       default:
-        checkIntervalSec: 10
         config:
-          httpHealthCheck:
-            # This needs to be the pod's port, or targetPort in the svc
-            port: 8080
-            requestPath: /
           type: HTTP
-        healthyThreshold: 1
         logConfig:
           enabled: true
+        checkIntervalSec: 5
         timeoutSec: 1
-        unhealthyThreshold: 3
+        healthyThreshold: 2
+        unhealthyThreshold: 2
       targetRef:
         group: ""
         kind: Service
-        name: example-service
+  items: []
+## Basic health check policy example, with defaults for all fields except the required ones:
+#
+#   - name: example-service
+#     spec:
+#       default:
+#         config:
+#           httpHealthCheck:
+#             port: 8080
+#             requestPath: /
+#      targetRef:
+#        name: example-service
+
+## Elaborated health check policy example:
+#
+#  - name: main
+#    # If true, the policy will be rendered. If false, it will be omitted.
+#    enabled: true
+#    rawSpec: true
+#    spec:
+#      default:
+#        checkIntervalSec: 10
+#        config:
+#          httpHealthCheck:
+#            # This needs to be the pod's port, or targetPort in the svc
+#            port: 8080
+#            requestPath: /
+#          type: HTTP
+#        healthyThreshold: 1
+#        logConfig:
+#          enabled: true
+#        timeoutSec: 1
+#        unhealthyThreshold: 3
+#      targetRef:
+#        group: ""
+#        kind: Service
+#        name: example-service
 
 # Routes list. Each item's `name` becomes the suffix of the rendered route resource
 # (e.g. `<release>-<name>`). Names must be unique across items. Each entry must
 # declare its `kind` (HTTPRoute or GRPCRoute) and a `spec` block.
 routes:
-  - name: main
-    # If true, the route will be rendered. If false, it will be omitted.
-    enabled: true
-    # GRPCRoute being another option
-    kind: HTTPRoute
-    # If set to true, no defaults will be used and the spec block will be
-    # passed through verbatim.
-    #
-    # If false, the spec block will be merged with some defaults
-    # (e.g. parentRefs) that can be overridden by the user.
-    rawSpec: true
+  enabled: true
+  # When an items entry rawSpec is false, the spec block will be merged with defaults defined here.
+  default:
     spec:
-      hostnames:
-        - example-service.daveapi.io
-        - example-service.daveapi.com
-      parentRefs:
-        - group: gateway.networking.k8s.io
-          kind: Gateway
-          name: shared-gw-0
-          namespace: shared-gateways
-      rules:
-        - backendRefs:
-            - group: ""
-              kind: Service
-              name: example-service
-              # This needs to be the svc port
-              port: 80
-              weight: 1
-          matches:
-            - path:
-                type: PathPrefix
-                value: /
+      parentRef:
+        group: gateway.networking.k8s.io
+        kind: Gateway
+        name: shared-gw-0
+        namespace: shared-gateways
+      rule:
+        backendRef:
+          group: ""
+          kind: Service
+          weight: 1
+        match:
+          path:
+            type: PathPrefix
+            value: "/"
+        filter:
+          type: RequestRedirect
+          requestRedirect:
+            scheme: https
+  items: []
+## Basic route example, with defaults for all fields except the required ones:
+#  - name: example-service
+#    spec:
+#      hostnames:
+#        - example-service.daveapi.io
+#        - example-service.daveapi.com
+#      rules:
+#        - backendRefs:
+#            - name: example-service
+#              port: 80
+
+## Elaborated route example, no defaults:
+#  - name: main
+#    # If true, the route will be rendered. If false, it will be omitted.
+#    enabled: true
+#    # GRPCRoute being another option
+#    kind: HTTPRoute
+#    # If set to true, no defaults will be used and the spec block will be
+#    # passed through verbatim.
+#    #
+#    # If false, the spec block will be merged with some defaults
+#    # (e.g. parentRefs) that can be overridden by the user.
+#    rawSpec: true
+#    spec:
+#      hostnames:
+#        - example-service.daveapi.io
+#        - example-service.daveapi.com
+#      parentRefs:
+#        - group: gateway.networking.k8s.io
+#          kind: Gateway
+#          name: shared-gw-0
+#          namespace: shared-gateways
+#      rules:
+#        - backendRefs:
+#            - group: ""
+#              kind: Service
+#              name: example-service
+#              # This needs to be the svc port
+#              port: 80
+#              weight: 1
+#          matches:
+#            - path:
+#                type: PathPrefix
+#                value: /
+#          timeouts:
+#            # Duration values follow GEP-2257 (e.g. "30s", "1m", "500ms").
+#            # At least one of `request` or `backendRequest` must be set.
+#            request: 30s
+#            backendRequest: 10s

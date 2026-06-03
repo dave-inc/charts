@@ -1,0 +1,32 @@
+# Minimal Gateway API deployment: routes traffic for
+# `example-service.trydave.com` to the `example-service` Service on port 80,
+# with an HTTP health check on pod port 8080. Relies on chart defaults for
+# parentRefs, path match, and health check intervals/thresholds.
+enabled: true
+routes:
+  items:
+    - name: example-service
+      spec:
+        hostnames:
+          - example-service.trydave.com
+        rules:
+          - backendRefs:
+              - name: example-service
+                # This is the port on the Service that the route will target.
+                port: 80
+healthCheckPolicies:
+  items:
+    - name: example-service
+      spec:
+        default:
+          config:
+            httpHealthCheck:
+              # This is the port on the pod/container that the health check
+              # will target, not the port on the Service.
+              port: 8080
+              # Most of the time what you have for readiness probes is what
+              # you want for health checks, but you can customize it here if
+              # needed.
+              requestPath: /healthz
+        targetRef:
+          name: example-service
