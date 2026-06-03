@@ -77,6 +77,15 @@ spec:
           {{- end }}
         {{- end }}
       {{- end }}
+      {{- if .timeouts }}
+      timeouts:
+        {{- if .timeouts.backendRequest }}
+        backendRequest: {{ .timeouts.backendRequest | quote }}
+        {{- end }}
+        {{- if .timeouts.request }}
+        request: {{ .timeouts.request | quote }}
+        {{- end }}
+      {{- end }}
     {{- end }}
 {{- end }}
 {{- end }}

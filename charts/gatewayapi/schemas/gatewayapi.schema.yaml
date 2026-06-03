@@ -289,6 +289,19 @@ $defs:
                               - 308
                         additionalProperties: false
                     additionalProperties: false
+                timeouts:
+                  type: object
+                  properties:
+                    backendRequest:
+                      type: string
+                    request:
+                      type: string
+                  anyOf:
+                    - required:
+                        - backendRequest
+                    - required:
+                        - request
+                  additionalProperties: false
               additionalProperties: false
         required:
           - hostnames
