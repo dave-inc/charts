@@ -27,7 +27,7 @@ take care of the most common use cases.
 Resources are named using the pattern `{item.name}` — the Gateway item's
 `name` is used verbatim, with no release-name prefix. This is intentional so
 that other charts (notably `gatewayapi`) can reference stable Gateway names
-like `shared-gw-0` via `parentRefs`.
+like `default` via `parentRefs`.
 
 ## How it works
 
