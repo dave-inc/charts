@@ -62,7 +62,8 @@ gateways:
       spec:
         gatewayClassName: gke-l7-rilb
         listeners:
-          - hostname: example-service-4.trydave.com
+         -  name: example-service-4-trydave-com-https
+            hostname: example-service-4.trydave.com
             port: 443
             protocol: HTTPS
             allowedRoutes:

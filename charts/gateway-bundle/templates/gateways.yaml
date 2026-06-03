@@ -1,69 +1,59 @@
-{{- $gatewayBundleLabels := include "gateway-bundle.labels" . }}
+{{- if .Values.enabled }}
+{{- $labels := include "gateway-bundle.labels" . }}
+{{- $default := .Values.gateways.default }}
 
-{{- /* Ensure that all gateway names are unique within the release, whether specified by the user or defaulted by the chart. */ -}}
-{{- $seenNames := dict }}
-{{- range $i, $gatewayConfig := .Values.gateways }}
-  {{- if hasKey $seenNames $gatewayConfig.name }}
-    {{- fail (printf "duplicate gateway name %q at gateways[%d]; names must be unique within a release" $gatewayConfig.name $i) }}
-  {{- end }}
-  {{- $_ := set $seenNames $gatewayConfig.name true }}
+{{- /* Ensure that all gateway names are unique within the release. */ -}}
+{{- $seen := dict }}
+{{- range $item := .Values.gateways.items }}
+{{- if hasKey $seen $item.name }}
+{{- fail (printf "Gateway names must be unique: '%s' is duplicated" $item.name) }}
+{{- end }}
+{{- $_ := set $seen $item.name true }}
 {{- end }}
 
-{{- /* Generate a Gateway resource for each gateway configuration, using the specified name or a default name based on the release and index. */ -}}
-{{- range $i, $gatewayConfig := .Values.gateways }}
+{{- range $item := .Values.gateways.items }}
+{{- if ne $item.enabled false }}
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: {{ $gatewayConfig.name }}
-  {{- with $gatewayConfig.gatewayAnnotations | default $.Values.gatewayAnnotations }}
+  name: {{ $item.name }}
+  {{- with $default.metadata.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    {{- $gatewayBundleLabels | nindent 4 }}
+    {{- $labels | nindent 4 }}
 spec:
-  {{- with $gatewayConfig.gatewaySpec | default $.Values.gatewaySpec }}
-  {{- toYaml . | nindent 2 }}
-  {{- end }}
+{{- if $item.rawSpec }}
+  {{- toYaml $item.spec | nindent 2 }}
+{{- else }}
+  gatewayClassName: {{ $item.spec.gatewayClassName | default $default.spec.gatewayClassName }}
   listeners:
-  {{- range $listener := $gatewayConfig.listeners }}
-  {{- if typeIs "string" $listener }}
-  - hostname: {{ $listener | quote }}
+  {{- $lDef := $default.spec.listener }}
+  {{- range $l := $item.spec.listeners }}
+  {{- $proto := $l.protocol | default $lDef.protocol }}
+  - hostname: {{ $l.hostname | quote }}
+    name: {{ $l.name | default (printf "%s-%s" ($l.hostname | replace "." "-") (lower $proto)) | trunc 63 }}
+    port: {{ $l.port | default $lDef.port }}
+    protocol: {{ $proto }}
     allowedRoutes:
       namespaces:
-        from: {{ $.Values.listenerSpec.allowedRoutes.namespaces.from }}
-    name: {{ printf "%s-%s" ($listener | replace "." "-") (lower $.Values.listenerSpec.protocol) }}
-    port: {{ $.Values.listenerSpec.port }}
-    protocol: {{ $.Values.listenerSpec.protocol }}
-    {{- if $.Values.listenerSpec.protocol | eq "HTTPS" }}
+        from: {{ dig "allowedRoutes" "namespaces" "from" $lDef.allowedRoutes.namespaces.from $l }}
+    {{- if eq $proto "HTTPS" }}
     tls:
+      {{- if $l.tls }}
+      {{- toYaml $l.tls | nindent 6 }}
+      {{- else }}
       certificateRefs:
         - group: ""
           kind: Secret
-          name: {{ (printf "%s-%s-tls" $listener $gatewayConfig.name) | replace "." "-" | trunc 63 }}
+          name: {{ (printf "%s-%s-tls" $l.hostname $item.name) | replace "." "-" | trunc 63 }}
       mode: Terminate
-    {{- end }}
-    {{- else }}
-    {{- with $listener.listenerSpec }}
-  - hostname: {{ .hostname | quote }}
-    {{- $allowedRoutes := default dict .allowedRoutes }}
-    {{- $namespaces := default dict $allowedRoutes.namespaces }}
-    allowedRoutes:
-      namespaces:
-        from: {{ $namespaces.from | default $.Values.listenerSpec.allowedRoutes.namespaces.from }}
-    name: {{ .name | default (printf "%s-%s" (.hostname | replace "." "-") (lower (.protocol | default $.Values.listenerSpec.protocol))) }}
-    port: {{ .port | default $.Values.listenerSpec.port }}
-    protocol: {{ .protocol | default $.Values.listenerSpec.protocol }}
-    {{- if .protocol | default $.Values.listenerSpec.protocol | eq "HTTPS" }}
-    tls:
-      certificateRefs:
-        - group: ""
-          kind: Secret
-          name: {{ (printf "%s-%s-tls" .hostname $gatewayConfig.name) | replace "." "-" | trunc 63 }}
-      mode: Terminate
-    {{- end }}
-    {{- end }}
+      {{- end }}
     {{- end }}
   {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
 {{- end }}
