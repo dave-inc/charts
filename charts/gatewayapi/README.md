@@ -84,6 +84,8 @@ You will notice there is no mention of `Gateway` resource in the example above.
 That's because the `Gateway` resource is managed elsewhere. TLS termination
 is also handled where the `Gateway` resource is defined.
 
+The `Gateway` helm chart is found [here](../gateway-bundle).
+
 ## Further configuration
 
 For a full list of configuration options, please refer to the
