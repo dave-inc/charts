@@ -91,7 +91,6 @@ routes:
       parentRef:
         group: gateway.networking.k8s.io
         kind: Gateway
-        name: default
         namespace: shared-gateways
       rule:
         backendRef:

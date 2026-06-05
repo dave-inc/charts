@@ -8,6 +8,8 @@ routes:
       spec:
         hostnames:
           - redirect-me.trydave.com
+        parentRefs:
+          - name: default
         rules:
           - filters:
               - type: RequestRedirect

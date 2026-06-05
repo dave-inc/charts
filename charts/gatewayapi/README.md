@@ -17,6 +17,8 @@ routes:
       spec:
         hostnames:
           - example-service.trydave.com
+        parentRefs:
+          - name: default
         rules:
           - backendRefs:
               - name: example-service
