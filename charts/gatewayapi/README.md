@@ -41,7 +41,7 @@ healthCheckPolicies:
 Most of the time, that will be all you need to do. The defaults in place take
 care of the most common use cases.
 
-Resources are named using the pattern `{Release.Name}-{item.name}`.
+Resources are named using the `name` field from each item (e.g. `example-service`).
 
 Just for illustration purposes, here is how the same configuration would
 look like if we were to use `ingress` instead of `gatewayapi`:

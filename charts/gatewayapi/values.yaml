@@ -23,8 +23,8 @@ gateways:
         # Overrides defaultNamespace for this reference
         namespace: shared-gateways
 
-# HealthCheckPolicies list. Each item's `name` becomes the suffix of the rendered
-# resource (e.g. `<release>-<name>`). Names must be unique across items.
+# HealthCheckPolicies list. Each item's `name` becomes the name of the rendered
+# resource (e.g. `<name>`). Names must be unique across items.
 healthCheckPolicies:
   enabled: true
   # When an items entry rawSpec is false, the spec block will be merged with defaults defined here.
@@ -80,8 +80,8 @@ healthCheckPolicies:
 #        kind: Service
 #        name: example-service
 
-# Routes list. Each item's `name` becomes the suffix of the rendered route resource
-# (e.g. `<release>-<name>`). Names must be unique across items. Each entry must
+# Routes list. Each item's `name` becomes the name of the rendered route resource
+# (e.g. `<name>`). Names must be unique across items. Each entry must
 # declare its `kind` (HTTPRoute or GRPCRoute) and a `spec` block.
 routes:
   enabled: true
@@ -112,6 +112,8 @@ routes:
 #      hostnames:
 #        - example-service.daveapi.io
 #        - example-service.daveapi.com
+#      parentRefs:
+#        - name: default
 #      rules:
 #        - backendRefs:
 #            - name: example-service

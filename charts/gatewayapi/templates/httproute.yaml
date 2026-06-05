@@ -16,7 +16,7 @@ kind: HTTPRoute
 metadata:
   labels:
     {{- $labels | nindent 4 }}
-  name: {{ $commonName }}-{{ $routeDefinition.name }}
+  name: {{ $routeDefinition.name }}
 spec:
 {{- if (and $routeDefinition.spec $routeDefinition.rawSpec) }}
   {{- toYaml $routeDefinition.spec | nindent 2 -}}
