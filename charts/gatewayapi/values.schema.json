@@ -40,11 +40,6 @@
                       "type": "string",
                       "const": "Gateway"
                     },
-                    "name": {
-                      "type": "string",
-                      "maxLength": 63,
-                      "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$"
-                    },
                     "namespace": {
                       "type": "string",
                       "const": "shared-gateways"
@@ -423,6 +418,24 @@
                             }
                           }
                         }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "spec": {
+                  "required": [
+                    "parentRefs"
+                  ],
+                  "properties": {
+                    "parentRefs": {
+                      "items": {
+                        "required": [
+                          "name"
+                        ]
                       }
                     }
                   }

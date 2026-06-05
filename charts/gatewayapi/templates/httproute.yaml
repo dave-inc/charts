@@ -16,7 +16,7 @@ kind: HTTPRoute
 metadata:
   labels:
     {{- $labels | nindent 4 }}
-  name: {{ $commonName }}-{{ $routeDefinition.name }}
+  name: {{ $routeDefinition.name }}
 spec:
 {{- if (and $routeDefinition.spec $routeDefinition.rawSpec) }}
   {{- toYaml $routeDefinition.spec | nindent 2 -}}
@@ -26,19 +26,12 @@ spec:
     - {{ . }}
     {{- end }}
   parentRefs:
-  {{- if $routeDefinition.spec.parentRefs }}
     {{- range $routeDefinition.spec.parentRefs }}
   - group: {{ .group | default $.Values.routes.default.spec.parentRef.group }}
     kind: {{ .kind | default $.Values.routes.default.spec.parentRef.kind }}
-    name: {{ .name | default $.Values.routes.default.spec.parentRef.name }}
+    name: {{ .name }}
     namespace: {{ .namespace | default $.Values.routes.default.spec.parentRef.namespace }}
     {{- end }}
-  {{- else }}
-  - group: {{ $.Values.routes.default.spec.parentRef.group }}
-    kind: {{ $.Values.routes.default.spec.parentRef.kind }}
-    name: {{ $.Values.routes.default.spec.parentRef.name }}
-    namespace: {{ $.Values.routes.default.spec.parentRef.namespace }}
-  {{- end }}
   rules:
     {{- range $routeDefinition.spec.rules }}
     -

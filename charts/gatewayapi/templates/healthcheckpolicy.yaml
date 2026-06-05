@@ -16,7 +16,7 @@ kind: HealthCheckPolicy
 metadata:
   labels:
     {{- $labels | nindent 4 }}
-  name: {{ $commonName }}-{{ $healthCheckPolicyDefinition.name }}
+  name: {{ $healthCheckPolicyDefinition.name }}
 spec:
 {{- if and $healthCheckPolicyDefinition.spec $healthCheckPolicyDefinition.rawSpec }}
   {{- toYaml $healthCheckPolicyDefinition.spec | nindent 2 }}
