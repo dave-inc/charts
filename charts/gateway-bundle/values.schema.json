@@ -93,26 +93,32 @@
               ],
               "additionalProperties": false
             },
-            "tlsSecretGroups": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "parentDomain": {
-                    "type": "string",
-                    "pattern": "^(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
-                  },
-                  "secretName": {
-                    "type": "string",
-                    "maxLength": 253
+            "ext": {
+              "type": "object",
+              "properties": {
+                "tlsSecretGroups": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "parentDomain": {
+                        "type": "string",
+                        "pattern": "^(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
+                      },
+                      "secretName": {
+                        "type": "string",
+                        "maxLength": 253
+                      }
+                    },
+                    "required": [
+                      "parentDomain",
+                      "secretName"
+                    ],
+                    "additionalProperties": false
                   }
-                },
-                "required": [
-                  "parentDomain",
-                  "secretName"
-                ],
-                "additionalProperties": false
-              }
+                }
+              },
+              "additionalProperties": false
             }
           },
           "required": [

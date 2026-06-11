@@ -15,24 +15,25 @@ gateways:
             from: All
         port: 443
         protocol: HTTPS
-    ## Optional. Groups HTTPS listeners by parent domain so they share a
-    ## single Secret instead of generating one Secret per listener. With
-    ## the `cert-manager.io/cluster-issuer` annotation above, cert-manager's
-    ## gateway-shim issues one multi-SAN Certificate per shared Secret,
-    ## collapsing many listeners into a single SSL certificate slot on the
-    ## underlying TargetHttpsProxy (GKE caps that at 15 per Gateway).
-    ##
-    ## A listener whose hostname matches `<parentDomain>` or
-    ## `*.<parentDomain>` will use the corresponding `secretName`. Listeners
-    ## with no matching group keep the per-listener Secret name. Listeners
-    ## with an explicit `tls` block are unaffected.
-    # tlsSecretGroups:
-    #   - parentDomain: trydave.com
-    #     secretName: shared-trydave-com-tls
-    #   - parentDomain: daveapi.com
-    #     secretName: shared-daveapi-com-tls
-    #   - parentDomain: daveapi.io
-    #     secretName: shared-daveapi-io-tls
+    ext:
+      ## Optional. Groups HTTPS listeners by parent domain so they share a
+      ## single Secret instead of generating one Secret per listener. With
+      ## the `cert-manager.io/cluster-issuer` annotation above, cert-manager's
+      ## gateway-shim issues one multi-SAN Certificate per shared Secret,
+      ## collapsing many listeners into a single SSL certificate slot on the
+      ## underlying TargetHttpsProxy (GKE caps that at 15 per Gateway).
+      ##
+      ## A listener whose hostname matches `<parentDomain>` or
+      ## `*.<parentDomain>` will use the corresponding `secretName`. Listeners
+      ## with no matching group keep the per-listener Secret name. Listeners
+      ## with an explicit `tls` block are unaffected.
+      tlsSecretGroups:
+        - parentDomain: trydave.com
+          secretName: trydave-com
+        - parentDomain: daveapi.com
+          secretName: daveapi-com
+        - parentDomain: daveapi.io
+          secretName: daveapi-io
   # Each item creates a Gateway resource.
   items: []
 ## This is the simplest case where the Gateway will be created using the

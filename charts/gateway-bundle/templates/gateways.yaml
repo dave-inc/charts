@@ -46,9 +46,9 @@ spec:
       {{- toYaml $l.tls | nindent 6 }}
       {{- else }}
       {{- $secretName := "" }}
-      {{- range $g := ($default.tlsSecretGroups | default list) }}
+      {{- range $g := ($default.ext.tlsSecretGroups | default list) }}
         {{- if or (eq $l.hostname $g.parentDomain) (hasSuffix (printf ".%s" $g.parentDomain) $l.hostname) }}
-          {{- $secretName = $g.secretName }}
+          {{- $secretName = (printf "%s-%s-tls" $g.secretName $item.name) | replace "." "-" | trunc 63 }}
         {{- end }}
       {{- end }}
       {{- if not $secretName }}
