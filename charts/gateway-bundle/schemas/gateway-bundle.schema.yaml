@@ -85,12 +85,8 @@ $defs:
                 parentDomain:
                   type: string
                   pattern: "^(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
-                secretName:
-                  type: string
-                  maxLength: 253
               required:
                 - parentDomain
-                - secretName
               additionalProperties: false
         additionalProperties: false
     required:

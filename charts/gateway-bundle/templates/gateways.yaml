@@ -48,7 +48,7 @@ spec:
       {{- $secretName := "" }}
       {{- range $g := ($default.ext.tlsSecretGroups | default list) }}
         {{- if or (eq $l.hostname $g.parentDomain) (hasSuffix (printf ".%s" $g.parentDomain) $l.hostname) }}
-          {{- $secretName = (printf "%s-%s-tls" $g.secretName $item.name) | replace "." "-" | trunc 63 }}
+          {{- $secretName = (printf "%s-%s-tls" $g.parentDomain $item.name) | replace "." "-" | trunc 63 }}
         {{- end }}
       {{- end }}
       {{- if not $secretName }}

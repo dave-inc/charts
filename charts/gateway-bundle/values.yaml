@@ -29,11 +29,8 @@ gateways:
       ## with an explicit `tls` block are unaffected.
       tlsSecretGroups:
         - parentDomain: trydave.com
-          secretName: trydave-com
         - parentDomain: daveapi.com
-          secretName: daveapi-com
         - parentDomain: daveapi.io
-          secretName: daveapi-io
   # Each item creates a Gateway resource.
   items: []
 ## This is the simplest case where the Gateway will be created using the
