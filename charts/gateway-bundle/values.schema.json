@@ -97,19 +97,27 @@
               "type": "object",
               "properties": {
                 "tlsSecretGroups": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "parentDomain": {
-                        "type": "string",
-                        "pattern": "^(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
-                      }
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
                     },
-                    "required": [
-                      "parentDomain"
-                    ],
-                    "additionalProperties": false
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "parentDomain": {
+                            "type": "string",
+                            "pattern": "^(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
+                          }
+                        },
+                        "required": [
+                          "parentDomain"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
                   }
                 }
               },

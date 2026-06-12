@@ -78,16 +78,21 @@ $defs:
         type: object
         properties:
           tlsSecretGroups:
-            type: array
-            items:
-              type: object
-              properties:
-                parentDomain:
-                  type: string
-                  pattern: "^(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
-              required:
-                - parentDomain
-              additionalProperties: false
+            type: object
+            properties:
+              enabled:
+                type: boolean
+              items:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    parentDomain:
+                      type: string
+                      pattern: "^(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
+                  required:
+                    - parentDomain
+                  additionalProperties: false
         additionalProperties: false
     required:
       - spec
