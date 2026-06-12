@@ -61,24 +61,23 @@ At most 15 SSL certificate(s) (N in the request) can be specified for
 TargetHttpsProxy patch.
 ```
 
-Set `gateways.default.tlsSecretGroups` to collapse listeners onto shared
+Set `gateways.default.ext.tlsSecretGroups` to collapse listeners onto shared
 Secrets by parent domain:
 
 ```yaml
 gateways:
   default:
-    tlsSecretGroups:
-      - parentDomain: trydave.com
-        secretName: shared-trydave-com-tls
-      - parentDomain: daveapi.com
-        secretName: shared-daveapi-com-tls
-      - parentDomain: daveapi.io
-        secretName: shared-daveapi-io-tls
+    ext:
+      tlsSecretGroups:
+        - parentDomain: trydave.com
+        - parentDomain: daveapi.com
+        - parentDomain: daveapi.io
 ```
 
 A listener whose hostname matches `<parentDomain>` or `*.<parentDomain>`
-uses the corresponding `secretName` instead of the per-listener name. With
-the `cert-manager.io/cluster-issuer` annotation in place, cert-manager's
+uses a secret named `<parentDomain>-<gatewayName>-tls` instead of the
+per-listener name. The dots are replaced with dashes. With the
+`cert-manager.io/cluster-issuer` annotation in place, cert-manager's
 gateway-shim issues a single multi-SAN `Certificate` per shared Secret —
 collapsing N listeners onto 1 cert slot on the underlying proxy.
 

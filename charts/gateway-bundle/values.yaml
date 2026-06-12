@@ -24,9 +24,11 @@ gateways:
       ## underlying TargetHttpsProxy (GKE caps that at 15 per Gateway).
       ##
       ## A listener whose hostname matches `<parentDomain>` or
-      ## `*.<parentDomain>` will use the corresponding `secretName`. Listeners
-      ## with no matching group keep the per-listener Secret name. Listeners
-      ## with an explicit `tls` block are unaffected.
+      ## `*.<parentDomain>` will use a secret name of the matching the
+      ## following pattern: `<parentDomain>-<gatewayName>-tls. The dots are
+      ## replaced with dashes. Listeners with no matching group keep the
+      ## per-listener Secret name. Listeners with an explicit `tls` block are
+      ## unaffected.
       tlsSecretGroups:
         - parentDomain: trydave.com
         - parentDomain: daveapi.com
