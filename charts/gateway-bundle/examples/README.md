@@ -17,10 +17,11 @@ expressive enough.
   and TLS. Useful as a reference for any non-default listener configuration
   without leaving the chart's templated mode.
 - [shared-tls-secrets](./shared-tls-secrets.yaml): Many HTTPS listeners
-  sharing TLS Secrets by parent domain via `gateways.default.tlsSecretGroups`.
-  Collapses N per-listener certs into one multi-SAN cert per shared Secret
-  (via cert-manager's gateway-shim) so the Gateway stays under GKE's
-  15-SSL-certificate cap on the underlying `TargetHttpsProxy`.
+  sharing TLS Secrets by parent domain via
+  `gateways.default.ext.tlsSecretGroups`. Collapses N per-listener certs
+  into one multi-SAN cert per shared Secret (via cert-manager's
+  gateway-shim) so the Gateway stays under GKE's 15-SSL-certificate cap
+  on the underlying `TargetHttpsProxy`.
 - [raw-spec](./raw-spec.yaml): An escape hatch that sets `rawSpec: true`
   and supplies the entire Gateway spec verbatim. Use this when the chart's
   templated mode can't express what you need; metadata is still inherited

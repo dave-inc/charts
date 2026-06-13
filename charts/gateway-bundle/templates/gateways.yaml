@@ -46,13 +46,19 @@ spec:
       {{- toYaml $l.tls | nindent 6 }}
       {{- else }}
       {{- $secretName := "" }}
-      {{- range $g := ($default.ext.tlsSecretGroups.items | default list) }}
-        {{- if (and $default.ext.tlsSecretGroups.enabled (or (eq $l.hostname $g.parentDomain) (hasSuffix (printf ".%s" $g.parentDomain) $l.hostname))) }}
-          {{- $secretName = (printf "%s-%s-tls" $g.parentDomain $item.name) | replace "." "-" | trunc 63 }}
+      {{- /* Chained access on `$default.ext` is intentional: Helm's nil
+             tolerance lets callers omit the whole `ext` block. */ -}}
+      {{- if $default.ext.tlsSecretGroups.enabled }}
+        {{- range $g := ($default.ext.tlsSecretGroups.items | default list) }}
+          {{- if not $secretName }}
+            {{- if (or (eq $l.hostname $g.parentDomain) (hasSuffix (printf ".%s" $g.parentDomain) $l.hostname)) }}
+              {{- $secretName = include "gateway-bundle.tlsSecretName" (dict "name" $g.parentDomain "gateway" $item.name) }}
+            {{- end }}
+          {{- end }}
         {{- end }}
       {{- end }}
       {{- if not $secretName }}
-        {{- $secretName = (printf "%s-%s-tls" $l.hostname $item.name) | replace "." "-" | trunc 63 }}
+        {{- $secretName = include "gateway-bundle.tlsSecretName" (dict "name" $l.hostname "gateway" $item.name) }}
       {{- end }}
       certificateRefs:
         - group: ""

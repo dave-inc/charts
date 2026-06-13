@@ -16,19 +16,23 @@ gateways:
         port: 443
         protocol: HTTPS
     ext:
-      ## Optional. Groups HTTPS listeners by parent domain so they share a
-      ## single Secret instead of generating one Secret per listener. With
-      ## the `cert-manager.io/cluster-issuer` annotation above, cert-manager's
+      ## Groups HTTPS listeners by parent domain so they share a single
+      ## Secret instead of generating one Secret per listener. With the
+      ## `cert-manager.io/cluster-issuer` annotation above, cert-manager's
       ## gateway-shim issues one multi-SAN Certificate per shared Secret,
       ## collapsing many listeners into a single SSL certificate slot on the
       ## underlying TargetHttpsProxy (GKE caps that at 15 per Gateway).
       ##
       ## A listener whose hostname matches `<parentDomain>` or
-      ## `*.<parentDomain>` will use a secret name of the matching the
-      ## following pattern: `<parentDomain>-<gatewayName>-tls. The dots are
-      ## replaced with dashes. Listeners with no matching group keep the
-      ## per-listener Secret name. Listeners with an explicit `tls` block are
-      ## unaffected.
+      ## `*.<parentDomain>` uses a Secret named
+      ## `<parentDomain>-<gatewayName>-tls` (dots replaced with dashes,
+      ## truncated to 63 chars). The first matching group wins. Listeners
+      ## with no matching group fall back to the per-listener Secret name
+      ## (`<hostname>-<gatewayName>-tls`). Listeners with an explicit `tls`
+      ## block bypass grouping entirely.
+      ##
+      ## Set `enabled: false` to disable grouping and keep per-listener
+      ## Secret names everywhere.
       tlsSecretGroups:
         enabled: true
         items:

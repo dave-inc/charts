@@ -38,3 +38,14 @@ Selector labels
 app.kubernetes.io/name: {{ include "gateway-bundle.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
+
+{{/*
+TLS Secret name for an HTTPS listener.
+Inputs: { name, gateway } — `name` is either the listener hostname (per-listener
+fallback) or a matched `parentDomain` (shared-group path). Produces
+"<name>-<gateway>-tls" with dots replaced by dashes and truncated to 63 chars
+(the DNS-1123 label limit Kubernetes enforces on Secret names).
+*/}}
+{{- define "gateway-bundle.tlsSecretName" -}}
+{{- printf "%s-%s-tls" .name .gateway | replace "." "-" | trunc 63 -}}
+{{- end }}

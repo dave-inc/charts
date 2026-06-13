@@ -43,11 +43,14 @@ is merged with the chart defaults:
 - `name` is auto-derived from the hostname and protocol (e.g.
   `example-service-trydave-com-https`).
 - For HTTPS listeners that don't declare a `tls` block, the chart
-  auto-generates `tls.certificateRefs` with a Secret named
-  `{hostname}-{item-name}-tls` (dots replaced with dashes, truncated to 63
-  characters). Pair this with cert-manager via the
-  `cert-manager.io/cluster-issuer` annotation on `gateways.default.metadata`
-  (the default annotation on a clean install is `letsencrypt`).
+  auto-generates `tls.certificateRefs`. By default the Secret name comes
+  from the matching `tlsSecretGroups` entry (see below) —
+  `{parentDomain}-{item-name}-tls`. Listeners whose hostname doesn't match
+  any group fall back to `{hostname}-{item-name}-tls`. In both cases dots
+  are replaced with dashes and the name is truncated to 63 characters.
+  Pair this with cert-manager via the `cert-manager.io/cluster-issuer`
+  annotation on `gateways.default.metadata` (the default annotation on a
+  clean install is `letsencrypt`).
 
 ### Sharing TLS Secrets across listeners
 
@@ -61,28 +64,37 @@ At most 15 SSL certificate(s) (N in the request) can be specified for
 TargetHttpsProxy patch.
 ```
 
-Set `gateways.default.ext.tlsSecretGroups` to collapse listeners onto shared
-Secrets by parent domain:
+`gateways.default.ext.tlsSecretGroups` (enabled by default — see
+[values.yaml](./values.yaml)) collapses listeners onto shared Secrets by
+parent domain:
 
 ```yaml
 gateways:
   default:
     ext:
       tlsSecretGroups:
-        - parentDomain: trydave.com
-        - parentDomain: daveapi.com
-        - parentDomain: daveapi.io
+        enabled: true
+        items:
+          - parentDomain: trydave.com
+          - parentDomain: daveapi.com
+          - parentDomain: daveapi.io
 ```
 
 A listener whose hostname matches `<parentDomain>` or `*.<parentDomain>`
-uses a secret named `<parentDomain>-<gatewayName>-tls` instead of the
-per-listener name. The dots are replaced with dashes. With the
+uses a Secret named `<parentDomain>-<gatewayName>-tls` (dots replaced with
+dashes, truncated to 63 chars) instead of the per-listener name. With the
 `cert-manager.io/cluster-issuer` annotation in place, cert-manager's
 gateway-shim issues a single multi-SAN `Certificate` per shared Secret —
 collapsing N listeners onto 1 cert slot on the underlying proxy.
 
 Precedence: an explicit per-listener `tls` block wins; otherwise the first
 matching group is used; otherwise the per-listener fallback name applies.
+Set `enabled: false` to keep per-listener Secret names everywhere.
+
+If you need a Secret name the generator can't produce (e.g. a pre-existing
+Secret that doesn't follow the `<parentDomain>-<gatewayName>-tls` pattern),
+declare the listener's `tls` block inline — the explicit block always wins
+over the auto-generated name.
 
 You will notice there is no mention of `HTTPRoute` or `HealthCheckPolicy`
 above. That's because routes and health checks are managed elsewhere — see

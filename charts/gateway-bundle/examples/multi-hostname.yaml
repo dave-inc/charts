@@ -1,12 +1,20 @@
 # Single Gateway hosting several HTTPS listeners. Each listener entry is just
 # a hostname; the chart fills in `name`, `port`, `protocol`, `allowedRoutes`,
-# and an auto-generated TLS cert ref (one Secret per hostname, suffixed with
-# the Gateway item name).
+# and an auto-generated TLS cert ref.
 #
-# This is the recommended shape when a team owns many hostnames that should
-# all sit behind one Gateway resource (subject to the 64-listener API limit).
+# `tlsSecretGroups` is disabled here so each hostname gets its own Secret
+# (e.g. `service-a-trydave-com-default-tls`). See `shared-tls-secrets.yaml`
+# for the opposite shape, where listeners collapse onto shared Secrets by
+# parent domain.
+#
+# Use this shape when each hostname owns its own cert and you're comfortably
+# under GKE's 15-SSL-certificate cap on the underlying TargetHttpsProxy.
 enabled: true
 gateways:
+  default:
+    ext:
+      tlsSecretGroups:
+        enabled: false
   items:
     - name: default
       spec:

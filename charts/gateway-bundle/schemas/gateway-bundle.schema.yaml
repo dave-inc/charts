@@ -20,6 +20,10 @@ required:
   - gateways
 
 $defs:
+  parentDomain:
+    type: string
+    pattern: "^(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
+
   gatewayDefault:
     type: object
     properties:
@@ -84,15 +88,29 @@ $defs:
                 type: boolean
               items:
                 type: array
+                minItems: 1
                 items:
                   type: object
                   properties:
                     parentDomain:
-                      type: string
-                      pattern: "^(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
+                      $ref: "#/$defs/parentDomain"
                   required:
                     - parentDomain
                   additionalProperties: false
+            required:
+              - enabled
+            # `items` is required only when `enabled: true` — there's no
+            # point forcing a placeholder list when grouping is off.
+            if:
+              properties:
+                enabled:
+                  const: true
+              required:
+                - enabled
+            then:
+              required:
+                - items
+            additionalProperties: false
         additionalProperties: false
     required:
       - spec
@@ -163,6 +181,9 @@ $defs:
     properties:
       hostname:
         type: string
+        # The parent-domain alternation (trydave.com|daveapi.com|daveapi.io)
+        # also lives in $defs/parentDomain — keep both in sync when the
+        # allow-list changes.
         pattern: "^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\\.)*(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
       name:
         type: string

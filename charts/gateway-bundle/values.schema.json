@@ -104,6 +104,7 @@
                     },
                     "items": {
                       "type": "array",
+                      "minItems": 1,
                       "items": {
                         "type": "object",
                         "properties": {
@@ -118,7 +119,26 @@
                         "additionalProperties": false
                       }
                     }
-                  }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "if": {
+                    "properties": {
+                      "enabled": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ]
+                  },
+                  "then": {
+                    "required": [
+                      "items"
+                    ]
+                  },
+                  "additionalProperties": false
                 }
               },
               "additionalProperties": false
