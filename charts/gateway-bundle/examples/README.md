@@ -22,6 +22,10 @@ expressive enough.
   into one multi-SAN cert per shared Secret (via cert-manager's
   gateway-shim) so the Gateway stays under GKE's 15-SSL-certificate cap
   on the underlying `TargetHttpsProxy`.
+- [custom-addresses](./custom-addresses.yaml): Bind a Gateway to one or
+  more caller-specified addresses (e.g. a pre-reserved GCP static IP or
+  an implementation-named address) via `spec.addresses`. Stays in
+  templated mode — listener defaults and `tlsSecretGroups` still apply.
 - [raw-spec](./raw-spec.yaml): An escape hatch that sets `rawSpec: true`
   and supplies the entire Gateway spec verbatim. Use this when the chart's
   templated mode can't express what you need; metadata is still inherited

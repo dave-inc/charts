@@ -29,6 +29,10 @@ spec:
   {{- toYaml $item.spec | nindent 2 }}
 {{- else }}
   gatewayClassName: {{ $item.spec.gatewayClassName | default $default.spec.gatewayClassName }}
+  {{- with $item.spec.addresses }}
+  addresses:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   listeners:
   {{- $lDef := $default.spec.listener }}
   {{- range $l := $item.spec.listeners }}

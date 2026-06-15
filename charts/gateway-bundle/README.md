@@ -100,6 +100,31 @@ You will notice there is no mention of `HTTPRoute` or `HealthCheckPolicy`
 above. That's because routes and health checks are managed elsewhere — see
 the [`gatewayapi`](../gatewayapi) helm chart.
 
+### Custom addresses
+
+Set `spec.addresses` on an item to bind the Gateway to a caller-specified
+IP, hostname, or implementation-named address (e.g. a pre-reserved GCP
+static IP):
+
+```yaml
+gateways:
+  items:
+    - name: default
+      spec:
+        addresses:
+          - type: IPAddress
+            value: 127.0.0.1
+          - type: NamedAddress
+            value: my-reserved-gcp-static-ip
+        listeners:
+          - hostname: example-service.trydave.com
+```
+
+`type` is one of `IPAddress`, `Hostname`, or `NamedAddress`. This works
+without `rawSpec: true`, so listener defaults and `tlsSecretGroups` still
+apply. For implementation-specific `<group>/<type>` values, drop into
+`rawSpec: true`.
+
 ### Full spec control
 
 By default, each item's spec is merged with the chart defaults. Set
@@ -132,6 +157,7 @@ The examples cover:
 | [multi-hostname.yaml](./examples/multi-hostname.yaml) | One Gateway hosting several HTTPS hostnames |
 | [per-listener-overrides.yaml](./examples/per-listener-overrides.yaml) | HTTP, Same-namespace, and caller-managed-TLS listeners on one Gateway |
 | [shared-tls-secrets.yaml](./examples/shared-tls-secrets.yaml) | Many listeners sharing TLS Secrets by parent domain (stays under GKE's 15-cert limit) |
+| [custom-addresses.yaml](./examples/custom-addresses.yaml) | Bind a Gateway to a specific IP or named address via `spec.addresses` |
 | [raw-spec.yaml](./examples/raw-spec.yaml) | `rawSpec: true` escape hatch for full Gateway-spec control |
 
 You can also apply `additionalLabels` to have extra labels added to all
