@@ -43,15 +43,87 @@ is merged with the chart defaults:
 - `name` is auto-derived from the hostname and protocol (e.g.
   `example-service-trydave-com-https`).
 - For HTTPS listeners that don't declare a `tls` block, the chart
-  auto-generates `tls.certificateRefs` with a Secret named
-  `{hostname}-{item-name}-tls` (dots replaced with dashes, truncated to 63
-  characters). Pair this with cert-manager via the
-  `cert-manager.io/cluster-issuer` annotation on `gateways.default.metadata`
-  (the default annotation on a clean install is `letsencrypt`).
+  auto-generates `tls.certificateRefs`. By default the Secret name comes
+  from the matching `tlsSecretGroups` entry (see below) —
+  `{parentDomain}-{item-name}-tls`. Listeners whose hostname doesn't match
+  any group fall back to `{hostname}-{item-name}-tls`. In both cases dots
+  are replaced with dashes and the name is truncated to 63 characters.
+  Pair this with cert-manager via the `cert-manager.io/cluster-issuer`
+  annotation on `gateways.default.metadata` (the default annotation on a
+  clean install is `letsencrypt`).
+
+### Sharing TLS Secrets across listeners
+
+GKE caps each `TargetHttpsProxy` (one per `Gateway`) at **15 SSL
+certificates**. Since the per-listener Secret naming above produces one cert
+per listener, a Gateway with more than 15 HTTPS listeners will fail to
+reconcile with an error like:
+
+```
+At most 15 SSL certificate(s) (N in the request) can be specified for
+TargetHttpsProxy patch.
+```
+
+`gateways.default.ext.tlsSecretGroups` (enabled by default — see
+[values.yaml](./values.yaml)) collapses listeners onto shared Secrets by
+parent domain:
+
+```yaml
+gateways:
+  default:
+    ext:
+      tlsSecretGroups:
+        enabled: true
+        items:
+          - parentDomain: trydave.com
+          - parentDomain: daveapi.com
+          - parentDomain: daveapi.io
+```
+
+A listener whose hostname matches `<parentDomain>` or `*.<parentDomain>`
+uses a Secret named `<parentDomain>-<gatewayName>-tls` (dots replaced with
+dashes, truncated to 63 chars) instead of the per-listener name. With the
+`cert-manager.io/cluster-issuer` annotation in place, cert-manager's
+gateway-shim issues a single multi-SAN `Certificate` per shared Secret —
+collapsing N listeners onto 1 cert slot on the underlying proxy.
+
+Precedence: an explicit per-listener `tls` block wins; otherwise the first
+matching group is used; otherwise the per-listener fallback name applies.
+Set `enabled: false` to keep per-listener Secret names everywhere.
+
+If you need a Secret name the generator can't produce (e.g. a pre-existing
+Secret that doesn't follow the `<parentDomain>-<gatewayName>-tls` pattern),
+declare the listener's `tls` block inline — the explicit block always wins
+over the auto-generated name.
 
 You will notice there is no mention of `HTTPRoute` or `HealthCheckPolicy`
 above. That's because routes and health checks are managed elsewhere — see
 the [`gatewayapi`](../gatewayapi) helm chart.
+
+### Custom addresses
+
+Set `spec.addresses` on an item to bind the Gateway to a caller-specified
+IP, hostname, or implementation-named address (e.g. a pre-reserved GCP
+static IP):
+
+```yaml
+gateways:
+  items:
+    - name: default
+      spec:
+        addresses:
+          - type: IPAddress
+            value: 127.0.0.1
+          - type: NamedAddress
+            value: my-reserved-gcp-static-ip
+        listeners:
+          - hostname: example-service.trydave.com
+```
+
+`type` is one of `IPAddress`, `Hostname`, or `NamedAddress`. This works
+without `rawSpec: true`, so listener defaults and `tlsSecretGroups` still
+apply. For implementation-specific `<group>/<type>` values, drop into
+`rawSpec: true`.
 
 ### Full spec control
 
@@ -84,6 +156,8 @@ The examples cover:
 | [simple.yaml](./examples/simple.yaml) | Minimal single-Gateway with one HTTPS listener |
 | [multi-hostname.yaml](./examples/multi-hostname.yaml) | One Gateway hosting several HTTPS hostnames |
 | [per-listener-overrides.yaml](./examples/per-listener-overrides.yaml) | HTTP, Same-namespace, and caller-managed-TLS listeners on one Gateway |
+| [shared-tls-secrets.yaml](./examples/shared-tls-secrets.yaml) | Many listeners sharing TLS Secrets by parent domain (stays under GKE's 15-cert limit) |
+| [custom-addresses.yaml](./examples/custom-addresses.yaml) | Bind a Gateway to a specific IP or named address via `spec.addresses` |
 | [raw-spec.yaml](./examples/raw-spec.yaml) | `rawSpec: true` escape hatch for full Gateway-spec control |
 
 You can also apply `additionalLabels` to have extra labels added to all

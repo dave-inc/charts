@@ -1,8 +1,11 @@
 # Minimal Gateway deployment: creates a single Gateway named `default`
 # with one HTTPS listener for `example-service.trydave.com`. Relies on chart
-# defaults for `gatewayClassName`, `port`, `protocol`, `allowedRoutes`, and an
-# auto-generated `tls.certificateRefs` entry (named
-# `example-service-trydave-com-default-tls`).
+# defaults for `gatewayClassName`, `port`, `protocol`, `allowedRoutes`, and
+# an auto-generated `tls.certificateRefs` entry. The default config enables
+# `tlsSecretGroups`, so the rendered Secret name is the shared
+# `trydave-com-default-tls` (parent-domain grouping). Override
+# `gateways.default.ext.tlsSecretGroups.enabled` to `false` to get
+# per-listener names — see `multi-hostname.yaml`.
 enabled: true
 gateways:
   items:

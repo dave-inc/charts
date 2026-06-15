@@ -29,6 +29,10 @@ spec:
   {{- toYaml $item.spec | nindent 2 }}
 {{- else }}
   gatewayClassName: {{ $item.spec.gatewayClassName | default $default.spec.gatewayClassName }}
+  {{- with $item.spec.addresses }}
+  addresses:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   listeners:
   {{- $lDef := $default.spec.listener }}
   {{- range $l := $item.spec.listeners }}
@@ -45,10 +49,25 @@ spec:
       {{- if $l.tls }}
       {{- toYaml $l.tls | nindent 6 }}
       {{- else }}
+      {{- $secretName := "" }}
+      {{- /* Chained access on `$default.ext` is intentional: Helm's nil
+             tolerance lets callers omit the whole `ext` block. */ -}}
+      {{- if $default.ext.tlsSecretGroups.enabled }}
+        {{- range $g := ($default.ext.tlsSecretGroups.items | default list) }}
+          {{- if not $secretName }}
+            {{- if (or (eq $l.hostname $g.parentDomain) (hasSuffix (printf ".%s" $g.parentDomain) $l.hostname)) }}
+              {{- $secretName = include "gateway-bundle.tlsSecretName" (dict "name" $g.parentDomain "gateway" $item.name) }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+      {{- if not $secretName }}
+        {{- $secretName = include "gateway-bundle.tlsSecretName" (dict "name" $l.hostname "gateway" $item.name) }}
+      {{- end }}
       certificateRefs:
         - group: ""
           kind: Secret
-          name: {{ (printf "%s-%s-tls" $l.hostname $item.name) | replace "." "-" | trunc 63 }}
+          name: {{ $secretName }}
       mode: Terminate
       {{- end }}
     {{- end }}
