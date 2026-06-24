@@ -1,0 +1,86 @@
+{{- if (and .Values.enabled .Values.routes.enabled) }}
+{{- $seen := dict }}
+{{- range $routeDefinition := .Values.routes.items }}
+{{- if hasKey $seen $routeDefinition.name }}
+{{- fail (printf "Route names must be unique: '%s' is duplicated" $routeDefinition.name) }}
+{{- end }}
+{{- $_ := set $seen $routeDefinition.name true }}
+{{- end }}
+{{- $labels := include "gatewayapi.labels" . }}
+{{- $commonName := include "gatewayapi.name" . }}
+{{- range $routeDefinition := .Values.routes.items }}
+{{- if (and (ne $routeDefinition.enabled false) (eq (default "HTTPRoute" $routeDefinition.kind) "HTTPRoute")) }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  labels:
+    {{- $labels | nindent 4 }}
+  name: {{ $routeDefinition.name }}
+spec:
+{{- if (and $routeDefinition.spec $routeDefinition.rawSpec) }}
+  {{- toYaml $routeDefinition.spec | nindent 2 -}}
+{{- else }}
+  hostnames:
+    {{- range $routeDefinition.spec.hostnames }}
+    - {{ . }}
+    {{- end }}
+  parentRefs:
+    {{- range $routeDefinition.spec.parentRefs }}
+  - group: {{ .group | default $.Values.routes.default.spec.parentRef.group }}
+    kind: {{ .kind | default $.Values.routes.default.spec.parentRef.kind }}
+    name: {{ .name }}
+    namespace: {{ .namespace | default $.Values.routes.default.spec.parentRef.namespace }}
+    {{- end }}
+  rules:
+    {{- range $routeDefinition.spec.rules }}
+    -
+      {{- if .backendRefs }}
+      backendRefs:
+        {{- range .backendRefs }}
+        - group: {{ .group | default $.Values.routes.default.spec.rule.backendRef.group | quote }}
+          kind: {{ .kind | default $.Values.routes.default.spec.rule.backendRef.kind }}
+          name: {{ .name }}
+          port: {{ .port }}
+          weight: {{ .weight | default $.Values.routes.default.spec.rule.backendRef.weight }}
+        {{- end }}
+      {{- end }}
+      {{- if .matches }}
+      matches:
+        {{- range .matches }}
+        - path:
+            type: {{ .path.type | default $.Values.routes.default.spec.rule.match.path.type }}
+            value: {{ .path.value | default $.Values.routes.default.spec.rule.match.path.value }}
+        {{- end }}
+      {{- else }}
+      matches:
+        - path:
+            type: {{ $.Values.routes.default.spec.rule.match.path.type }}
+            value: {{ $.Values.routes.default.spec.rule.match.path.value }}
+      {{- end }}
+      {{- if .filters }}
+      filters:
+        {{- range .filters }}
+        - type: {{ .type | default $.Values.routes.default.spec.rule.filter.type }}
+          {{- if (eq (default $.Values.routes.default.spec.rule.filter.type .type) "RequestRedirect") }}
+          requestRedirect:
+            scheme: {{ .requestRedirect.scheme | default $.Values.routes.default.spec.rule.filter.requestRedirect.scheme }}
+            hostname: {{ .requestRedirect.hostname }}
+            statusCode: {{ .requestRedirect.statusCode }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+      {{- if .timeouts }}
+      timeouts:
+        {{- if .timeouts.backendRequest }}
+        backendRequest: {{ .timeouts.backendRequest | quote }}
+        {{- end }}
+        {{- if .timeouts.request }}
+        request: {{ .timeouts.request | quote }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

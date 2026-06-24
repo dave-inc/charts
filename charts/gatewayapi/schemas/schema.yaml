@@ -10,7 +10,8 @@ properties:
     additionalProperties:
       type: string
   gateways:
-    $ref: ./gateway-bundle.schema.yaml#/properties/gateways
-required:
-  - enabled
-  - gateways
+    $ref: ./gatewayapi.schema.yaml#/properties/gateways
+  routes:
+    $ref: ./gatewayapi.schema.yaml#/properties/routes
+  healthCheckPolicies:
+    $ref: ./gatewayapi.schema.yaml#/properties/healthCheckPolicies

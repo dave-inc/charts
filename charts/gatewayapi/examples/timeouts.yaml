@@ -1,0 +1,31 @@
+# Routes traffic to `example-service` with per-request timeouts. The total
+# request must complete within 30s, and any single backend attempt has 10s.
+# Duration values follow GEP-2257 format. Includes an HTTP health check on
+# pod port 8080.
+enabled: true
+routes:
+  items:
+    - name: example-service
+      spec:
+        hostnames:
+          - example-service.trydave.com
+        parentRefs:
+          - name: default
+        rules:
+          - backendRefs:
+              - name: example-service
+                port: 80
+            timeouts:
+              request: 30s
+              backendRequest: 10s
+healthCheckPolicies:
+  items:
+    - name: example-service
+      spec:
+        default:
+          config:
+            httpHealthCheck:
+              port: 8080
+              requestPath: /healthz
+        targetRef:
+          name: example-service

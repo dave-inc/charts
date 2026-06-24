@@ -1,0 +1,272 @@
+$schema: "http://json-schema.org/draft-07/schema#"
+type: object
+definitions: {}
+properties:
+  gateways:
+    type: object
+    properties:
+      default:
+        $ref: "#/$defs/gatewayDefault"
+      items:
+        type: array
+        minItems: 0
+        items:
+          $ref: "#/$defs/gatewayItem"
+    required:
+      - default
+      - items
+    additionalProperties: false
+required:
+  - gateways
+
+$defs:
+  parentDomain:
+    type: string
+    pattern: "^(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
+
+  gatewayDefault:
+    type: object
+    properties:
+      metadata:
+        type: object
+        properties:
+          annotations:
+            type: object
+            additionalProperties:
+              type: string
+        additionalProperties: false
+      spec:
+        type: object
+        properties:
+          gatewayClassName:
+            type: string
+          listener:
+            type: object
+            properties:
+              allowedRoutes:
+                type: object
+                properties:
+                  namespaces:
+                    type: object
+                    properties:
+                      from:
+                        type: string
+                        enum:
+                          - All
+                          - Same
+                    required:
+                      - from
+                    additionalProperties: false
+                required:
+                  - namespaces
+                additionalProperties: false
+              port:
+                type: integer
+                minimum: 1
+                maximum: 65535
+              protocol:
+                type: string
+                enum:
+                  - HTTP
+                  - HTTPS
+            required:
+              - allowedRoutes
+              - port
+              - protocol
+            additionalProperties: false
+        required:
+          - gatewayClassName
+          - listener
+        additionalProperties: false
+      ext:
+        type: object
+        properties:
+          tlsSecretGroups:
+            type: object
+            properties:
+              enabled:
+                type: boolean
+              items:
+                type: array
+                minItems: 1
+                items:
+                  type: object
+                  properties:
+                    parentDomain:
+                      $ref: "#/$defs/parentDomain"
+                  required:
+                    - parentDomain
+                  additionalProperties: false
+            required:
+              - enabled
+            # `items` is required only when `enabled: true` — there's no
+            # point forcing a placeholder list when grouping is off.
+            if:
+              properties:
+                enabled:
+                  const: true
+              required:
+                - enabled
+            then:
+              required:
+                - items
+            additionalProperties: false
+        additionalProperties: false
+    required:
+      - spec
+    additionalProperties: false
+
+  gatewayItem:
+    type: object
+    properties:
+      name:
+        type: string
+        maxLength: 63
+        pattern: "^[a-z]([-a-z0-9]*[a-z0-9])?$"
+      enabled:
+        type: boolean
+      rawSpec:
+        type: boolean
+      spec:
+        type: object
+        properties:
+          gatewayClassName:
+            type: string
+          addresses:
+            type: array
+            minItems: 1
+            items:
+              $ref: "#/$defs/address"
+          listeners:
+            type: array
+            minItems: 1
+            # Hard limit on the number of listeners per gateway.
+            maxItems: 64
+            items:
+              $ref: "#/$defs/listener"
+        required:
+          - listeners
+        additionalProperties: false
+    required:
+      - name
+      - spec
+    if:
+      required:
+        - rawSpec
+      properties:
+        rawSpec:
+          const: true
+    then:
+      properties:
+        spec:
+          required:
+            - gatewayClassName
+            - listeners
+          properties:
+            listeners:
+              items:
+                required:
+                  - hostname
+                  - port
+                  - protocol
+                  - allowedRoutes
+                  - name
+    else:
+      properties:
+        spec:
+          properties:
+            listeners:
+              items:
+                required:
+                  - hostname
+    additionalProperties: false
+
+  address:
+    type: object
+    properties:
+      # Implementation-specific custom types (`<group>/<type>`) are not
+      # accepted here — drop into `rawSpec: true` if you need one.
+      type:
+        type: string
+        enum:
+          - IPAddress
+          - Hostname
+          - NamedAddress
+      value:
+        type: string
+        minLength: 1
+        maxLength: 253
+    required:
+      - type
+      - value
+    additionalProperties: false
+
+  listener:
+    type: object
+    properties:
+      hostname:
+        type: string
+        # The parent-domain alternation (trydave.com|daveapi.com|daveapi.io)
+        # also lives in $defs/parentDomain — keep both in sync when the
+        # allow-list changes.
+        pattern: "^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\\.)*(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
+      name:
+        type: string
+        maxLength: 63
+      port:
+        type: integer
+        minimum: 1
+        maximum: 65535
+      protocol:
+        type: string
+        enum:
+          - HTTP
+          - HTTPS
+      allowedRoutes:
+        type: object
+        properties:
+          namespaces:
+            type: object
+            properties:
+              from:
+                type: string
+                enum:
+                  - All
+                  - Same
+            required:
+              - from
+            additionalProperties: false
+        required:
+          - namespaces
+        additionalProperties: false
+      tls:
+        type: object
+        properties:
+          mode:
+            type: string
+            enum:
+              - Terminate
+              - Passthrough
+          certificateRefs:
+            type: array
+            minItems: 1
+            items:
+              type: object
+              properties:
+                group:
+                  type: string
+                  const: ""
+                kind:
+                  type: string
+                  const: Secret
+                name:
+                  type: string
+                  maxLength: 253
+              required:
+                - name
+              additionalProperties: false
+        required:
+          - certificateRefs
+        additionalProperties: false
+    additionalProperties: false
+additionalProperties: false

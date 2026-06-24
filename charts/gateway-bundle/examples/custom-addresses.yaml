@@ -1,0 +1,19 @@
+# Bind a Gateway to one or more caller-specified addresses (e.g. a
+# pre-reserved GCP static IP, or an implementation-named address) via
+# Gateway-API's `spec.addresses`. Each entry is `{type, value}` where
+# `type` is one of `IPAddress`, `Hostname`, or `NamedAddress`. This
+# stays in templated mode — listener defaults, auto-naming, and
+# `tlsSecretGroups` all still apply. For implementation-specific
+# `<group>/<type>` values, use `raw-spec.yaml` instead.
+enabled: true
+gateways:
+  items:
+    - name: default
+      spec:
+        addresses:
+          - type: IPAddress
+            value: 127.0.0.1
+          - type: NamedAddress
+            value: my-reserved-gcp-static-ip
+        listeners:
+          - hostname: example-service.trydave.com

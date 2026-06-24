@@ -1,0 +1,43 @@
+{{- if (and .Values.enabled .Values.healthCheckPolicies.enabled) }}
+{{- $seen := dict }}
+{{- range $healthCheckPolicyDefinition := .Values.healthCheckPolicies.items }}
+{{- if hasKey $seen $healthCheckPolicyDefinition.name }}
+{{- fail (printf "HealthCheckPolicy names must be unique: '%s' is duplicated" $healthCheckPolicyDefinition.name) }}
+{{- end }}
+{{- $_ := set $seen $healthCheckPolicyDefinition.name true }}
+{{- end }}
+{{- $labels := include "gatewayapi.labels" . }}
+{{- $commonName := include "gatewayapi.name" . }}
+{{- range $healthCheckPolicyDefinition := .Values.healthCheckPolicies.items }}
+{{- if (ne $healthCheckPolicyDefinition.enabled false) }}
+---
+apiVersion: networking.gke.io/v1
+kind: HealthCheckPolicy
+metadata:
+  labels:
+    {{- $labels | nindent 4 }}
+  name: {{ $healthCheckPolicyDefinition.name }}
+spec:
+{{- if and $healthCheckPolicyDefinition.spec $healthCheckPolicyDefinition.rawSpec }}
+  {{- toYaml $healthCheckPolicyDefinition.spec | nindent 2 }}
+{{- else }}
+  default:
+    config:
+      httpHealthCheck:
+        port: {{ $healthCheckPolicyDefinition.spec.default.config.httpHealthCheck.port }}
+        requestPath: {{ $healthCheckPolicyDefinition.spec.default.config.httpHealthCheck.requestPath }}
+      type: {{ $healthCheckPolicyDefinition.spec.default.config.type | default $.Values.healthCheckPolicies.default.spec.default.config.type }}
+    logConfig:
+      enabled: {{ dig "logConfig" "enabled" $.Values.healthCheckPolicies.default.spec.default.logConfig.enabled $healthCheckPolicyDefinition.spec.default }}
+    checkIntervalSec: {{ $healthCheckPolicyDefinition.spec.default.checkIntervalSec | default $.Values.healthCheckPolicies.default.spec.default.checkIntervalSec }}
+    timeoutSec: {{ $healthCheckPolicyDefinition.spec.default.timeoutSec | default $.Values.healthCheckPolicies.default.spec.default.timeoutSec }}
+    healthyThreshold: {{ $healthCheckPolicyDefinition.spec.default.healthyThreshold | default $.Values.healthCheckPolicies.default.spec.default.healthyThreshold }}
+    unhealthyThreshold: {{ $healthCheckPolicyDefinition.spec.default.unhealthyThreshold | default $.Values.healthCheckPolicies.default.spec.default.unhealthyThreshold }}
+  targetRef:
+    group: {{ $healthCheckPolicyDefinition.spec.targetRef.group | default $.Values.healthCheckPolicies.default.spec.targetRef.group | quote }}
+    kind: {{ $healthCheckPolicyDefinition.spec.targetRef.kind | default $.Values.healthCheckPolicies.default.spec.targetRef.kind }}
+    name: {{ $healthCheckPolicyDefinition.spec.targetRef.name }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

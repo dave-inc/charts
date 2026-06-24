@@ -1,0 +1,31 @@
+# Routes traffic to `example-service` only when the request path is prefixed
+# with `/custom`. Other paths under `example-service.trydave.com` are not
+# matched by this route. Includes an HTTP health check on pod port 8080.
+enabled: true
+routes:
+  items:
+    - name: example-service
+      spec:
+        hostnames:
+          - example-service.trydave.com
+        parentRefs:
+          - name: default
+        rules:
+          - backendRefs:
+              - name: example-service
+                port: 80
+            matches:
+              - path:
+                  type: PathPrefix
+                  value: /custom
+healthCheckPolicies:
+  items:
+    - name: example-service
+      spec:
+        default:
+          config:
+            httpHealthCheck:
+              port: 8080
+              requestPath: /healthz
+        targetRef:
+          name: example-service

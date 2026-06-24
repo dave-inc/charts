@@ -1,0 +1,29 @@
+# Escape hatch: when the chart's templated mode can't express a configuration
+# (e.g. needs a Gateway-API field not modeled by the chart, or a hand-tuned
+# `tls`/`allowedRoutes` combination), set `rawSpec: true` and the item's
+# `spec` block is rendered verbatim onto the Gateway. Metadata
+# (annotations/labels) is still inherited from `gateways.default`.
+#
+# Caveat: when `rawSpec: true`, you own every Gateway-API field on the
+# listener, including `name`. Nothing is defaulted by the chart.
+enabled: true
+gateways:
+  items:
+    - name: extra-gw-0
+      rawSpec: true
+      spec:
+        gatewayClassName: gke-l7-rilb
+        listeners:
+          - name: example-service-trydave-com-https
+            hostname: example-service.trydave.com
+            port: 443
+            protocol: HTTPS
+            allowedRoutes:
+              namespaces:
+                from: All
+            tls:
+              certificateRefs:
+                - group: ""
+                  kind: Secret
+                  name: example-service-trydave-com-extra-gw-0-tls
+              mode: Terminate

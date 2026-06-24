@@ -1,60 +1,78 @@
-{{- $gatewayBundleLabels := include "gateway-bundle.labels" . }}
-{{- $gatewayBundleFullname := include "gateway-bundle.fullname" . }}
+{{- if .Values.enabled }}
+{{- $labels := include "gateway-bundle.labels" . }}
+{{- $default := .Values.gateways.default }}
 
-{{- range $i, $gatewayConfig := .Values.gateways }}
+{{- /* Ensure that all gateway names are unique within the release. */ -}}
+{{- $seen := dict }}
+{{- range $item := .Values.gateways.items }}
+{{- if hasKey $seen $item.name }}
+{{- fail (printf "Gateway names must be unique: '%s' is duplicated" $item.name) }}
+{{- end }}
+{{- $_ := set $seen $item.name true }}
+{{- end }}
+
+{{- range $item := .Values.gateways.items }}
+{{- if ne $item.enabled false }}
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: {{ $gatewayBundleFullname }}-{{ $i }}
-  {{- with $gatewayConfig.gatewayAnnotations | default $.Values.gatewayAnnotations }}
+  name: {{ $item.name }}
+  {{- with $default.metadata.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   labels:
-    {{- $gatewayBundleLabels | nindent 4 }}
+    {{- $labels | nindent 4 }}
 spec:
-  {{- with $gatewayConfig.gatewaySpec | default $.Values.gatewaySpec }}
-  {{- toYaml . | nindent 2 }}
+{{- if $item.rawSpec }}
+  {{- toYaml $item.spec | nindent 2 }}
+{{- else }}
+  gatewayClassName: {{ $item.spec.gatewayClassName | default $default.spec.gatewayClassName }}
+  {{- with $item.spec.addresses }}
+  addresses:
+    {{- toYaml . | nindent 4 }}
   {{- end }}
   listeners:
-  {{- range $listener := $gatewayConfig.listeners }}
-  {{- if typeIs "string" $listener }}
-  - hostname: {{ $listener | quote }}
+  {{- $lDef := $default.spec.listener }}
+  {{- range $l := $item.spec.listeners }}
+  {{- $proto := $l.protocol | default $lDef.protocol }}
+  - hostname: {{ $l.hostname | quote }}
+    name: {{ $l.name | default (printf "%s-%s" ($l.hostname | replace "." "-") (lower $proto)) | trunc 63 }}
+    port: {{ $l.port | default $lDef.port }}
+    protocol: {{ $proto }}
     allowedRoutes:
       namespaces:
-        from: {{ $.Values.listenerSpec.allowedRoutes.namespaces.from }}
-    name: {{ printf "%s-%s" ($listener | replace "." "-") (lower $.Values.listenerSpec.protocol) }}
-    port: {{ $.Values.listenerSpec.port }}
-    protocol: {{ $.Values.listenerSpec.protocol }}
-    {{- if $.Values.listenerSpec.protocol | eq "HTTPS" }}
+        from: {{ dig "allowedRoutes" "namespaces" "from" $lDef.allowedRoutes.namespaces.from $l }}
+    {{- if eq $proto "HTTPS" }}
     tls:
+      {{- if $l.tls }}
+      {{- toYaml $l.tls | nindent 6 }}
+      {{- else }}
+      {{- $secretName := "" }}
+      {{- /* Chained access on `$default.ext` is intentional: Helm's nil
+             tolerance lets callers omit the whole `ext` block. */ -}}
+      {{- if $default.ext.tlsSecretGroups.enabled }}
+        {{- range $g := ($default.ext.tlsSecretGroups.items | default list) }}
+          {{- if not $secretName }}
+            {{- if (or (eq $l.hostname $g.parentDomain) (hasSuffix (printf ".%s" $g.parentDomain) $l.hostname)) }}
+              {{- $secretName = include "gateway-bundle.tlsSecretName" (dict "name" $g.parentDomain "gateway" $item.name) }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+      {{- if not $secretName }}
+        {{- $secretName = include "gateway-bundle.tlsSecretName" (dict "name" $l.hostname "gateway" $item.name) }}
+      {{- end }}
       certificateRefs:
         - group: ""
           kind: Secret
-          name: {{ $listener | replace "." "-" }}-{{ $gatewayBundleFullname }}-tls
+          name: {{ $secretName }}
       mode: Terminate
-    {{- end }}
-    {{- else }}
-    {{- with $listener.listenerSpec }}
-  - hostname: {{ .hostname | quote }}
-    {{- $allowedRoutes := default dict .allowedRoutes }}
-    {{- $namespaces := default dict $allowedRoutes.namespaces }}
-    allowedRoutes:
-      namespaces:
-        from: {{ $namespaces.from | default $.Values.listenerSpec.allowedRoutes.namespaces.from }}
-    name: {{ .name | default (printf "%s-%s" (.hostname | replace "." "-") (lower (.protocol | default $.Values.listenerSpec.protocol))) }}
-    port: {{ .port | default $.Values.listenerSpec.port }}
-    protocol: {{ .protocol | default $.Values.listenerSpec.protocol }}
-    {{- if .protocol | default $.Values.listenerSpec.protocol | eq "HTTPS" }}
-    tls:
-      certificateRefs:
-        - group: ""
-          kind: Secret
-          name: {{ .hostname | replace "." "-" }}-{{ $gatewayBundleFullname }}-tls
-      mode: Terminate
-    {{- end }}
-    {{- end }}
+      {{- end }}
     {{- end }}
   {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
 {{- end }}
