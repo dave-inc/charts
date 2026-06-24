@@ -99,6 +99,11 @@ serviceAccount:
 
 lifecycle: {}
 
+# Annotations applied to the Job/CronJob resource itself (not the Pod template).
+# Use this for things like argocd.argoproj.io/skip-health-check, which Argo CD
+# reads from the resource it's evaluating, not from the Pod spec.
+annotations: {}
+
 podAnnotations: {}
 
 podSecurityContext: {}
