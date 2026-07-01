@@ -422,14 +422,14 @@ kedaScaling:
 # kedaScaling:
 #   enabled: true
 #   triggers:
-#   - type: gcp-pubsub
-#     authenticationRef:
-#       name: keda-gcp-auth
-#       kind: ClusterTriggerAuthentication
-#     metadata:
-#       subscriptionName: "projects/my-project/subscriptions/my-sub"
-#       value: "5"
-#       activationValue: "0"
+#     - type: gcp-pubsub
+#       authenticationRef:
+#         name: keda-gcp-auth
+#         kind: ClusterTriggerAuthentication
+#       metadata:
+#         subscriptionName: "projects/my-project/subscriptions/my-sub"
+#         value: "5"
+#         activationValue: "0"
 #   scaleDown:
 #     stabilizationWindowSeconds: 300
 #     policies:
