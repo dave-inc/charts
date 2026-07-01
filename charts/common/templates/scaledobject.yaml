@@ -1,0 +1,23 @@
+{{- if .Values.kedaScaling.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "common.name" . }}
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "common.name" . }}
+  minReplicaCount: {{ .Values.kedaScaling.minReplicas | default .Values.autoscaling.minReplicas }}
+  maxReplicaCount: {{ .Values.kedaScaling.maxReplicas | default .Values.autoscaling.maxReplicas }}
+  {{- if .Values.hpaBehavior.enabled }}
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        {{- toYaml .Values.hpaBehavior.behavior | nindent 8 }}
+  {{- end }}
+  triggers:
+    {{- toYaml .Values.kedaScaling.triggers | nindent 4 }}
+{{- end }}
