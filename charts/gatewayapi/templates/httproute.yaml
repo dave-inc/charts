@@ -14,6 +14,12 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
+  {{- if $routeDefinition.metadata }}
+  {{- if $routeDefinition.metadata.annotations }}
+  annotations:
+    {{- toYaml $routeDefinition.metadata.annotations | nindent 4 }}
+  {{- end }}
+  {{- end }}
   labels:
     {{- $labels | nindent 4 }}
   name: {{ $routeDefinition.name }}
