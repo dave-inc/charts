@@ -116,7 +116,7 @@ The examples cover:
 
 | File | What it demonstrates |
 |------|----------------------|
-| [simple.yaml](./examples/simple.yaml) | Minimal route + health check |
+| [simple.yaml](./examples/simple.yaml) | Minimal route + health check, with custom annotations |
 | [timeouts.yaml](./examples/timeouts.yaml) | Per-request and per-backend timeouts |
 | [redirect.yaml](./examples/redirect.yaml) | HTTP redirect with no backend |
 | [custom-path-match.yaml](./examples/custom-path-match.yaml) | PathPrefix routing to a non-root path |
@@ -129,6 +129,27 @@ additionalLabels:
   team: platform
   env: production
 ```
+
+### Custom annotations
+
+Individual routes and health check policies accept custom annotations via a
+`metadata.annotations` block. Unlike `additionalLabels` (which is applied
+chart-wide to every resource), these annotations are applied only to that
+specific rendered resource:
+
+```yaml
+routes:
+  items:
+    - name: example-service
+      metadata:
+        annotations:
+          networking.gke.io/some-annotation: "value"
+      spec:
+        ...
+```
+
+The same `metadata.annotations` key is supported on entries under
+`healthCheckPolicies.items`.
 
 > **Schema:** `values.schema.json` is auto-generated from files in `schemas/`.
 > Do not edit it directly — run `make schema-bundle` to regenerate it after

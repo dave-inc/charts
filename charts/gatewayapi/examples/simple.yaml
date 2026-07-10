@@ -1,11 +1,17 @@
 # Minimal Gateway API deployment: routes traffic for
 # `example-service.trydave.com` to the `example-service` Service on port 80,
 # with an HTTP health check on pod port 8080. Relies on chart defaults for
-# path match and health check intervals/thresholds.
+# path match and health check intervals/thresholds. Also demonstrates
+# attaching custom annotations to the rendered resources via
+# `metadata.annotations`.
 enabled: true
 routes:
   items:
     - name: example-service
+      # Custom annotations applied to this HTTPRoute resource.
+      metadata:
+        annotations:
+          example.com/some-annotation: "some-value"
       spec:
         hostnames:
           - example-service.trydave.com
@@ -19,6 +25,10 @@ routes:
 healthCheckPolicies:
   items:
     - name: example-service
+      # Custom annotations applied to this HealthCheckPolicy resource.
+      metadata:
+        annotations:
+          example.com/some-annotation: "some-value"
       spec:
         default:
           config:

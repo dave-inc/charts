@@ -58,6 +58,10 @@ healthCheckPolicies:
 ## Elaborated health check policy example:
 #
 #  - name: main
+#    # Custom annotations applied to this HealthCheckPolicy resource.
+#    metadata:
+#      annotations:
+#        example.com/some-annotation: "some-value"
 #    # If true, the policy will be rendered. If false, it will be omitted.
 #    enabled: true
 #    rawSpec: true
@@ -121,6 +125,10 @@ routes:
 
 ## Elaborated route example, no defaults:
 #  - name: main
+#    # Custom annotations applied to this route resource.
+#    metadata:
+#      annotations:
+#        example.com/some-annotation: "some-value"
 #    # If true, the route will be rendered. If false, it will be omitted.
 #    enabled: true
 #    # GRPCRoute being another option

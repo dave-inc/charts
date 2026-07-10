@@ -146,6 +146,18 @@
               "name": {
                 "type": "string"
               },
+              "metadata": {
+                "type": "object",
+                "properties": {
+                  "annotations": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              },
               "enabled": {
                 "type": "boolean"
               },
@@ -532,6 +544,18 @@
             "properties": {
               "name": {
                 "type": "string"
+              },
+              "metadata": {
+                "type": "object",
+                "properties": {
+                  "annotations": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false
               },
               "enabled": {
                 "type": "boolean"
