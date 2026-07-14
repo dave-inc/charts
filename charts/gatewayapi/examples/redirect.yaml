@@ -20,3 +20,6 @@ routes:
 healthCheckPolicies:
   # A HealthCheckPolicy resource is not really necessary for a redirect-only route.
   enabled: false
+gcpBackendPolicies:
+  # Likewise, there is no backend Service to attach a GCPBackendPolicy to.
+  enabled: false

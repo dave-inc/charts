@@ -1,0 +1,39 @@
+{{- if (and .Values.enabled .Values.gcpBackendPolicies.enabled) }}
+{{- $seen := dict }}
+{{- range $gcpBackendPolicyDefinition := .Values.gcpBackendPolicies.items }}
+{{- if hasKey $seen $gcpBackendPolicyDefinition.name }}
+{{- fail (printf "GCPBackendPolicy names must be unique: '%s' is duplicated" $gcpBackendPolicyDefinition.name) }}
+{{- end }}
+{{- $_ := set $seen $gcpBackendPolicyDefinition.name true }}
+{{- end }}
+{{- $labels := include "gatewayapi.labels" . }}
+{{- $commonName := include "gatewayapi.name" . }}
+{{- range $gcpBackendPolicyDefinition := .Values.gcpBackendPolicies.items }}
+{{- if (ne $gcpBackendPolicyDefinition.enabled false) }}
+---
+apiVersion: networking.gke.io/v1
+kind: GCPBackendPolicy
+metadata:
+  {{- if $gcpBackendPolicyDefinition.metadata }}
+  {{- if $gcpBackendPolicyDefinition.metadata.annotations }}
+  annotations:
+    {{- toYaml $gcpBackendPolicyDefinition.metadata.annotations | nindent 4 }}
+  {{- end }}
+  {{- end }}
+  labels:
+    {{- $labels | nindent 4 }}
+  name: {{ $gcpBackendPolicyDefinition.name }}
+spec:
+{{- if and $gcpBackendPolicyDefinition.spec $gcpBackendPolicyDefinition.rawSpec }}
+  {{- toYaml $gcpBackendPolicyDefinition.spec | nindent 2 }}
+{{- else }}
+  default:
+    timeoutSec: {{ dig "default" "timeoutSec" $.Values.gcpBackendPolicies.default.spec.default.timeoutSec $gcpBackendPolicyDefinition.spec }}
+  targetRef:
+    group: {{ $gcpBackendPolicyDefinition.spec.targetRef.group | default $.Values.gcpBackendPolicies.default.spec.targetRef.group | quote }}
+    kind: {{ $gcpBackendPolicyDefinition.spec.targetRef.kind | default $.Values.gcpBackendPolicies.default.spec.targetRef.kind }}
+    name: {{ $gcpBackendPolicyDefinition.spec.targetRef.name }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

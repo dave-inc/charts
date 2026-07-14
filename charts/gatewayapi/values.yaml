@@ -84,6 +84,45 @@ healthCheckPolicies:
 #        kind: Service
 #        name: example-service
 
+# GCPBackendPolicies list. Each item's `name` becomes the name of the rendered
+# resource (e.g. `<name>`). Names must be unique across items. A GCPBackendPolicy
+# attaches GKE backend-service configuration (e.g. `timeoutSec`) to a Service.
+gcpBackendPolicies:
+  enabled: true
+  # When an items entry rawSpec is false, the spec block will be merged with defaults defined here.
+  default:
+    spec:
+      default:
+        timeoutSec: 60
+      targetRef:
+        group: ""
+        kind: Service
+  items: []
+## Basic backend policy example, with defaults for all fields except the required ones:
+#
+#   - name: example-service
+#     spec:
+#       targetRef:
+#         name: example-service
+
+## Elaborated backend policy example:
+#
+#  - name: main
+#    # Custom annotations applied to this GCPBackendPolicy resource.
+#    metadata:
+#      annotations:
+#        example.com/some-annotation: "some-value"
+#    # If true, the policy will be rendered. If false, it will be omitted.
+#    enabled: true
+#    rawSpec: true
+#    spec:
+#      default:
+#        timeoutSec: 60
+#      targetRef:
+#        group: ""
+#        kind: Service
+#        name: example-service
+
 # Routes list. Each item's `name` becomes the name of the rendered route resource
 # (e.g. `<name>`). Names must be unique across items. Each entry must
 # declare its `kind` (HTTPRoute or GRPCRoute) and a `spec` block.
