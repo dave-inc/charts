@@ -86,6 +86,22 @@ as the readiness probe of the service. Note that `HealthCheckPolicy` is a
 GKE-specific CRD (`networking.gke.io/v1`) and is not part of the standard
 Gateway API.
 
+The chart can also render `GCPBackendPolicy` resources (another GKE-specific
+CRD, `networking.gke.io/v1`) to attach backend-service configuration such as
+`timeoutSec` to a `Service`. Like health check policies, they reference the
+target `Service` via `spec.targetRef.name`:
+
+```yaml
+gcpBackendPolicies:
+  items:
+    - name: example-service
+      spec:
+        default:
+          timeoutSec: 60
+        targetRef:
+          name: example-service
+```
+
 You will notice there is no mention of `Gateway` resource in the example above.
 That's because the `Gateway` resource is managed elsewhere. TLS termination
 is also handled where the `Gateway` resource is defined.
@@ -149,7 +165,7 @@ routes:
 ```
 
 The same `metadata.annotations` key is supported on entries under
-`healthCheckPolicies.items`.
+`healthCheckPolicies.items` and `gcpBackendPolicies.items`.
 
 > **Schema:** `values.schema.json` is auto-generated from files in `schemas/`.
 > Do not edit it directly — run `make schema-bundle` to regenerate it after

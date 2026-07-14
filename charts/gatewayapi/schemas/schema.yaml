@@ -15,3 +15,5 @@ properties:
     $ref: ./gatewayapi.schema.yaml#/properties/routes
   healthCheckPolicies:
     $ref: ./gatewayapi.schema.yaml#/properties/healthCheckPolicies
+  gcpBackendPolicies:
+    $ref: ./gatewayapi.schema.yaml#/properties/gcpBackendPolicies
