@@ -1,0 +1,45 @@
+# Extends the minimal Gateway API deployment (see simple.yaml) with a
+# GCPBackendPolicy attached to the backend Service. GCPBackendPolicy is a
+# GKE-specific CRD (networking.gke.io/v1) that configures backend-service
+# settings on the load balancer. Here it raises the backend-service response
+# timeout to 120s (the chart default is 60s). Also demonstrates attaching
+# custom annotations to the rendered resource via `metadata.annotations`.
+enabled: true
+routes:
+  items:
+    - name: example-service
+      spec:
+        hostnames:
+          - example-service.trydave.com
+        parentRefs:
+          - name: default
+        rules:
+          - backendRefs:
+              - name: example-service
+                port: 80
+healthCheckPolicies:
+  items:
+    - name: example-service
+      spec:
+        default:
+          config:
+            httpHealthCheck:
+              port: 8080
+              requestPath: /healthz
+        targetRef:
+          name: example-service
+gcpBackendPolicies:
+  items:
+    - name: example-service
+      # Custom annotations applied to this GCPBackendPolicy resource.
+      metadata:
+        annotations:
+          example.com/some-annotation: "some-value"
+      spec:
+        default:
+          # Backend-service response timeout, in seconds. The chart default is
+          # 60; raised here to 120.
+          timeoutSec: 120
+        # The Service this policy attaches to.
+        targetRef:
+          name: example-service
