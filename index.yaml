@@ -1877,6 +1877,18 @@ entries:
   gatewayapi:
   - apiVersion: v2
     appVersion: 0.1.0
+    created: "2026-07-15T22:11:08.445379294Z"
+    description: 'Standalone chart for managing Kubernetes Gateway API resources (HTTPRoute
+      / GRPCRoute) and GKE HealthCheckPolicy / GCPBackendPolicy resources. Originally
+      extracted from the gateway-related features of the `common` chart. '
+    digest: 5b57682e0bf21cb6fdd64d5dfef3d6e7e34740c155b4f5c33476bcde095676bd
+    name: gatewayapi
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/gatewayapi-2.5.1/gatewayapi-2.5.1.tgz
+    version: 2.5.1
+  - apiVersion: v2
+    appVersion: 0.1.0
     created: "2026-07-15T21:49:55.297268997Z"
     description: 'Standalone chart for managing Kubernetes Gateway API resources (HTTPRoute
       / GRPCRoute) and GKE HealthCheckPolicy / GCPBackendPolicy resources. Originally
@@ -2652,4 +2664,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2026-07-15T21:49:55.29826747Z"
+generated: "2026-07-15T22:11:08.447322718Z"
