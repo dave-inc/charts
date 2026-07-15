@@ -1,53 +1,3 @@
-$schema: "http://json-schema.org/draft-07/schema#"
-type: object
-definitions: {}
-properties:
-  gateways:
-    type: object
-  routes:
-    type: object
-    properties:
-      enabled:
-        type: boolean
-      default:
-        $ref: "#/$defs/routeDefault"
-      items:
-        type: array
-        minItems: 0
-        items:
-          $ref: "#/$defs/route"
-    additionalProperties: false
-  healthCheckPolicies:
-    type: object
-    properties:
-      enabled:
-        type: boolean
-      default:
-        $ref: "#/$defs/healthCheckPolicyDefault"
-      items:
-        type: array
-        minItems: 0
-        items:
-          $ref: "#/$defs/healthCheckPolicy"
-    additionalProperties: false
-  gcpBackendPolicies:
-    type: object
-    properties:
-      enabled:
-        type: boolean
-      default:
-        $ref: "#/$defs/gcpBackendPolicyDefault"
-      items:
-        type: array
-        minItems: 0
-        items:
-          $ref: "#/$defs/gcpBackendPolicy"
-    additionalProperties: false
-required:
-  - routes
-  - healthCheckPolicies
-  - gcpBackendPolicies
-
 $defs:
   healthCheckPolicy:
     type: object
@@ -474,6 +424,16 @@ $defs:
                           - 307
                           - 308
                     additionalProperties: false
+                additionalProperties: false
+              timeouts:
+                type: object
+                properties:
+                  backendRequest:
+                    type: string
+                    pattern: "^([0-9]{1,5}(h|m|s|ms)){1,4}$"
+                  request:
+                    type: string
+                    pattern: "^([0-9]{1,5}(h|m|s|ms)){1,4}$"
                 additionalProperties: false
             additionalProperties: false
         additionalProperties: false

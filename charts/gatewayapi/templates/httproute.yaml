@@ -76,15 +76,12 @@ spec:
           {{- end }}
         {{- end }}
       {{- end }}
-      {{- if .timeouts }}
       timeouts:
-        {{- if .timeouts.backendRequest }}
-        backendRequest: {{ .timeouts.backendRequest | quote }}
+        {{- $timeouts := .timeouts | default dict }}
+        {{- if $timeouts.backendRequest }}
+        backendRequest: {{ $timeouts.backendRequest | quote }}
         {{- end }}
-        {{- if .timeouts.request }}
-        request: {{ .timeouts.request | quote }}
-        {{- end }}
-      {{- end }}
+        request: {{ $timeouts.request | default $.Values.routes.default.spec.rule.timeouts.request | quote }}
     {{- end }}
 {{- end }}
 {{- end }}

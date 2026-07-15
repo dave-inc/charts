@@ -1,4 +1,4 @@
-$schema: http://json-schema.org/draft-07/schema#
+$schema: "http://json-schema.org/draft-07/schema#"
 type: object
 properties:
   name:
@@ -10,10 +10,48 @@ properties:
     additionalProperties:
       type: string
   gateways:
-    $ref: ./gatewayapi.schema.yaml#/properties/gateways
+    type: object
   routes:
-    $ref: ./gatewayapi.schema.yaml#/properties/routes
+    type: object
+    properties:
+      enabled:
+        type: boolean
+      default:
+        $ref: "./gatewayapi.schema.yaml#/$defs/routeDefault"
+      items:
+        type: array
+        minItems: 0
+        items:
+          $ref: "./gatewayapi.schema.yaml#/$defs/route"
+    additionalProperties: false
   healthCheckPolicies:
-    $ref: ./gatewayapi.schema.yaml#/properties/healthCheckPolicies
+    type: object
+    properties:
+      enabled:
+        type: boolean
+      default:
+        $ref: "./gatewayapi.schema.yaml#/$defs/healthCheckPolicyDefault"
+      items:
+        type: array
+        minItems: 0
+        items:
+          $ref: "./gatewayapi.schema.yaml#/$defs/healthCheckPolicy"
+    additionalProperties: false
   gcpBackendPolicies:
-    $ref: ./gatewayapi.schema.yaml#/properties/gcpBackendPolicies
+    type: object
+    properties:
+      enabled:
+        type: boolean
+      default:
+        $ref: "./gatewayapi.schema.yaml#/$defs/gcpBackendPolicyDefault"
+      items:
+        type: array
+        minItems: 0
+        items:
+          $ref: "./gatewayapi.schema.yaml#/$defs/gcpBackendPolicy"
+    additionalProperties: false
+required:
+  - routes
+  - healthCheckPolicies
+  - gcpBackendPolicies
+additionalProperties: false

@@ -148,6 +148,8 @@ routes:
           type: RequestRedirect
           requestRedirect:
             scheme: https
+        timeouts:
+          request: 60s
   items: []
 ## Basic route example, with defaults for all fields except the required ones:
 #  - name: example-service
