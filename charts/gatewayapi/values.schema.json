@@ -910,8 +910,6 @@
   },
   "required": [
     "routes",
-    "healthCheckPolicies",
-    "gcpBackendPolicies"
-  ],
-  "additionalProperties": false
+    "healthCheckPolicies"
+  ]
 }
