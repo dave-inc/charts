@@ -893,5 +893,11 @@
       },
       "additionalProperties": false
     }
-  }
+  },
+  "required": [
+    "routes",
+    "healthCheckPolicies",
+    "gcpBackendPolicies"
+  ],
+  "additionalProperties": false
 }
