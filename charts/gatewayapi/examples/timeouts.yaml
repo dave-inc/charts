@@ -29,12 +29,3 @@ healthCheckPolicies:
               requestPath: /healthz
         targetRef:
           name: example-service
-gcpBackendPolicies:
-  items:
-    - name: example-service
-      spec:
-        default:
-          # Backend-service response timeout on the load balancer.
-          timeoutSec: 30
-        targetRef:
-          name: example-service

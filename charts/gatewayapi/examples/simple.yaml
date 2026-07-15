@@ -42,9 +42,3 @@ healthCheckPolicies:
               requestPath: /healthz
         targetRef:
           name: example-service
-gcpBackendPolicies:
-  items:
-    - name: example-service
-      spec:
-        targetRef:
-          name: example-service
