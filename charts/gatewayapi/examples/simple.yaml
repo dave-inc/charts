@@ -42,3 +42,11 @@ healthCheckPolicies:
               requestPath: /healthz
         targetRef:
           name: example-service
+gcpBackendPolicies:
+  items:
+    # A GCPBackendPolicy resource will be created from this,
+    # .spec.default.timeoutSec will have a value by default
+    - name: example-service
+      spec:
+        targetRef:
+          name: example-service

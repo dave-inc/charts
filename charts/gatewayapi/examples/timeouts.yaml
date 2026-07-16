@@ -1,3 +1,11 @@
+##############################################################################
+## ===== WARNING =====                                                      ##
+##                                                                          ##
+## The timeouts feature is not currently supported by GKE's Gateway API     ##
+## implementation. This example is provided for future reference only.      ##
+##                                                                          ##
+##############################################################################
+
 # Routes traffic to `example-service` with per-request timeouts. The total
 # request must complete within 30s, and any single backend attempt has 10s.
 # Duration values follow GEP-2257 format. Includes an HTTP health check on

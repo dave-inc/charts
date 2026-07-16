@@ -272,6 +272,9 @@ $defs:
                     additionalProperties: false
                 timeouts:
                   type: object
+                  description: >-
+                    Warning: This field is not yet supported by GKE's Gateway
+                    API implementation.
                   properties:
                     backendRequest:
                       type: string
@@ -424,16 +427,6 @@ $defs:
                           - 307
                           - 308
                     additionalProperties: false
-                additionalProperties: false
-              timeouts:
-                type: object
-                properties:
-                  backendRequest:
-                    type: string
-                    pattern: "^([0-9]{1,5}(h|m|s|ms)){1,4}$"
-                  request:
-                    type: string
-                    pattern: "^([0-9]{1,5}(h|m|s|ms)){1,4}$"
                 additionalProperties: false
             additionalProperties: false
         additionalProperties: false

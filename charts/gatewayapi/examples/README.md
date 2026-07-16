@@ -6,8 +6,10 @@ services, perform redirects, configure timeouts, and implement health check
 and backend policies.
 
 - [simple](./simple.yaml): A minimal example that routes traffic to a backend
-  service and configures an HTTP health check policy. Also shows how to attach
-  custom annotations to the rendered resources via `metadata.annotations`.
+  service, configures an HTTP health check policy, and defines a
+  GCPBackendPolicy resource with the default `timeoutSec` value. Also
+  shows how to attach custom annotations to the rendered resources via
+  `metadata.annotations`.
 - [redirect](./redirect.yaml): An example that issues a 301 redirect from one
   hostname to another. Health check policy is disabled since no backend is
   configured.
