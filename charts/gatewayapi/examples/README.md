@@ -7,7 +7,7 @@ and backend policies.
 
 - [simple](./simple.yaml): A minimal example that routes traffic to a backend
   service, configures an HTTP health check policy, and defines a
-  GCPBackendPolicy resource with the default `timeoutSec` default value. Also
+  GCPBackendPolicy resource with the default `timeoutSec` value. Also
   shows how to attach custom annotations to the rendered resources via
   `metadata.annotations`.
 - [redirect](./redirect.yaml): An example that issues a 301 redirect from one
