@@ -6,7 +6,7 @@ rollouts:
   clusterInstall: true
 
   dashboard:
-    enabled: false
+    enabled: true
 
   controller:
     replicas: 2
