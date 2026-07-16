@@ -272,6 +272,9 @@ $defs:
                     additionalProperties: false
                 timeouts:
                   type: object
+                  description: >-
+                    Warning: This field is not yet supported by GKE's Gateway
+                    API implementation.
                   properties:
                     backendRequest:
                       type: string
