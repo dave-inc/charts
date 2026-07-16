@@ -9,8 +9,13 @@
 ) -}}
 {{- $sqlProxyVersion := include "common.cloudsqlProxyVersion" . -}}
 {{- $sqlinstanceConnectionName := include "common.instanceConnectionName" . -}}
-apiVersion: apps/v1
-kind: Deployment
+{{- if and .Values.canary.enabled .Values.canary.trafficRouting }}
+{{- if not (and .Values.canary.canaryService .Values.canary.stableService) }}
+{{- fail "canary.canaryService and canary.stableService are both required when canary.trafficRouting is set" }}
+{{- end }}
+{{- end }}
+apiVersion: {{ include "common.workloadApiVersion" . }}
+kind: {{ include "common.workloadKind" . }}
 metadata:
   name: {{ include "common.name" . }}
   labels:
@@ -30,7 +35,29 @@ spec:
       {{- .Values.podSelectorLabelsOverride | toYaml | nindent 6 }}
     {{- end }}
   strategy:
+  {{- if .Values.canary.enabled }}
+    canary:
+      {{- if .Values.canary.canaryService }}
+      canaryService: {{ .Values.canary.canaryService }}
+      {{- end }}
+      {{- if .Values.canary.stableService }}
+      stableService: {{ .Values.canary.stableService }}
+      {{- end }}
+      maxSurge: {{ .Values.canary.maxSurge | quote }}
+      maxUnavailable: {{ .Values.canary.maxUnavailable }}
+      {{- if .Values.canary.trafficRouting }}
+      trafficRouting:
+        {{- toYaml .Values.canary.trafficRouting | nindent 8 }}
+      {{- end }}
+      {{- if .Values.canary.analysis }}
+      analysis:
+        {{- toYaml .Values.canary.analysis | nindent 8 }}
+      {{- end }}
+      steps:
+        {{- toYaml .Values.canary.steps | nindent 8 }}
+  {{- else }}
     {{- toYaml .Values.strategy | nindent 6 }}
+  {{- end }}
   template:
     metadata:
       annotations:
