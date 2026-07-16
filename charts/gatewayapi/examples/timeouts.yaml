@@ -1,7 +1,7 @@
 ##############################################################################
 ## ===== WARNING =====                                                      ##
 ##                                                                          ##
-## The timeouts feature is not currently supported by GKE's Gateway API ##
+## The timeouts feature is not currently supported by GKE's Gateway API     ##
 ## implementation. This example is provided for future reference only.      ##
 ##                                                                          ##
 ##############################################################################
