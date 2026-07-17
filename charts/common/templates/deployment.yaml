@@ -9,10 +9,26 @@
 ) -}}
 {{- $sqlProxyVersion := include "common.cloudsqlProxyVersion" . -}}
 {{- $sqlinstanceConnectionName := include "common.instanceConnectionName" . -}}
-apiVersion: apps/v1
-kind: Deployment
+{{- if and .Values.canary.enabled .Values.canary.trafficRouting }}
+{{- if not (and .Values.canary.canaryService .Values.canary.stableService) }}
+{{- fail "canary.canaryService and canary.stableService are both required when canary.trafficRouting is set" }}
+{{- end }}
+{{- end }}
+apiVersion: {{ include "common.workloadApiVersion" . }}
+kind: {{ include "common.workloadKind" . }}
 metadata:
   name: {{ include "common.name" . }}
+  {{- if .Values.canary.enabled }}
+  annotations:
+    {{- /*
+    Ensures ArgoCD creates/health-checks the Rollout and waits for it to
+    become healthy (spinning up its own ReplicaSet alongside the still-live
+    Deployment being replaced) before the next sync wave prunes the old
+    apps/v1 Deployment. Without this, prune order/timing between the two
+    isn't guaranteed and can cause a gap with zero serving pods.
+    */}}
+    argocd.argoproj.io/sync-wave: "-1"
+  {{- end }}
   labels:
     tags.datadoghq.com/version: "{{ .Values.image.tag }}"
     run: {{ include "common.name" . }}
@@ -30,7 +46,29 @@ spec:
       {{- .Values.podSelectorLabelsOverride | toYaml | nindent 6 }}
     {{- end }}
   strategy:
+  {{- if .Values.canary.enabled }}
+    canary:
+      {{- if .Values.canary.canaryService }}
+      canaryService: {{ .Values.canary.canaryService }}
+      {{- end }}
+      {{- if .Values.canary.stableService }}
+      stableService: {{ .Values.canary.stableService }}
+      {{- end }}
+      maxSurge: {{ .Values.canary.maxSurge | quote }}
+      maxUnavailable: {{ .Values.canary.maxUnavailable }}
+      {{- if .Values.canary.trafficRouting }}
+      trafficRouting:
+        {{- toYaml .Values.canary.trafficRouting | nindent 8 }}
+      {{- end }}
+      {{- if .Values.canary.analysis }}
+      analysis:
+        {{- toYaml .Values.canary.analysis | nindent 8 }}
+      {{- end }}
+      steps:
+        {{- toYaml .Values.canary.steps | nindent 8 }}
+  {{- else }}
     {{- toYaml .Values.strategy | nindent 6 }}
+  {{- end }}
   template:
     metadata:
       annotations:
