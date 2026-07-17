@@ -157,6 +157,7 @@ canary:
   # Canary steps, passed as-is to Rollout .spec.strategy.canary.steps
   # https://argo-rollouts.readthedocs.io/en/stable/features/canary/#canary-steps
   steps:
+    - pause: {}
     - setWeight: 20
     - pause: {}
   maxSurge: "25%"
