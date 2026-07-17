@@ -7,8 +7,8 @@ metadata:
     {{- include "common.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
+    apiVersion: {{ include "common.workloadApiVersion" . }}
+    kind: {{ include "common.workloadKind" . }}
     name: {{ include "common.name" . }}
   minReplicaCount: {{ .Values.kedaScaling.minReplicas | default .Values.autoscaling.minReplicas }}
   maxReplicaCount: {{ .Values.kedaScaling.maxReplicas | default .Values.autoscaling.maxReplicas }}
