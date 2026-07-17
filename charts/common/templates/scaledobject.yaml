@@ -20,8 +20,8 @@ metadata:
     {{- include "common.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
+    apiVersion: {{ include "common.workloadApiVersion" . }}
+    kind: {{ include "common.workloadKind" . }}
     name: {{ include "common.name" . }}
   minReplicaCount: {{ $minReplicas }}
   maxReplicaCount: {{ $maxReplicas }}

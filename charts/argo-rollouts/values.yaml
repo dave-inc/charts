@@ -1,0 +1,18 @@
+# Values below are passed through to the upstream argo-rollouts chart
+# (aliased as `rollouts`). See the full set of upstream options at
+# https://github.com/argoproj/argo-helm/blob/argo-rollouts-2.41.0/charts/argo-rollouts/values.yaml
+rollouts:
+  installCRDs: true
+  clusterInstall: true
+
+  dashboard:
+    enabled: true
+
+  controller:
+    replicas: 2
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 256Mi

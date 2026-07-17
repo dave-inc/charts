@@ -1,8 +1,8 @@
-{{- if and .Values.service.enabled .Values.canary.enabled .Values.canary.canaryService -}}
+{{- if and .Values.service.enabled .Values.canary.enabled .Values.canary.stableService -}}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.canary.canaryService }}
+  name: {{ .Values.canary.stableService }}
   annotations:
     argocd.argoproj.io/sync-wave: "1"
   labels:

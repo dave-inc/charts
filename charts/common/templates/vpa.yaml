@@ -7,8 +7,8 @@ metadata:
     {{- include "common.labels" . | nindent 4 }}
 spec:
   targetRef:
-    apiVersion: "apps/v1"
-    kind: Deployment
+    apiVersion: {{ include "common.workloadApiVersion" . }}
+    kind: {{ include "common.workloadKind" . }}
     name: {{ include "common.name" . }}
   updatePolicy:
     # Purposely harcoded to "Off"
