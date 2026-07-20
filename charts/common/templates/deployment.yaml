@@ -64,6 +64,20 @@ spec:
       analysis:
         {{- toYaml .Values.canary.analysis | nindent 8 }}
       {{- end }}
+      {{- /*
+      Ephemeral metadata: the deployment-group label is only meaningful per
+      ReplicaSet role (stable vs canary), which flips on promotion. A static
+      label on the pod template can't express that for a single shared
+      Rollout template, so it's applied here instead, and Argo Rollouts
+      adds/removes it on the relevant ReplicaSet's pods as their role changes.
+      https://argo-rollouts.readthedocs.io/en/stable/features/ephemeral-metadata/
+      */}}
+      canaryMetadata:
+        labels:
+          deployment-group: "canary"
+      stableMetadata:
+        labels:
+          deployment-group: "control"
       steps:
         {{- toYaml .Values.canary.steps | nindent 8 }}
   {{- else }}
@@ -80,7 +94,9 @@ spec:
         {{- toYaml .Values.podAnnotations | nindent 8 }}
         {{- end }}
       labels:
+        {{- if not .Values.canary.enabled }}
         deployment-group: "control"
+        {{- end }}
         tags.datadoghq.com/version: "{{ .Values.image.tag }}"
       {{- if not .Values.podSelectorLabelsOverride }}
         run: {{ include "common.name" . }}
