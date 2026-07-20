@@ -94,6 +94,8 @@ gcpBackendPolicies:
     spec:
       default:
         timeoutSec: 60
+        logging:
+          enabled: true
       targetRef:
         group: ""
         kind: Service
