@@ -506,6 +506,14 @@ $defs:
               timeoutSec:
                 type: integer
                 minimum: 1
+              logging:
+                type: object
+                properties:
+                  enabled:
+                    type: boolean
+                required:
+                  - enabled
+                additionalProperties: false
             additionalProperties: false
           targetRef:
             type: object
@@ -555,6 +563,12 @@ $defs:
               timeoutSec:
                 type: integer
                 minimum: 1
+              logging:
+                type: object
+                properties:
+                  enabled:
+                    type: boolean
+                additionalProperties: false
             additionalProperties: false
           targetRef:
             type: object
