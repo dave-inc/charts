@@ -244,7 +244,22 @@ spec:
             - name: DEPLOYMENT_NAME
               value: {{ include "common.name" . }}
             - name: DD_VERSION
+              {{- /*
+              Unlike deployment-group, Argo Rollouts has no per-role
+              mechanism for container env vars (ephemeral-metadata only
+              covers pod labels/annotations) - a Rollout's canary and stable
+              ReplicaSets are just different revisions of this same
+              template, so a static "-control"/"-canary" suffix here would
+              be wrong for whichever revision is currently playing canary.
+              Drop the suffix under canary and rely on
+              tags.datadoghq.com/version (image tag) + the deployment-group
+              ephemeral label for role/version grouping in Datadog instead.
+              */}}
+              {{- if .Values.canary.enabled }}
+              value: "{{ .Values.image.tag }}-canary"
+              {{- else }}
               value: "{{ .Values.image.tag }}-control"
+              {{- end }}
             - name: NAMESPACE
               valueFrom:
                 fieldRef:
