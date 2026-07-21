@@ -8,13 +8,6 @@ Expand the name of the chart.
 {{- end }}
 
 {{/*
-Control common name
-*/}}
-{{- define "common.controlName" -}}
-{{- printf "%s-control" (include "common.name" .) }}
-{{- end }}
-
-{{/*
 Create chart name and version as used by the chart label.
 */}}
 {{- define "common.chart" -}}
@@ -50,13 +43,6 @@ Selector labels
 */}}
 {{- define "common.selectorLabels" -}}
 {{ include "common.selectorLabelsBuilder" (list . .Release.Name "") }}
-{{- end }}
-
-{{/*
-Control selector labels
-*/}}
-{{- define "common.controlSelectorLabels" -}}
-{{ include "common.selectorLabelsBuilder" (list . .Release.Name "-control") }}
 {{- end }}
 
 {{/*
