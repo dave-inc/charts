@@ -149,11 +149,20 @@ service:
 
 # Argo Rollouts canary deployment. Requires the Argo Rollouts controller
 # (https://argo-rollouts.readthedocs.io) installed in the target cluster.
-# When enabled, this chart's workload is a Rollout (argoproj.io/v1alpha1) using
-# the canary strategy instead of a plain Deployment. HPA/VPA/KEDA scaleTargetRef
-# and the rollout's own steps/traffic routing all key off canary.enabled.
+# When enabled, a Rollout (argoproj.io/v1alpha1) is created alongside the
+# regular apps/v1 Deployment, referencing it via workloadRef instead of
+# duplicating its pod template, per
+# https://argo-rollouts.readthedocs.io/en/stable/migrating/. HPA/VPA/KEDA
+# scaleTargetRef then points at the Rollout instead of the Deployment.
 canary:
   enabled: false
+  # What the Rollout does to the referenced Deployment once its own
+  # ReplicaSet is healthy: "never" leaves it running at full size,
+  # "onsuccess" scales it to 0 once, "progressively" scales it down in step
+  # with the Rollout scaling up. Passed as-is to
+  # Rollout .spec.workloadRef.scaleDown
+  # https://argo-rollouts.readthedocs.io/en/stable/migrating/#workloadref-field
+  scaleDown: "onsuccess"
   # Canary steps, passed as-is to Rollout .spec.strategy.canary.steps
   # https://argo-rollouts.readthedocs.io/en/stable/features/canary/#canary-steps
   steps:

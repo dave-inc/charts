@@ -9,32 +9,33 @@
 ) -}}
 {{- $sqlProxyVersion := include "common.cloudsqlProxyVersion" . -}}
 {{- $sqlinstanceConnectionName := include "common.instanceConnectionName" . -}}
-{{- if and .Values.canary.enabled .Values.canary.trafficRouting }}
-{{- if not (and .Values.canary.canaryService .Values.canary.stableService) }}
-{{- fail "canary.canaryService and canary.stableService are both required when canary.trafficRouting is set" }}
-{{- end }}
-{{- end }}
-apiVersion: {{ include "common.workloadApiVersion" . }}
-kind: {{ include "common.workloadKind" . }}
+{{- /*
+This Deployment always renders as a plain apps/v1 Deployment, even when
+canary.enabled. When canary is on, rollout.yaml renders a Rollout that
+references this Deployment via workloadRef instead of duplicating its pod
+template, per https://argo-rollouts.readthedocs.io/en/stable/migrating/.
+The Deployment keeps serving its own pods (labeled "control") as the
+pre-migration baseline; the Rollout adopts the same template to run its
+canary/stable ReplicaSets alongside it and scales the Deployment down per
+canary.scaleDown once healthy.
+*/}}
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: {{ include "common.name" . }}
-  {{- if .Values.canary.enabled }}
-  annotations:
-    {{- /*
-    Ensures ArgoCD creates/health-checks the Rollout and waits for it to
-    become healthy (spinning up its own ReplicaSet alongside the still-live
-    Deployment being replaced) before the next sync wave prunes the old
-    apps/v1 Deployment. Without this, prune order/timing between the two
-    isn't guaranteed and can cause a gap with zero serving pods.
-    */}}
-    argocd.argoproj.io/sync-wave: "-1"
-  {{- end }}
   labels:
     tags.datadoghq.com/version: "{{ .Values.image.tag }}"
     run: {{ include "common.name" . }}
     {{- include "common.labels" . | nindent 4 }}
 spec:
-{{- if not (or .Values.autoscaling.enabled .Values.kedaScaling.enabled) }}
+  {{- /*
+  When canary is enabled, HPA/VPA/KEDA scaleTargetRef points at the Rollout
+  (see common.workloadKind), not this Deployment, so autoscaling.enabled /
+  kedaScaling.enabled don't apply here - this Deployment's replicas are a
+  static baseline that the Rollout scales down per canary.scaleDown once its
+  own ReplicaSet is healthy.
+  */}}
+{{- if or .Values.canary.enabled (not (or .Values.autoscaling.enabled .Values.kedaScaling.enabled)) }}
   replicas: {{ .Values.replicaCount }}
 {{- end }}
   selector:
@@ -46,43 +47,7 @@ spec:
       {{- .Values.podSelectorLabelsOverride | toYaml | nindent 6 }}
     {{- end }}
   strategy:
-  {{- if .Values.canary.enabled }}
-    canary:
-      {{- if .Values.canary.canaryService }}
-      canaryService: {{ .Values.canary.canaryService }}
-      {{- end }}
-      {{- if .Values.canary.stableService }}
-      stableService: {{ .Values.canary.stableService }}
-      {{- end }}
-      maxSurge: {{ .Values.canary.maxSurge | quote }}
-      maxUnavailable: {{ .Values.canary.maxUnavailable }}
-      {{- if .Values.canary.trafficRouting }}
-      trafficRouting:
-        {{- toYaml .Values.canary.trafficRouting | nindent 8 }}
-      {{- end }}
-      {{- if .Values.canary.analysis }}
-      analysis:
-        {{- toYaml .Values.canary.analysis | nindent 8 }}
-      {{- end }}
-      {{- /*
-      Ephemeral metadata: the deployment-group label is only meaningful per
-      ReplicaSet role (stable vs canary), which flips on promotion. A static
-      label on the pod template can't express that for a single shared
-      Rollout template, so it's applied here instead, and Argo Rollouts
-      adds/removes it on the relevant ReplicaSet's pods as their role changes.
-      https://argo-rollouts.readthedocs.io/en/stable/features/ephemeral-metadata/
-      */}}
-      canaryMetadata:
-        labels:
-          deployment-group: "canary"
-      stableMetadata:
-        labels:
-          deployment-group: "control"
-      steps:
-        {{- toYaml .Values.canary.steps | nindent 8 }}
-  {{- else }}
     {{- toYaml .Values.strategy | nindent 6 }}
-  {{- end }}
   template:
     metadata:
       annotations:
@@ -94,9 +59,7 @@ spec:
         {{- toYaml .Values.podAnnotations | nindent 8 }}
         {{- end }}
       labels:
-        {{- if not .Values.canary.enabled }}
         deployment-group: "control"
-        {{- end }}
         tags.datadoghq.com/version: "{{ .Values.image.tag }}"
       {{- if not .Values.podSelectorLabelsOverride }}
         run: {{ include "common.name" . }}
