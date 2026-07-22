@@ -31,7 +31,6 @@ metadata:
   labels:
     {{- $labels | nindent 4 }}
   annotations:
-    argocd.argoproj.io/sync-wave: "1"
     cloud.google.com/backend-config: >
       {{- if $.Values.cloudArmor.backendConfig.iap }}
       {"ports": {"80":"{{ $commonname }}", "443":"{{ $commonname }}"},"default": "{{ $commonname }}"}
