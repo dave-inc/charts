@@ -1,5 +1,24 @@
 apiVersion: v1
 entries:
+  argo-rollouts:
+  - apiVersion: v2
+    appVersion: 2.41.0
+    created: "2026-07-22T18:04:02.286031617Z"
+    dependencies:
+    - alias: rollouts
+      name: argo-rollouts
+      repository: https://argoproj.github.io/argo-helm
+      version: 2.41.0
+    description: 'Cluster-wide install of the Argo Rollouts controller and CRDs (https://argo-rollouts.readthedocs.io).
+      Deploy once per cluster, separate from app releases. Backs the `canary.enabled`
+      feature in the `common` chart, which creates Rollout resources that this controller
+      reconciles. '
+    digest: 6893378502363ea41c45dfbd351c56ffb240cbb8469d841993654dd8d9908482
+    name: argo-rollouts
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/argo-rollouts-0.1.0-beta.1/argo-rollouts-0.1.0-beta.1.tgz
+    version: 0.1.0-beta.1
   cloudarmor:
   - apiVersion: v2
     appVersion: 0.1.0
@@ -71,6 +90,16 @@ entries:
     - https://github.com/dave-inc/charts/releases/download/cloudsql-proxy-0.1.0-beta.0/cloudsql-proxy-0.1.0-beta.0.tgz
     version: 0.1.0-beta.0
   common:
+  - apiVersion: v2
+    appVersion: 1.17.0
+    created: "2026-07-22T18:04:02.496429799Z"
+    description: Standard Service Template
+    digest: 8dacad53b71634f3ee8b796393519e214186deedeeac4289b2c7d82737618563
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.12.1-plat-1724-beta.2/common-0.12.1-plat-1724-beta.2.tgz
+    version: 0.12.1-plat-1724-beta.2
   - apiVersion: v2
     appVersion: 1.17.0
     created: "2026-07-07T00:03:44.09481366Z"
@@ -793,9 +822,19 @@ entries:
     version: 0.8.9
   - apiVersion: v2
     appVersion: 1.17.0
-    created: "2024-09-18T02:33:58.165516692Z"
+    created: "2024-09-18T23:07:53.957992564Z"
     description: Standard Service Template
-    digest: ea5aa7d7405aacbc682f3a8bfffec3b5997a9743adf8fd680f7c81f3a492ee54
+    digest: c7e242bc43a7734a20e868ad3ad6e13ee5cb946482122f743ff485de32804d62
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.8.9-bei-719/common-0.8.9-bei-719.tgz
+    version: 0.8.9-bei-719
+  - apiVersion: v2
+    appVersion: 1.17.0
+    created: "2024-09-17T17:51:00.885390099Z"
+    description: Standard Service Template
+    digest: 3d1b70a5c8e1bda6322e7edfec75b0234f66b5cc0ba5526637451b462ec58dbc
     name: common
     type: application
     urls:
@@ -813,19 +852,9 @@ entries:
     version: 0.8.9-bei-719
   - apiVersion: v2
     appVersion: 1.17.0
-    created: "2024-09-18T23:07:53.957992564Z"
+    created: "2024-09-18T02:33:58.165516692Z"
     description: Standard Service Template
-    digest: c7e242bc43a7734a20e868ad3ad6e13ee5cb946482122f743ff485de32804d62
-    name: common
-    type: application
-    urls:
-    - https://github.com/dave-inc/charts/releases/download/common-0.8.9-bei-719/common-0.8.9-bei-719.tgz
-    version: 0.8.9-bei-719
-  - apiVersion: v2
-    appVersion: 1.17.0
-    created: "2024-09-17T17:51:00.885390099Z"
-    description: Standard Service Template
-    digest: 3d1b70a5c8e1bda6322e7edfec75b0234f66b5cc0ba5526637451b462ec58dbc
+    digest: ea5aa7d7405aacbc682f3a8bfffec3b5997a9743adf8fd680f7c81f3a492ee54
     name: common
     type: application
     urls:
@@ -2688,4 +2717,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2026-07-20T22:51:19.641768552Z"
+generated: "2026-07-22T18:04:02.498842717Z"
