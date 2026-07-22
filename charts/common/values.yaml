@@ -147,95 +147,42 @@ service:
   # The name of the service is optional, If not set, a name is generated using Release.Name
   # name: ""
 
+# Argo Rollouts canary deployment. Requires the Argo Rollouts controller
+# (https://argo-rollouts.readthedocs.io) installed in the target cluster.
+# When enabled, a Rollout (argoproj.io/v1alpha1) is created alongside the
+# regular apps/v1 Deployment, referencing it via workloadRef instead of
+# duplicating its pod template, per
+# https://argo-rollouts.readthedocs.io/en/stable/migrating/. HPA/VPA/KEDA
+# scaleTargetRef then points at the Rollout instead of the Deployment.
 canary:
   enabled: false
-  weight: 0
-  deploymentContainer:
-    command: []
-    args: []
-    # Optional: override probes for canary only (same structure as deploymentContainer).
-    # If unset, canary uses the main deployment's liveness/readiness/startup probes.
-    # livenessProbe: {}
-    # customLivenessProbe: {}
-    # readinessProbe: {}
-    # customReadinessProbe: {}
-    # startupProbe: {}
-    # customStartupProbe: {}
-  resources: {}
-  service:
-    annotations:
-      canary: {}
-      control: {}
-  # Implementation specific configurations for canary deployment
-  reverseProxy:
-    # WARNING: enabling this will cause every request to be logged. That is a lot of logs.
-    enableAccessLogs: false
-    # Minimum number of upstreams to duplicate; the actual count: max(.Values.canary.reverseProxy.minUpstreams, .Values.autoscaling.maxReplicas)
-    minUpstreams: 10
-    # Timeouts for the reverse proxy. These defaults are intended for web services. If you would like to use canary for something
-    # like a GCP task handler you would need to increase these limits
-    send_timeout: 30s
-    proxy_connect_timeout: 5s
-    proxy_send_timeout: 30s
-    proxy_read_timeout: 30s
-    livenessProbe:
-      initialDelaySeconds: 1
-      failureThreshold: 3
-      # The probe will be checked every 10 seconds.
-      periodSeconds: 10
-      # Number of times the probe is allowed to fail before the transition
-      # from healthy to failure state.
-      # If periodSeconds = 60, 5 tries will result in five minutes of
-      # checks. The proxy starts to refresh a certificate five minutes
-      # before its expiration. If those five minutes lapse without a
-      # successful refresh, the liveness probe will fail and the pod will be
-      # restarted.
-      successThreshold: 1
-      # The probe will fail if it does not respond in 10 seconds
-      timeoutSeconds: 10
-    readinessProbe:
-      initialDelaySeconds: 1
-      failureThreshold: 3
-      # The probe will be checked every 10 seconds.
-      periodSeconds: 10
-      # Number of times the probe is allowed to fail before the transition
-      # from healthy to failure state.
-      # If periodSeconds = 60, 5 tries will result in five minutes of
-      # checks. The proxy starts to refresh a certificate five minutes
-      # before its expiration. If those five minutes lapse without a
-      # successful refresh, the liveness probe will fail and the pod will be
-      # restarted.
-      successThreshold: 1
-      # The probe will fail if it does not respond in 10 seconds
-      timeoutSeconds: 10
-    startupProbe:
-      initialDelaySeconds: 1
-      failureThreshold: 60
-      periodSeconds: 1
-      successThreshold: 1
-      timeoutSeconds: 10
-    image:
-      repository: nginx
-      tag: 1.27.4
-    autoscaling:
-      enabled: true
-      metrics: []
-    resources:
-      requests:
-        cpu: 100m
-        memory: 256Mi
-      limits:
-        memory: 256Mi
-
-  # HPA settings for canary deployment. ".Values.autoscaling" values are used to confiugre HPA.
-  # minReplicas and/or maxReplicas can be overriten for canary with this configuration. Does not support overriding any other values.
-  # autoscaling:
-  #  minReplicas: 1 (defaults to .Values.autoscaling.minReplicas)
-  #  maxReplicas: 10 (defaults to .Values.autoscaling.maxReplicas)
-  # percentage of traffic that should be sent to canary. (100 - weight) is sent to non-canary deployment.
-  # weight: 5
-  # image:
-  #  tag: ""
+  # What the Rollout does to the referenced Deployment once its own
+  # ReplicaSet is healthy: "never" leaves it running at full size,
+  # "onsuccess" scales it to 0 once, "progressively" scales it down in step
+  # with the Rollout scaling up. Passed as-is to
+  # Rollout .spec.workloadRef.scaleDown
+  # https://argo-rollouts.readthedocs.io/en/stable/migrating/#workloadref-field
+  scaleDown: "onsuccess"
+  # Canary steps, passed as-is to Rollout .spec.strategy.canary.steps
+  # https://argo-rollouts.readthedocs.io/en/stable/features/canary/#canary-steps
+  steps:
+    - pause: {}
+    - setWeight: 20
+    - pause: {}
+  maxSurge: "25%"
+  maxUnavailable: 0
+  # canaryService/stableService are only required when trafficRouting is set.
+  # Argo Rollouts manages the pod selector on these Services itself; the chart
+  # only needs to create them with the same base selector as the main service.
+  canaryService: ""
+  stableService: ""
+  # Optional traffic routing config, passed as-is to .spec.strategy.canary.trafficRouting
+  # (e.g. nginx, istio, alb, smi). Leave empty for basic weighted-replica canary,
+  # which needs no service mesh or ingress controller support.
+  trafficRouting: {}
+  # Optional background analysis config, passed as-is to .spec.strategy.canary.analysis
+  # https://argo-rollouts.readthedocs.io/en/stable/features/analysis/
+  analysis: {}
 
 # Disclaimer: The gatewayapi configuration is in early stages and might change in the future.
 gatewayapi:
@@ -339,7 +286,7 @@ ingress:
   #      ## The name is optional, If not set, a name is generated using host
   #        name: ""
   #        staticIpName: ""
-  #        csmStaticIpName: "" # Only used if canary.enabled is true. Optional, If not set, a name is generated using Release.Name with "-csm" suffix. This is a resource in GCP.
+  #        csmStaticIpName: "" # Optional, If not set, a name is generated using Release.Name with "-csm" suffix. This is a resource in GCP.
   #        annotations: {}
   #       ## kubernetes.io/ingress.class: (nginx-internal or nginx-public)
   #       ## kubernetes.io/tls-acme: "true"
@@ -487,7 +434,7 @@ affinity: {}
 apm:
   enabled: false
   otlp: false
-  # If datadogEnvironment is not defined we use variable environment long with a suffix of "-canary" if canary is enabled as default
+  # If datadogEnvironment is not defined we use variable environment as default
   datadogEnvironment: ""
   # Optional override DD_SERVICE_NAME to a custon name instead of common.name
   datadogServiceName: ""
