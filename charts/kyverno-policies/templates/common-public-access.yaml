@@ -47,7 +47,7 @@ spec:
         {{ .Values.policySets.common.publicAccess.exclude | toYaml | nindent 8 }}
       preconditions:
         all:
-        - key: "{{`{{ request.object.spec.type }}`}}"
+        - key: "{{`{{ request.object.spec.type || '' }}`}}"
           operator: Equals
           value: LoadBalancer
       validate:
