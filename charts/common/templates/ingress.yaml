@@ -11,12 +11,11 @@ metadata:
   name: {{ .name | default $hostwithdashes }}
   labels:
     {{- $labels | nindent 4 }}
-  {{- if .annotations }}
   annotations:
+    argocd.argoproj.io/sync-wave: "2"
     {{- with .annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-  {{- end }}
 spec:
   rules:
   - host: {{ .host | quote }}

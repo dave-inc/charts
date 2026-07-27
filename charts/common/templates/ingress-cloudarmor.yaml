@@ -15,6 +15,7 @@ metadata:
   labels:
     {{- $labels | nindent 4 }}
   annotations:
+    argocd.argoproj.io/sync-wave: "2"
     {{- with .annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -53,6 +54,7 @@ metadata:
   labels:
     {{- include "common.labels" . | nindent 4 }}
   annotations:
+    argocd.argoproj.io/sync-wave: "2"
     {{- with .Values.cloudArmor.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
