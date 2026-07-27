@@ -47,9 +47,9 @@ spec:
         {{ .Values.policySets.common.publicAccess.exclude | toYaml | nindent 8 }}
       preconditions:
         all:
-        - key: "{{`{{ request.object.spec.type || '' }}`}}"
-          operator: Equals
-          value: LoadBalancer
+          - key: "{{`{{ request.object.spec.type || '' }}`}}"
+            operator: Equals
+            value: LoadBalancer
       validate:
         message: "Service Type:LoadBalancer detected, add annotation networking.gke.io/load-balancer-type: Internal, or switch to Type:ClusterIP or use Cloud Armor."
         anyPattern:
