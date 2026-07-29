@@ -470,6 +470,21 @@
         "default": {
           "type": "object",
           "properties": {
+            "ext": {
+              "type": "object",
+              "properties": {
+                "canaryLegacy": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
             "spec": {
               "type": "object",
               "properties": {
@@ -560,6 +575,24 @@
               },
               "enabled": {
                 "type": "boolean"
+              },
+              "ext": {
+                "type": "object",
+                "properties": {
+                  "canaryLegacy": {
+                    "type": "object",
+                    "properties": {
+                      "enabled": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
               },
               "rawSpec": {
                 "type": "boolean"

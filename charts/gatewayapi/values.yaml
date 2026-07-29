@@ -29,6 +29,9 @@ healthCheckPolicies:
   enabled: true
   # When an items entry rawSpec is false, the spec block will be merged with defaults defined here.
   default:
+    ext:
+      canaryLegacy:
+        enabled: false
     spec:
       default:
         config:

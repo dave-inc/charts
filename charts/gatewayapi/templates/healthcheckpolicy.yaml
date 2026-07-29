@@ -10,6 +10,12 @@
 {{- $commonName := include "gatewayapi.name" . }}
 {{- range $healthCheckPolicyDefinition := .Values.healthCheckPolicies.items }}
 {{- if (ne $healthCheckPolicyDefinition.enabled false) }}
+{{- $basePolicies := list "" }}
+{{- if dig "ext" "canaryLegacy" "enabled" $.Values.healthCheckPolicies.default.ext.canaryLegacy.enabled $healthCheckPolicyDefinition }}
+{{- $basePolicies = append $basePolicies "-control" }}
+{{- $basePolicies = append $basePolicies "-canary" }}
+{{- end }}
+{{ range $basePolicy := $basePolicies }}
 ---
 apiVersion: networking.gke.io/v1
 kind: HealthCheckPolicy
@@ -22,7 +28,7 @@ metadata:
   {{- end }}
   labels:
     {{- $labels | nindent 4 }}
-  name: {{ $healthCheckPolicyDefinition.name }}
+  name: {{ printf "%s%s" $healthCheckPolicyDefinition.name $basePolicy }}
 spec:
 {{- if and $healthCheckPolicyDefinition.spec $healthCheckPolicyDefinition.rawSpec }}
   {{- toYaml $healthCheckPolicyDefinition.spec | nindent 2 }}
@@ -42,7 +48,8 @@ spec:
   targetRef:
     group: {{ $healthCheckPolicyDefinition.spec.targetRef.group | default $.Values.healthCheckPolicies.default.spec.targetRef.group | quote }}
     kind: {{ $healthCheckPolicyDefinition.spec.targetRef.kind | default $.Values.healthCheckPolicies.default.spec.targetRef.kind }}
-    name: {{ $healthCheckPolicyDefinition.spec.targetRef.name }}
+    name: {{ printf "%s%s" $healthCheckPolicyDefinition.name $basePolicy }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

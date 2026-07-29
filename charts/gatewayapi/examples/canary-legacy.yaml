@@ -1,0 +1,58 @@
+# Legacy-canary health check example: demonstrates `ext.canaryLegacy.enabled`.
+#
+# When a HealthCheckPolicy item sets `ext.canaryLegacy.enabled: true`, the
+# chart renders THREE HealthCheckPolicy resources from that single item instead
+# of one, appending a suffix to both the resource name and its `targetRef.name`:
+#
+#   - `<name>`         -> attaches to Service `<name>`
+#   - `<name>-control` -> attaches to Service `<name>-control`
+#   - `<name>-canary`  -> attaches to Service `<name>-canary`
+#
+# This supports the legacy canary rollout pattern, where control and canary
+# pods are fronted by separately-named Services (`-control`/`-canary`) that
+# each need their own health check. When the flag is false (the chart default),
+# a single HealthCheckPolicy named `<name>` is rendered.
+enabled: true
+routes:
+  items:
+    - name: example-service
+      spec:
+        hostnames:
+          - example-service.trydave.com
+        parentRefs:
+          - name: default
+        rules:
+          - backendRefs:
+              - name: example-service
+                # This is the port on the Service that the route will target.
+                port: 80
+healthCheckPolicies:
+  items:
+    - name: example-service
+      # Opt this policy into the legacy canary pattern. This renders three
+      # HealthCheckPolicies: `example-service`, `example-service-control`, and
+      # `example-service-canary`, each targeting the Service of the same name.
+      ext:
+        canaryLegacy:
+          enabled: true
+      spec:
+        default:
+          config:
+            httpHealthCheck:
+              # This is the port on the pod/container that the health check
+              # will target, not the port on the Service.
+              port: 8080
+              requestPath: /healthz
+        targetRef:
+          # For canary-legacy policies the rendered `targetRef.name` follows the
+          # item `name` plus the `-control`/`-canary` suffix, so each generated
+          # policy points at its matching Service.
+          name: example-service
+gcpBackendPolicies:
+  items:
+    # A GCPBackendPolicy resource will be created from this,
+    # .spec.default.timeoutSec will have a value by default
+    - name: example-service
+      spec:
+        targetRef:
+          name: example-service

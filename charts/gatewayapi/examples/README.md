@@ -20,6 +20,10 @@ and backend policies.
 - [gcpbackendpolicies](./gcpbackendpolicies.yaml): An example that attaches a
   GCPBackendPolicy to a backend Service to configure backend-service settings
   (here, the response timeout), alongside an HTTP health check policy.
+- [canary-legacy](./canary-legacy.yaml): An example that enables
+  `ext.canaryLegacy.enabled` on a health check policy, rendering three
+  HealthCheckPolicies (`<name>`, `<name>-control`, `<name>-canary`) that each
+  target the Service of the same name for the legacy canary rollout pattern.
 
 You can mix and match these configurations to create more complex routing
 rules and policies as needed. Each example is self-contained and can be
