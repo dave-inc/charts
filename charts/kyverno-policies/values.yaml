@@ -50,6 +50,18 @@ policySets:
             selector:
               matchLabels:
                 kyverno-hpa-policy: skip
+    hpaRProxy:
+      category: "SRE Best Practices"
+      severity: medium
+      validationFailureAction: Audit
+      exclude:
+        any:
+        - resources:
+            kinds:
+            - HorizontalPodAutoscaler
+            selector:
+              matchLabels:
+                kyverno-hpa-rproxy-policy: skip
     publicAccess:
       category: "Security Best Practices"
       severity: medium
