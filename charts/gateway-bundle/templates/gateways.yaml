@@ -38,7 +38,7 @@ spec:
   {{- range $l := $item.spec.listeners }}
   {{- $proto := $l.protocol | default $lDef.protocol }}
   - hostname: {{ $l.hostname | quote }}
-    name: {{ $l.name | default (printf "%s-%s" ($l.hostname | replace "." "-") (lower $proto)) | trunc 63 }}
+    name: {{ $l.name | default (printf "%s-%s" ($l.hostname | replace "*." "wildcard." | replace "." "-") (lower $proto)) | trunc 63 }}
     port: {{ $l.port | default $lDef.port }}
     protocol: {{ $proto }}
     allowedRoutes:
@@ -50,9 +50,16 @@ spec:
       {{- toYaml $l.tls | nindent 6 }}
       {{- else }}
       {{- $secretName := "" }}
+      {{- /* Wildcard listeners (`*.<domain>`) get a dedicated
+             `wildcard-<domain>-<gateway>-tls` Secret and take precedence over
+             tlsSecretGroups (a `*.<domain>` hostname would otherwise match the
+             suffix check below). */ -}}
+      {{- if hasPrefix "*." $l.hostname }}
+        {{- $secretName = include "gateway-bundle.wildcardTlsSecretName" (dict "hostname" $l.hostname "gateway" $item.name) }}
+      {{- end }}
       {{- /* Chained access on `$default.ext` is intentional: Helm's nil
              tolerance lets callers omit the whole `ext` block. */ -}}
-      {{- if $default.ext.tlsSecretGroups.enabled }}
+      {{- if and (not $secretName) $default.ext.tlsSecretGroups.enabled }}
         {{- range $g := ($default.ext.tlsSecretGroups.items | default list) }}
           {{- if not $secretName }}
             {{- if (or (eq $l.hostname $g.parentDomain) (hasSuffix (printf ".%s" $g.parentDomain) $l.hostname)) }}
