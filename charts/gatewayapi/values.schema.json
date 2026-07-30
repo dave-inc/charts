@@ -205,6 +205,11 @@
                         "namespace": {
                           "type": "string",
                           "const": "shared-gateways"
+                        },
+                        "sectionName": {
+                          "type": "string",
+                          "maxLength": 253,
+                          "pattern": "^[a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?$"
                         }
                       },
                       "additionalProperties": false

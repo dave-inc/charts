@@ -189,6 +189,9 @@ routes:
 #          kind: Gateway
 #          name: default
 #          namespace: shared-gateways
+#          # Optional. Pins the route to a specific listener/section on the
+#          # referenced Gateway. Omit to attach to all compatible listeners.
+#          sectionName: custom-section-name
 #      rules:
 #        - backendRefs:
 #            - group: ""

@@ -20,6 +20,9 @@ and backend policies.
 - [gcpbackendpolicies](./gcpbackendpolicies.yaml): An example that attaches a
   GCPBackendPolicy to a backend Service to configure backend-service settings
   (here, the response timeout), alongside an HTTP health check policy.
+- [section-name](./section-name.yaml): An example that pins the route to a
+  specific Gateway listener via `parentRefs[].sectionName`, alongside an HTTP
+  health check policy and a GCPBackendPolicy.
 
 You can mix and match these configurations to create more complex routing
 rules and policies as needed. Each example is self-contained and can be

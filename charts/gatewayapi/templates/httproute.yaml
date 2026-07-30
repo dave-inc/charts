@@ -37,6 +37,9 @@ spec:
     kind: {{ .kind | default $.Values.routes.default.spec.parentRef.kind }}
     name: {{ .name }}
     namespace: {{ .namespace | default $.Values.routes.default.spec.parentRef.namespace }}
+    {{- if .sectionName }}
+    sectionName: {{ .sectionName }}
+    {{- end }}
     {{- end }}
   rules:
     {{- range $routeDefinition.spec.rules }}
