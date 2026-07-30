@@ -208,7 +208,7 @@
                       "properties": {
                         "hostname": {
                           "type": "string",
-                          "pattern": "^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\\.)*(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
+                          "pattern": "^(\\*\\.)?([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\\.)*(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
                         },
                         "name": {
                           "type": "string",

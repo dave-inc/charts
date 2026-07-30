@@ -49,3 +49,16 @@ fallback) or a matched `parentDomain` (shared-group path). Produces
 {{- define "gateway-bundle.tlsSecretName" -}}
 {{- printf "%s-%s-tls" .name .gateway | replace "." "-" | trunc 63 -}}
 {{- end }}
+
+{{/*
+TLS Secret name for a wildcard HTTPS listener.
+Inputs: { hostname, gateway } — `hostname` begins with "*.". Strips the "*."
+label and produces "wildcard-<domain>-<gateway>-tls" with dots replaced by
+dashes and truncated to 63 chars (the DNS-1123 label limit Kubernetes
+enforces on Secret names). e.g. "*.trydave.com" + "default-private" ->
+"wildcard-trydave-com-default-private-tls".
+*/}}
+{{- define "gateway-bundle.wildcardTlsSecretName" -}}
+{{- $domain := trimPrefix "*." .hostname -}}
+{{- printf "wildcard-%s-%s-tls" $domain .gateway | replace "." "-" | trunc 63 -}}
+{{- end }}
