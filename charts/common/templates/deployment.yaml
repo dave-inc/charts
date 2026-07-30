@@ -31,6 +31,9 @@ spec:
     {{- end }}
   strategy:
     {{- toYaml .Values.strategy | nindent 6 }}
+  {{- if gt (.Values.minReadySeconds | default 0 | int) 0 }}
+  minReadySeconds: {{ .Values.minReadySeconds }}
+  {{- end }}
   template:
     metadata:
       annotations:
