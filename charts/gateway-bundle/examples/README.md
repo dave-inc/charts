@@ -22,6 +22,11 @@ expressive enough.
   into one multi-SAN cert per shared Secret (via cert-manager's
   gateway-shim) so the Gateway stays under GKE's 15-SSL-certificate cap
   on the underlying `TargetHttpsProxy`.
+- [wildcard](./wildcard.yaml): A Gateway with a wildcard HTTPS listener
+  (`*.<domain>`) that terminates TLS for every subdomain under a parent
+  domain with a single wildcard certificate. Wildcard listeners get a
+  dedicated Secret named `wildcard-<domain>-<gatewayName>-tls` (dots replaced
+  with dashes) and take precedence over `tlsSecretGroups`.
 - [custom-addresses](./custom-addresses.yaml): Bind a Gateway to one or
   more caller-specified addresses (e.g. a pre-reserved GCP static IP or
   an implementation-named address) via `spec.addresses`. Stays in

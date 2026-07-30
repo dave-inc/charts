@@ -23,13 +23,18 @@ gateways:
       ## collapsing many listeners into a single SSL certificate slot on the
       ## underlying TargetHttpsProxy (GKE caps that at 15 per Gateway).
       ##
-      ## A listener whose hostname matches `<parentDomain>` or
-      ## `*.<parentDomain>` uses a Secret named
+      ## A listener whose hostname equals `<parentDomain>` or is a subdomain
+      ## of it (`<sub>.<parentDomain>`) uses a Secret named
       ## `<parentDomain>-<gatewayName>-tls` (dots replaced with dashes,
       ## truncated to 63 chars). The first matching group wins. Listeners
       ## with no matching group fall back to the per-listener Secret name
       ## (`<hostname>-<gatewayName>-tls`). Listeners with an explicit `tls`
       ## block bypass grouping entirely.
+      ##
+      ## Wildcard listeners (`*.<domain>`) are handled separately: they get a
+      ## dedicated Secret named `wildcard-<domain>-<gatewayName>-tls` (dots
+      ## replaced with dashes, truncated to 63 chars) and take precedence over
+      ## grouping — a wildcard cert already covers all subdomains.
       ##
       ## Set `enabled: false` to disable grouping and keep per-listener
       ## Secret names everywhere.

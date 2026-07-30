@@ -208,8 +208,9 @@ $defs:
         type: string
         # The parent-domain alternation (trydave.com|daveapi.com|daveapi.io)
         # also lives in $defs/parentDomain — keep both in sync when the
-        # allow-list changes.
-        pattern: "^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\\.)*(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
+        # allow-list changes. The optional leading `*.` permits wildcard
+        # listeners (e.g. `*.trydave.com`); `parentDomain` stays bare.
+        pattern: "^(\\*\\.)?([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\\.)*(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
       name:
         type: string
         maxLength: 63

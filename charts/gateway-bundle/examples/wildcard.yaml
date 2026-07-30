@@ -1,0 +1,23 @@
+# One Gateway mixing a wildcard HTTPS listener with concrete subdomains.
+# Wildcard hostnames (`*.<domain>`) are detected automatically and get a
+# dedicated Secret named `wildcard-<domain>-<gatewayName>-tls` (dots replaced
+# with dashes, truncated to 63 chars) covering every subdomain under it with a
+# single wildcard certificate. This takes precedence over `tlsSecretGroups` —
+# a wildcard cert already covers all subdomains, so it gets its own Secret
+# rather than joining a parent-domain multi-SAN group.
+#
+# The wildcard hostname must be quoted: an unquoted `*` starts a YAML alias.
+#
+# Result here:
+#   - *.gen1.trydave.com -> wildcard-gen1-trydave-com-default-tls (wildcard)
+#   - foo.trydave.com     -> trydave-com-default-tls (shared tlsSecretGroups)
+#   - bar.trydave.com     -> trydave-com-default-tls (shared tlsSecretGroups)
+enabled: true
+gateways:
+  items:
+    - name: default
+      spec:
+        listeners:
+          - hostname: "*.gen1.trydave.com"
+          - hostname: foo.trydave.com
+          - hostname: bar.trydave.com
