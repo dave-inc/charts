@@ -50,6 +50,32 @@ policySets:
             selector:
               matchLabels:
                 kyverno-hpa-policy: skip
+    hpaRProxy:
+      category: "SRE Best Practices"
+      severity: medium
+      validationFailureAction: Audit
+      exclude:
+        any:
+        - resources:
+            kinds:
+            - HorizontalPodAutoscaler
+            - keda.sh/v1alpha1/ScaledObject
+            selector:
+              matchLabels:
+                kyverno-hpa-rproxy-policy: skip
+    hpaCanary:
+      category: "SRE Best Practices"
+      severity: medium
+      validationFailureAction: Audit
+      exclude:
+        any:
+        - resources:
+            kinds:
+            - HorizontalPodAutoscaler
+            - keda.sh/v1alpha1/ScaledObject
+            selector:
+              matchLabels:
+                kyverno-hpa-canary-policy: skip
     publicAccess:
       category: "Security Best Practices"
       severity: medium
