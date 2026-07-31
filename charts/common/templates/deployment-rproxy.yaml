@@ -2,8 +2,8 @@
 {{- $canaryWeight := .Values.canary.weight }}
 {{- $effectiveCanaryWeight := min (max $canaryWeight 0) 100 }}
 {{- $remainingWeight := sub 100 $effectiveCanaryWeight }}
-{{- /* Not coalesce: it treats 0 as empty, which would silently ignore an
-explicit reverseProxy.minReadySeconds of 0 meant to opt out of a global value. */}}
+{{- /* Not coalesce: it treats 0 as empty, which would silently ignore an explicit
+canary.reverseProxy.minReadySeconds of 0 meant to opt out of a global value. */}}
 {{- $rproxyMinReady := .Values.minReadySeconds | default 0 }}
 {{- if not (kindIs "invalid" .Values.canary.reverseProxy.minReadySeconds) }}
 {{- $rproxyMinReady = .Values.canary.reverseProxy.minReadySeconds }}
