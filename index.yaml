@@ -842,6 +842,16 @@ entries:
     version: 0.8.9-bei-719
   - apiVersion: v2
     appVersion: 1.17.0
+    created: "2024-09-17T17:51:00.885390099Z"
+    description: Standard Service Template
+    digest: 3d1b70a5c8e1bda6322e7edfec75b0234f66b5cc0ba5526637451b462ec58dbc
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.8.9-bei-719/common-0.8.9-bei-719.tgz
+    version: 0.8.9-bei-719
+  - apiVersion: v2
+    appVersion: 1.17.0
     created: "2024-09-18T23:07:53.957992564Z"
     description: Standard Service Template
     digest: c7e242bc43a7734a20e868ad3ad6e13ee5cb946482122f743ff485de32804d62
@@ -855,16 +865,6 @@ entries:
     created: "2024-09-18T16:21:03.735084914Z"
     description: Standard Service Template
     digest: 7bb442d82472d79639f3a077bf8317ab46a4ae1bf9463a270126f28b1baa1b47
-    name: common
-    type: application
-    urls:
-    - https://github.com/dave-inc/charts/releases/download/common-0.8.9-bei-719/common-0.8.9-bei-719.tgz
-    version: 0.8.9-bei-719
-  - apiVersion: v2
-    appVersion: 1.17.0
-    created: "2024-09-17T17:51:00.885390099Z"
-    description: Standard Service Template
-    digest: 3d1b70a5c8e1bda6322e7edfec75b0234f66b5cc0ba5526637451b462ec58dbc
     name: common
     type: application
     urls:
@@ -2283,6 +2283,16 @@ entries:
   kyverno-policies:
   - apiVersion: v2
     appVersion: 0.0.1
+    created: "2026-07-31T18:35:31.194537537Z"
+    description: A Helm chart for deploying kyverno policies
+    digest: 2b336b7e8fe2720096bc62155aa7f8ac391b3dacea9e3f513ed0b508c97096d8
+    name: kyverno-policies
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/kyverno-policies-0.1.2-beta.3/kyverno-policies-0.1.2-beta.3.tgz
+    version: 0.1.2-beta.3
+  - apiVersion: v2
+    appVersion: 0.0.1
     created: "2026-07-27T14:35:21.494270738Z"
     description: A Helm chart for deploying kyverno policies
     digest: 3d362b39a0698051a46f746dc051f09e4a31bebe029c20d2acd3e40d1ab8d614
@@ -2748,4 +2758,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2026-07-30T22:29:05.665080805Z"
+generated: "2026-07-31T18:35:31.196768311Z"
