@@ -26,6 +26,18 @@
         "default": {
           "type": "object",
           "properties": {
+            "metadata": {
+              "type": "object",
+              "properties": {
+                "annotations": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
             "spec": {
               "type": "object",
               "properties": {
@@ -475,6 +487,18 @@
         "default": {
           "type": "object",
           "properties": {
+            "metadata": {
+              "type": "object",
+              "properties": {
+                "annotations": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
             "spec": {
               "type": "object",
               "properties": {
@@ -764,6 +788,18 @@
         "default": {
           "type": "object",
           "properties": {
+            "metadata": {
+              "type": "object",
+              "properties": {
+                "annotations": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
             "spec": {
               "type": "object",
               "properties": {

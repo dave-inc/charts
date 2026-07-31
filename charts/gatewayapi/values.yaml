@@ -29,6 +29,12 @@ healthCheckPolicies:
   enabled: true
   # When an items entry rawSpec is false, the spec block will be merged with defaults defined here.
   default:
+    # Default annotations applied to every rendered resource, overridable per item
+    # via metadata.annotations. sync-wave "2" ensures the target Service (created
+    # at sync-wave "1" by the common/cloudarmor charts) reconciles first.
+    metadata:
+      annotations:
+        argocd.argoproj.io/sync-wave: "2"
     spec:
       default:
         config:
@@ -91,6 +97,12 @@ gcpBackendPolicies:
   enabled: true
   # When an items entry rawSpec is false, the spec block will be merged with defaults defined here.
   default:
+    # Default annotations applied to every rendered resource, overridable per item
+    # via metadata.annotations. sync-wave "2" ensures the target Service (created
+    # at sync-wave "1" by the common/cloudarmor charts) reconciles first.
+    metadata:
+      annotations:
+        argocd.argoproj.io/sync-wave: "2"
     spec:
       default:
         timeoutSec: 60
@@ -132,6 +144,12 @@ routes:
   enabled: true
   # When an items entry rawSpec is false, the spec block will be merged with defaults defined here.
   default:
+    # Default annotations applied to every rendered resource, overridable per item
+    # via metadata.annotations. sync-wave "2" ensures the target Service (created
+    # at sync-wave "1" by the common/cloudarmor charts) reconciles first.
+    metadata:
+      annotations:
+        argocd.argoproj.io/sync-wave: "2"
     spec:
       parentRef:
         group: gateway.networking.k8s.io

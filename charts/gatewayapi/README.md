@@ -108,6 +108,22 @@ is also handled where the `Gateway` resource is defined.
 
 The `Gateway` helm chart is found [here](../gateway-bundle).
 
+### Sync ordering (Argo CD sync-wave)
+
+Every `HTTPRoute`, `HealthCheckPolicy` and `GCPBackendPolicy` this chart renders
+is annotated with `argocd.argoproj.io/sync-wave: "2"` by default. All three
+attach to a `Service` (via `targetRef` / `backendRefs`), and those Services are
+created at `argocd.argoproj.io/sync-wave: "1"` by the `common` / `cloudarmor`
+charts. Defaulting these resources to wave `"2"` guarantees Argo CD reconciles
+the target Service first, so a route or policy never reconciles ahead of the
+backend it binds to (which would fail to bind or briefly mark the backend
+unhealthy).
+
+The default is overridable — per item via its `metadata.annotations` (setting
+`argocd.argoproj.io/sync-wave` there wins over the chart default), and
+chart-wide by changing `<resource>.default.metadata.annotations` in your values
+(e.g. `routes.default.metadata.annotations`).
+
 ### Full spec control
 
 By default, each item's spec is merged with the chart defaults. Set `rawSpec: true`

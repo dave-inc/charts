@@ -14,11 +14,18 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  {{- if $routeDefinition.metadata }}
-  {{- if $routeDefinition.metadata.annotations }}
+  {{- $userAnnotations := dig "metadata" "annotations" dict $routeDefinition }}
+  {{- $defaultAnnotations := dig "default" "metadata" "annotations" dict $.Values.routes }}
+  {{- if or $userAnnotations $defaultAnnotations }}
   annotations:
-    {{- toYaml $routeDefinition.metadata.annotations | nindent 4 }}
-  {{- end }}
+    {{- range $k, $v := $defaultAnnotations }}
+    {{- if not (hasKey $userAnnotations $k) }}
+    {{ $k }}: {{ $v | quote }}
+    {{- end }}
+    {{- end }}
+    {{- with $userAnnotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
   {{- end }}
   labels:
     {{- $labels | nindent 4 }}
