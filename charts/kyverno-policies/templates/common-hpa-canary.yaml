@@ -7,14 +7,14 @@ metadata:
   labels:
     {{- include "kyverno-policies.labels" . | nindent 4 }}
   annotations:
-    policies.kyverno.io/title: Canary HPA Minimum Replicas >= 2
+    policies.kyverno.io/title: Canary HPA / ScaledObject Minimum Replicas >= 2
     policies.kyverno.io/category: {{ .Values.policySets.common.hpaCanary.category }}
     policies.kyverno.io/severity: {{ .Values.policySets.common.hpaCanary.severity }}
-    policies.kyverno.io/subject: HorizontalPodAutoscaler
+    policies.kyverno.io/subject: "HorizontalPodAutoscaler / ScaledObject"
     policies.kyverno.io/minversion: 1.6.0
     policies.kyverno.io/description: >-
-      When canary is enabled, the common chart deploys a canary HPA named
-      {app}-canary. That HPA must set minReplicas >= 2 to avoid a single
+      When canary is enabled, the common chart deploys a canary HPA / ScaledObject named
+      {app}-canary. That HPA / ScaledObject must set minReplicas >= 2 to avoid a single
       point of failure for the canary deployment.
 spec:
   validationFailureAction: {{ .Values.policySets.common.hpaCanary.validationFailureAction }}
