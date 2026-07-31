@@ -1,0 +1,53 @@
+{{- if .Values.policySets.common.enabled }}
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: hpa-canary
+  namespace: {{ .Values.policySets.common.namespace }}
+  labels:
+    {{- include "kyverno-policies.labels" . | nindent 4 }}
+  annotations:
+    policies.kyverno.io/title: Canary HPA / ScaledObject Minimum Replicas >= 2
+    policies.kyverno.io/category: {{ .Values.policySets.common.hpaCanary.category }}
+    policies.kyverno.io/severity: {{ .Values.policySets.common.hpaCanary.severity }}
+    policies.kyverno.io/subject: "HorizontalPodAutoscaler / ScaledObject"
+    policies.kyverno.io/minversion: 1.6.0
+    policies.kyverno.io/description: >-
+      When canary is enabled, the common chart deploys a canary HPA / ScaledObject named
+      {app}-canary. That HPA / ScaledObject must set minReplicas >= 2 to avoid a single
+      point of failure for the canary deployment.
+spec:
+  validationFailureAction: {{ .Values.policySets.common.hpaCanary.validationFailureAction }}
+  background: true
+  rules:
+    - name: hpa-canary-min-replicas
+      match:
+        any:
+        - resources:
+            kinds:
+            - HorizontalPodAutoscaler
+            - keda.sh/v1alpha1/ScaledObject
+      exclude:
+        {{ .Values.policySets.common.hpaCanary.exclude | toYaml | nindent 8 }}
+
+      context:
+        - name: minReplicas
+          variable:
+            jmesPath: "request.object.spec.minReplicas || request.object.spec.minReplicaCount"
+            default: 1
+
+      preconditions:
+        all:
+        - key: "{{`{{ request.object.metadata.name }}`}}"
+          operator: Equals
+          value: "*-canary"
+
+      validate:
+        message: "Canary minReplicas/minReplicaCount must be >= 2. Set canary.autoscaling.minReplicas (HPA) or the equivalent KEDA minReplicaCount in the common chart values."
+        deny:
+          conditions:
+            any:
+              - key: "{{`{{ minReplicas }}`}}"
+                operator: LessThan
+                value: 2
+{{- end }}
