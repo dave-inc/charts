@@ -12,10 +12,20 @@ description: Standard Service Template
 # pipeline. Library charts do not define any templates and therefore cannot be deployed.
 type: application
 
+# The Deployment templates render topologySpreadConstraints.matchLabelKeys, which
+# is beta and enabled by default only from 1.27. On older clusters the API server
+# either prunes the field (silently losing revision-scoped spread) or rejects the
+# manifest under strict field validation, so fail loudly at install time instead.
+#
+# The trailing -0 is required, not cosmetic: GKE reports versions such as
+# v1.33.2-gke.1036000, and a plain ">=1.27.0" constraint excludes every version
+# carrying a prerelease suffix, which would reject all of our clusters.
+kubeVersion: ">=1.27.0-0"
+
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 0.11.1-beta.13
+version: 0.11.1-beta.14
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
