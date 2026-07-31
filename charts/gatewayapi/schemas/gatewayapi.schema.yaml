@@ -274,24 +274,29 @@ $defs:
                               - 308
                         additionalProperties: false
                     additionalProperties: false
-                timeouts:
-                  type: object
-                  description: >-
-                    Warning: This field is not yet supported by GKE's Gateway
-                    API implementation.
-                  properties:
-                    backendRequest:
-                      type: string
-                      pattern: "^([0-9]{1,5}(h|m|s|ms)){1,4}$"
-                    request:
-                      type: string
-                      pattern: "^([0-9]{1,5}(h|m|s|ms)){1,4}$"
-                  anyOf:
-                    - required:
-                        - backendRequest
-                    - required:
-                        - request
-                  additionalProperties: false
+##############################################################################
+## Commenting out timeouts for now, since GKE's Gateway API implementation  ##
+## does not yet support them. Users can still set timeouts via the          ##
+## gcpBackendPolicy resource, which is supported by GKE.                    ##
+##############################################################################
+#                timeouts:
+#                  type: object
+#                  description: >-
+#                    Warning: This field is not yet supported by GKE's Gateway
+#                    API implementation.
+#                  properties:
+#                    backendRequest:
+#                      type: string
+#                      pattern: "^([0-9]{1,5}(h|m|s|ms)){1,4}$"
+#                    request:
+#                      type: string
+#                      pattern: "^([0-9]{1,5}(h|m|s|ms)){1,4}$"
+#                  anyOf:
+#                    - required:
+#                        - backendRequest
+#                    - required:
+#                        - request
+#                  additionalProperties: false
               additionalProperties: false
         required:
           - hostnames

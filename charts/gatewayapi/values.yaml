@@ -223,6 +223,10 @@ routes:
 #                type: PathPrefix
 #                value: /
 #          timeouts:
+#            # WARNING: The `timeouts` field is not yet supported by GKE
+#            # Gateway API. It is included here for future compatibility with
+#            # the spec.
+#            #
 #            # Duration values follow GEP-2257 (e.g. "30s", "1m", "500ms").
 #            # At least one of `request` or `backendRequest` must be set.
 #            request: 30s

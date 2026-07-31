@@ -16,7 +16,8 @@ and backend policies.
 - [custom-path-match](./custom-path-match.yaml): An example that restricts
   routing to requests matching a path prefix, with an HTTP health check policy.
 - [timeouts](./timeouts.yaml): An example that configures per-request and
-  per-backend-attempt timeouts, with an HTTP health check policy.
+  per-backend-attempt timeouts, with an HTTP health check policy. Not supported
+  by GKE's Gateway API offering yet.
 - [gcpbackendpolicies](./gcpbackendpolicies.yaml): An example that attaches a
   GCPBackendPolicy to a backend Service to configure backend-service settings
   (here, the response timeout), alongside an HTTP health check policy.

@@ -149,7 +149,7 @@ The examples cover:
 | File | What it demonstrates |
 |------|----------------------|
 | [simple.yaml](./examples/simple.yaml) | Minimal route + health check, with custom annotations |
-| [timeouts.yaml](./examples/timeouts.yaml) | Per-request and per-backend timeouts |
+| [timeouts.yaml](./examples/timeouts.yaml) | Per-request and per-backend timeouts. Not supported by GKE's Gateway API offering yet |
 | [redirect.yaml](./examples/redirect.yaml) | HTTP redirect with no backend |
 | [custom-path-match.yaml](./examples/custom-path-match.yaml) | PathPrefix routing to a non-root path |
 
