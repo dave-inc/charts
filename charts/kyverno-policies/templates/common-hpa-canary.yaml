@@ -26,13 +26,14 @@ spec:
         - resources:
             kinds:
             - HorizontalPodAutoscaler
+            - keda.sh/v1alpha1/ScaledObject
       exclude:
         {{ .Values.policySets.common.hpaCanary.exclude | toYaml | nindent 8 }}
 
       context:
         - name: minReplicas
           variable:
-            jmesPath: request.object.spec.minReplicas
+            jmesPath: "request.object.spec.minReplicas || request.object.spec.minReplicaCount"
             default: 1
 
       preconditions:
@@ -42,7 +43,7 @@ spec:
           value: "*-canary"
 
       validate:
-        message: "Canary HPA minReplicas must be >= 2. Set canary.autoscaling.minReplicas (or raise autoscaling.minReplicas) in the common chart values."
+        message: "Canary minReplicas/minReplicaCount must be >= 2. Set canary.autoscaling.minReplicas (HPA) or the equivalent KEDA minReplicaCount in the common chart values."
         deny:
           conditions:
             any:
