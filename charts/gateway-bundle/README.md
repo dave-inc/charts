@@ -43,10 +43,12 @@ is merged with the chart defaults:
 - `name` is auto-derived from the hostname and protocol (e.g.
   `example-service-trydave-com-https`).
 - For HTTPS listeners that don't declare a `tls` block, the chart
-  auto-generates `tls.certificateRefs`. By default the Secret name comes
+  auto-generates `tls.certificateRefs`. Wildcard listeners (`*.<domain>`)
+  get a dedicated `wildcard-{domain}-{item-name}-tls` Secret (see
+  [Wildcard domains](#wildcard-domains)). Otherwise the Secret name comes
   from the matching `tlsSecretGroups` entry (see below) —
   `{parentDomain}-{item-name}-tls`. Listeners whose hostname doesn't match
-  any group fall back to `{hostname}-{item-name}-tls`. In both cases dots
+  any group fall back to `{hostname}-{item-name}-tls`. In all cases dots
   are replaced with dashes and the name is truncated to 63 characters.
   Pair this with cert-manager via the `cert-manager.io/cluster-issuer`
   annotation on `gateways.default.metadata` (the default annotation on a
@@ -80,16 +82,17 @@ gateways:
           - parentDomain: daveapi.io
 ```
 
-A listener whose hostname matches `<parentDomain>` or `*.<parentDomain>`
-uses a Secret named `<parentDomain>-<gatewayName>-tls` (dots replaced with
-dashes, truncated to 63 chars) instead of the per-listener name. With the
-`cert-manager.io/cluster-issuer` annotation in place, cert-manager's
-gateway-shim issues a single multi-SAN `Certificate` per shared Secret —
-collapsing N listeners onto 1 cert slot on the underlying proxy.
+A listener whose hostname equals `<parentDomain>` or is a subdomain of it
+(`<sub>.<parentDomain>`) uses a Secret named `<parentDomain>-<gatewayName>-tls`
+(dots replaced with dashes, truncated to 63 chars) instead of the per-listener
+name. With the `cert-manager.io/cluster-issuer` annotation in place,
+cert-manager's gateway-shim issues a single multi-SAN `Certificate` per shared
+Secret — collapsing N listeners onto 1 cert slot on the underlying proxy.
 
-Precedence: an explicit per-listener `tls` block wins; otherwise the first
-matching group is used; otherwise the per-listener fallback name applies.
-Set `enabled: false` to keep per-listener Secret names everywhere.
+Precedence: an explicit per-listener `tls` block wins; then wildcard listeners
+(see [Wildcard domains](#wildcard-domains)); then the first matching group;
+otherwise the per-listener fallback name applies. Set `enabled: false` to keep
+per-listener Secret names everywhere.
 
 If you need a Secret name the generator can't produce (e.g. a pre-existing
 Secret that doesn't follow the `<parentDomain>-<gatewayName>-tls` pattern),
@@ -99,6 +102,32 @@ over the auto-generated name.
 You will notice there is no mention of `HTTPRoute` or `HealthCheckPolicy`
 above. That's because routes and health checks are managed elsewhere — see
 the [`gatewayapi`](../gatewayapi) helm chart.
+
+### Wildcard domains
+
+A listener can use a wildcard hostname to terminate TLS for every subdomain
+under a domain with a single wildcard certificate:
+
+```yaml
+gateways:
+  items:
+    - name: default
+      spec:
+        listeners:
+          # Quote the hostname — an unquoted `*` starts a YAML alias.
+          - hostname: "*.trydave.com"
+```
+
+Wildcard listeners are detected automatically (any hostname starting with
+`*.`) and get a dedicated Secret named `wildcard-<domain>-<gatewayName>-tls`,
+where `<domain>` is the hostname with the leading `*.` stripped and dots
+replaced with dashes (truncated to 63 chars). For example, `*.trydave.com` on
+Gateway `default-private` yields `wildcard-trydave-com-default-private-tls`.
+
+This takes precedence over `tlsSecretGroups`: a wildcard cert already covers
+every subdomain, so it gets its own Secret rather than joining a parent-domain
+multi-SAN group. Wildcard and concrete listeners can coexist on the same
+Gateway — see [wildcard.yaml](./examples/wildcard.yaml).
 
 ### Custom addresses
 
@@ -157,6 +186,7 @@ The examples cover:
 | [multi-hostname.yaml](./examples/multi-hostname.yaml) | One Gateway hosting several HTTPS hostnames |
 | [per-listener-overrides.yaml](./examples/per-listener-overrides.yaml) | HTTP, Same-namespace, and caller-managed-TLS listeners on one Gateway |
 | [shared-tls-secrets.yaml](./examples/shared-tls-secrets.yaml) | Many listeners sharing TLS Secrets by parent domain (stays under GKE's 15-cert limit) |
+| [wildcard.yaml](./examples/wildcard.yaml) | Wildcard listener (`*.<domain>`) with a dedicated `wildcard-<domain>-<gatewayName>-tls` Secret, alongside concrete subdomains |
 | [custom-addresses.yaml](./examples/custom-addresses.yaml) | Bind a Gateway to a specific IP or named address via `spec.addresses` |
 | [raw-spec.yaml](./examples/raw-spec.yaml) | `rawSpec: true` escape hatch for full Gateway-spec control |
 
