@@ -4,6 +4,12 @@
 # path match and health check intervals/thresholds. Also demonstrates
 # attaching custom annotations to the rendered resources via
 # `metadata.annotations`.
+#
+# Every rendered HTTPRoute, HealthCheckPolicy and GCPBackendPolicy also gets
+# `argocd.argoproj.io/sync-wave: "2"` by default (see values.yaml), so Argo CD
+# reconciles the target Service — created at sync-wave "1" — before these
+# resources attach to it. That default is overridable per item via
+# `metadata.annotations` (the route below sets its own sync-wave to show this).
 enabled: true
 routes:
   items:
@@ -12,6 +18,9 @@ routes:
       metadata:
         annotations:
           example.com/some-annotation: "some-value"
+          # A user-set annotation wins over the chart default: this route will
+          # reconcile at sync-wave "3" instead of the default "2".
+          argocd.argoproj.io/sync-wave: "3"
       spec:
         hostnames:
           - example-service.trydave.com

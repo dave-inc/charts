@@ -5,6 +5,8 @@ These examples demonstrate how to use it to route traffic to backend
 services, perform redirects, configure timeouts, and implement health check
 and backend policies.
 
+## Supported features
+
 - [simple](./simple.yaml): A minimal example that routes traffic to a backend
   service, configures an HTTP health check policy, and defines a
   GCPBackendPolicy resource with the default `timeoutSec` value. Also
@@ -15,14 +17,28 @@ and backend policies.
   configured.
 - [custom-path-match](./custom-path-match.yaml): An example that restricts
   routing to requests matching a path prefix, with an HTTP health check policy.
-- [timeouts](./timeouts.yaml): An example that configures per-request and
-  per-backend-attempt timeouts, with an HTTP health check policy.
-- [gcpbackendpolicies](./gcpbackendpolicies.yaml): An example that attaches a
-  GCPBackendPolicy to a backend Service to configure backend-service settings
-  (here, the response timeout), alongside an HTTP health check policy.
+- [gcpbackendpolicies](./gcpbackendpolicies.yaml): How to set a custom timeout.
+  An example that attaches a GCPBackendPolicy to a backend Service to configure
+  backend-service settings (here, the response timeout), alongside an HTTP
+  health check policy.
+- [section-name](./section-name.yaml): An example that pins the route to a
+  specific Gateway listener via `parentRefs[].sectionName`, alongside an HTTP
+  health check policy and a GCPBackendPolicy.
 
 You can mix and match these configurations to create more complex routing
 rules and policies as needed. Each example is self-contained and can be
 rendered using `helm template example-service . -f examples/simple.yaml` at
 the base of the `gatewayapi` chart directory, replacing `simple.yaml` with
 the desired example file.
+
+## Unsupported features
+
+There are some features already implemented in this helm chart that are not
+yet supported by GKE's Gateway API offering. These include:
+
+- [httprote-timeouts](./httproute-timeouts.yaml): Not supported by GKE's
+  Gateway API offering yet. An example that configures per-request and
+  per-backend-attempt timeouts, with an HTTP health check policy.
+
+These features will become available once GKE's Gateway API implementation
+supports them.

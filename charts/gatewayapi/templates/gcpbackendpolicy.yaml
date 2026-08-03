@@ -14,11 +14,18 @@
 apiVersion: networking.gke.io/v1
 kind: GCPBackendPolicy
 metadata:
-  {{- if $gcpBackendPolicyDefinition.metadata }}
-  {{- if $gcpBackendPolicyDefinition.metadata.annotations }}
+  {{- $userAnnotations := dig "metadata" "annotations" dict $gcpBackendPolicyDefinition }}
+  {{- $defaultAnnotations := dig "default" "metadata" "annotations" dict $.Values.gcpBackendPolicies }}
+  {{- if or $userAnnotations $defaultAnnotations }}
   annotations:
-    {{- toYaml $gcpBackendPolicyDefinition.metadata.annotations | nindent 4 }}
-  {{- end }}
+    {{- range $k, $v := $defaultAnnotations }}
+    {{- if not (hasKey $userAnnotations $k) }}
+    {{ $k }}: {{ $v | quote }}
+    {{- end }}
+    {{- end }}
+    {{- with $userAnnotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
   {{- end }}
   labels:
     {{- $labels | nindent 4 }}

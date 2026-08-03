@@ -14,11 +14,18 @@
 apiVersion: networking.gke.io/v1
 kind: HealthCheckPolicy
 metadata:
-  {{- if $healthCheckPolicyDefinition.metadata }}
-  {{- if $healthCheckPolicyDefinition.metadata.annotations }}
+  {{- $userAnnotations := dig "metadata" "annotations" dict $healthCheckPolicyDefinition }}
+  {{- $defaultAnnotations := dig "default" "metadata" "annotations" dict $.Values.healthCheckPolicies }}
+  {{- if or $userAnnotations $defaultAnnotations }}
   annotations:
-    {{- toYaml $healthCheckPolicyDefinition.metadata.annotations | nindent 4 }}
-  {{- end }}
+    {{- range $k, $v := $defaultAnnotations }}
+    {{- if not (hasKey $userAnnotations $k) }}
+    {{ $k }}: {{ $v | quote }}
+    {{- end }}
+    {{- end }}
+    {{- with $userAnnotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
   {{- end }}
   labels:
     {{- $labels | nindent 4 }}

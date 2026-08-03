@@ -36,6 +36,12 @@ healthCheckPolicies:
               requestPath: /your-health-check-endpoint
         targetRef:
           name: example-service
+gcpBackendPolicies:
+  items:
+    - name: example-service
+      spec:
+        targetRef:
+          name: example-service
 ```
 
 Most of the time, that will be all you need to do. The defaults in place take
@@ -73,18 +79,18 @@ Both are functionally equivalent.
 
 ## How it works
 
-The chart will automatically create both `HTTPRoute` and `HealthCheckPolicy`
+The chart will create `HTTPRoute`, `HealthCheckPolicy` and `GCPBackendPolicy`
 resources for the service.
 
-`HTTPRoute` will be able to handle the traffic prefixed by "/" (i.e, all
-traffic) for the specified hostnames and route it to the service.
+By default `HTTPRoute` will be able to handle the traffic prefixed by "/"
+(i.e, all traffic) for the specified hostnames and route it to the service.
 
 All services need to have a `HealthCheckPolicy` defined, otherwise the
 underlying load balancer will mark the service as unhealthy and stop routing
 traffic to it. For the request path, it's recommended to use the same endpoint
-as the readiness probe of the service. Note that `HealthCheckPolicy` is a
-GKE-specific CRD (`networking.gke.io/v1`) and is not part of the standard
-Gateway API.
+as the readiness probe of the service unless some other endpoint is more
+appropriate for your use case. Note that `HealthCheckPolicy` is a GKE-specific
+CRD (`networking.gke.io/v1`) and is not part of the standard Gateway API.
 
 The chart can also render `GCPBackendPolicy` resources (another GKE-specific
 CRD, `networking.gke.io/v1`) to attach backend-service configuration such as
@@ -102,11 +108,30 @@ gcpBackendPolicies:
           name: example-service
 ```
 
+if `spec.default.timeoutSec` is omitted, the default value of 60 seconds is
+used.
+
 You will notice there is no mention of `Gateway` resource in the example above.
 That's because the `Gateway` resource is managed elsewhere. TLS termination
 is also handled where the `Gateway` resource is defined.
 
 The `Gateway` helm chart is found [here](../gateway-bundle).
+
+### Sync ordering (Argo CD sync-wave)
+
+Every `HTTPRoute`, `HealthCheckPolicy` and `GCPBackendPolicy` this chart renders
+is annotated with `argocd.argoproj.io/sync-wave: "2"` by default. All three
+attach to a `Service` (via `targetRef` / `backendRefs`), and those Services are
+created at `argocd.argoproj.io/sync-wave: "1"` by the `common` / `cloudarmor`
+charts. Defaulting these resources to wave `"2"` guarantees Argo CD reconciles
+the target Service first, so a route or policy never reconciles ahead of the
+backend it binds to (which would fail to bind or briefly mark the backend
+unhealthy).
+
+The default is overridable — per item via its `metadata.annotations` (setting
+`argocd.argoproj.io/sync-wave` there wins over the chart default), and
+chart-wide by changing `<resource>.default.metadata.annotations` in your values
+(e.g. `routes.default.metadata.annotations`).
 
 ### Full spec control
 
@@ -125,17 +150,11 @@ routes:
 
 ## Further configuration
 
-For a full list of configuration options, refer to the
-[values.yaml](./values.yaml) file and the [examples](./examples) directory.
+This document only covers the most common use cases. For a full list of
+configuration options, refer to the [values.yaml](./values.yaml) file and
+the [examples](./examples) directory.
 
-The examples cover:
-
-| File | What it demonstrates |
-|------|----------------------|
-| [simple.yaml](./examples/simple.yaml) | Minimal route + health check, with custom annotations |
-| [timeouts.yaml](./examples/timeouts.yaml) | Per-request and per-backend timeouts |
-| [redirect.yaml](./examples/redirect.yaml) | HTTP redirect with no backend |
-| [custom-path-match.yaml](./examples/custom-path-match.yaml) | PathPrefix routing to a non-root path |
+## Custom labels
 
 You can also apply `additionalLabels` to have extra labels added to all
 resources created by the chart:
@@ -145,6 +164,8 @@ additionalLabels:
   team: platform
   env: production
 ```
+
+This is the same pattern the `common` chart follows.
 
 ### Custom annotations
 

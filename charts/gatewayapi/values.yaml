@@ -29,6 +29,12 @@ healthCheckPolicies:
   enabled: true
   # When an items entry rawSpec is false, the spec block will be merged with defaults defined here.
   default:
+    # Default annotations applied to every rendered resource, overridable per item
+    # via metadata.annotations. sync-wave "2" ensures the target Service (created
+    # at sync-wave "1" by the common/cloudarmor charts) reconciles first.
+    metadata:
+      annotations:
+        argocd.argoproj.io/sync-wave: "2"
     spec:
       default:
         config:
@@ -91,6 +97,12 @@ gcpBackendPolicies:
   enabled: true
   # When an items entry rawSpec is false, the spec block will be merged with defaults defined here.
   default:
+    # Default annotations applied to every rendered resource, overridable per item
+    # via metadata.annotations. sync-wave "2" ensures the target Service (created
+    # at sync-wave "1" by the common/cloudarmor charts) reconciles first.
+    metadata:
+      annotations:
+        argocd.argoproj.io/sync-wave: "2"
     spec:
       default:
         timeoutSec: 60
@@ -132,6 +144,12 @@ routes:
   enabled: true
   # When an items entry rawSpec is false, the spec block will be merged with defaults defined here.
   default:
+    # Default annotations applied to every rendered resource, overridable per item
+    # via metadata.annotations. sync-wave "2" ensures the target Service (created
+    # at sync-wave "1" by the common/cloudarmor charts) reconciles first.
+    metadata:
+      annotations:
+        argocd.argoproj.io/sync-wave: "2"
     spec:
       parentRef:
         group: gateway.networking.k8s.io
@@ -189,6 +207,9 @@ routes:
 #          kind: Gateway
 #          name: default
 #          namespace: shared-gateways
+#          # Optional. Pins the route to a specific listener/section on the
+#          # referenced Gateway. Omit to attach to all compatible listeners.
+#          sectionName: custom-section-name
 #      rules:
 #        - backendRefs:
 #            - group: ""
@@ -202,6 +223,10 @@ routes:
 #                type: PathPrefix
 #                value: /
 #          timeouts:
+#            # WARNING: The `timeouts` field is not yet supported by GKE
+#            # Gateway API. It is included here for future compatibility with
+#            # the spec.
+#            #
 #            # Duration values follow GEP-2257 (e.g. "30s", "1m", "500ms").
 #            # At least one of `request` or `backendRequest` must be set.
 #            request: 30s
