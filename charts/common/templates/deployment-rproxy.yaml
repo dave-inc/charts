@@ -2,6 +2,12 @@
 {{- $canaryWeight := .Values.canary.weight }}
 {{- $effectiveCanaryWeight := min (max $canaryWeight 0) 100 }}
 {{- $remainingWeight := sub 100 $effectiveCanaryWeight }}
+{{- /* Not coalesce: it treats 0 as empty, which would silently ignore an explicit
+canary.reverseProxy.minReadySeconds of 0 meant to opt out of a global value. */}}
+{{- $rproxyMinReady := .Values.minReadySeconds | default 0 }}
+{{- if not (kindIs "invalid" .Values.canary.reverseProxy.minReadySeconds) }}
+{{- $rproxyMinReady = .Values.canary.reverseProxy.minReadySeconds }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,6 +24,9 @@ spec:
       {{- include "common.reverseProxySelectorLabels" . | nindent 6 }}
   strategy:
     {{- toYaml .Values.strategy | nindent 6 }}
+  {{- if gt ($rproxyMinReady | int) 0 }}
+  minReadySeconds: {{ $rproxyMinReady }}
+  {{- end }}
   template:
     metadata:
       annotations:
@@ -50,17 +59,23 @@ spec:
         - topologyKey: {{ .Values.topologySpreadConstraints.zone.topologyKey }}
           maxSkew: {{ .Values.topologySpreadConstraints.zone.maxSkew }}
           whenUnsatisfiable: {{ .Values.topologySpreadConstraints.zone.whenUnsatisfiable }}
+          {{- /* Scope the skew calculation to this revision so a rolling update
+          is not blocked by pods from the outgoing ReplicaSet. */}}
+          matchLabelKeys:
+            - pod-template-hash
           labelSelector:
             matchLabels:
-              {{- include "common.canarySelectorLabels" . | nindent 14 }}
+              {{- include "common.reverseProxySelectorLabels" . | nindent 14 }}
         {{- end }}
         {{- if .Values.topologySpreadConstraints.node.enabled }}
         - topologyKey: {{ .Values.topologySpreadConstraints.node.topologyKey }}
           maxSkew: {{ .Values.topologySpreadConstraints.node.maxSkew }}
           whenUnsatisfiable: {{ .Values.topologySpreadConstraints.node.whenUnsatisfiable }}
+          matchLabelKeys:
+            - pod-template-hash
           labelSelector:
             matchLabels:
-              {{- include "common.canarySelectorLabels" . | nindent 14 }}
+              {{- include "common.reverseProxySelectorLabels" . | nindent 14 }}
         {{- end }}
       {{- end }}
       containers:
