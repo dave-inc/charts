@@ -59,7 +59,6 @@ policySets:
         - resources:
             kinds:
             - HorizontalPodAutoscaler
-            - keda.sh/v1alpha1/ScaledObject
             selector:
               matchLabels:
                 kyverno-hpa-rproxy-policy: skip
@@ -72,7 +71,6 @@ policySets:
         - resources:
             kinds:
             - HorizontalPodAutoscaler
-            - keda.sh/v1alpha1/ScaledObject
             selector:
               matchLabels:
                 kyverno-hpa-canary-policy: skip
