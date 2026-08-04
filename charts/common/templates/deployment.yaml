@@ -31,6 +31,9 @@ spec:
     {{- end }}
   strategy:
     {{- toYaml .Values.strategy | nindent 6 }}
+  {{- if gt (.Values.minReadySeconds | default 0 | int) 0 }}
+  minReadySeconds: {{ .Values.minReadySeconds }}
+  {{- end }}
   template:
     metadata:
       annotations:
@@ -69,6 +72,10 @@ spec:
         - topologyKey: {{ .Values.topologySpreadConstraints.zone.topologyKey }}
           maxSkew: {{ .Values.topologySpreadConstraints.zone.maxSkew }}
           whenUnsatisfiable: {{ .Values.topologySpreadConstraints.zone.whenUnsatisfiable }}
+          {{- /* Scope the skew calculation to this revision so a rolling update
+          is not blocked by pods from the outgoing ReplicaSet. */}}
+          matchLabelKeys:
+            - pod-template-hash
           labelSelector:
             matchLabels:
               {{- include "common.selectorLabels" . | nindent 14 }}
@@ -77,6 +84,8 @@ spec:
         - topologyKey: {{ .Values.topologySpreadConstraints.node.topologyKey }}
           maxSkew: {{ .Values.topologySpreadConstraints.node.maxSkew }}
           whenUnsatisfiable: {{ .Values.topologySpreadConstraints.node.whenUnsatisfiable }}
+          matchLabelKeys:
+            - pod-template-hash
           labelSelector:
             matchLabels:
               {{- include "common.selectorLabels" . | nindent 14 }}
