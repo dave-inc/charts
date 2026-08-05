@@ -3,10 +3,14 @@
 {{- $effectiveCanaryWeight := min (max $canaryWeight 0) 100 }}
 {{- $remainingWeight := sub 100 $effectiveCanaryWeight }}
 {{- /* Not coalesce: it treats 0 as empty, which would silently ignore an explicit
-canary.reverseProxy.minReadySeconds of 0 meant to opt out of a global value. */}}
+override of 0 meant to opt the rproxy out of a global value. */}}
 {{- $rproxyMinReady := .Values.minReadySeconds | default 0 }}
 {{- if not (kindIs "invalid" .Values.canary.reverseProxy.minReadySeconds) }}
 {{- $rproxyMinReady = .Values.canary.reverseProxy.minReadySeconds }}
+{{- end }}
+{{- $rproxyGracePeriod := .Values.terminationGracePeriodSeconds }}
+{{- if not (kindIs "invalid" .Values.canary.reverseProxy.terminationGracePeriodSeconds) }}
+{{- $rproxyGracePeriod = .Values.canary.reverseProxy.terminationGracePeriodSeconds }}
 {{- end }}
 apiVersion: apps/v1
 kind: Deployment
@@ -52,7 +56,7 @@ spec:
       serviceAccountName: {{ include "common.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ $rproxyGracePeriod }}
       {{- if or (.Values.topologySpreadConstraints.zone.enabled) (.Values.topologySpreadConstraints.node.enabled) }}
       topologySpreadConstraints:
         {{- if .Values.topologySpreadConstraints.zone.enabled }}
