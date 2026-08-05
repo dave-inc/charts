@@ -91,18 +91,28 @@ deploymentContainer:
   #   exec:
   #     command: ["/bin/sh", "-c", "echo 'PreStop hook'"]
 
-# terminationGracePeriodSeconds is the time to wait before forcefully terminating a pod
-# after a SIGTERM signal is sent to the container. If the preStop hook is used, this
-# value must be higher than the preStop hook timeout, which is 30 seconds for most of
-# Dave's apps.
+# terminationGracePeriodSeconds is the whole budget for shutdown: the time from
+# termination starting until the container is SIGKILLed, spanning both the preStop hook
+# and the SIGTERM handling after it. It is a ceiling, not a delay, and on its own it
+# does not keep a Pod in the traffic path. preStopSleepSeconds below does that.
 #
-# A terminating Pod can still be sent traffic until the load balancer detaches its
-# endpoint from the NEG, which lagged the Pod being killed by ~12s in staging. 60
-# leaves room for that on top of the 30 second preStop.
+# 60 leaves the process around 40s to finish in-flight work once the default 20s preStop
+# sleep is done. Must exceed preStopSleepSeconds or the Pod is SIGKILLed mid-drain.
 #
 # Applies to the control and canary Deployments. The reverse proxy inherits this value
 # unless canary.reverseProxy.terminationGracePeriodSeconds is set.
 terminationGracePeriodSeconds: 60
+
+# Seconds a Pod keeps serving after termination begins, before its process is asked to
+# shut down. This covers the window between a Pod being killed and the load balancer
+# detaching its endpoint from the NEG: that detach lagged the kill by ~12s in staging,
+# and requests can still arrive until it completes.
+#
+# Rendered as a preStop sleep on the control and canary application containers, unless
+# deploymentContainer.lifecycle is set, which takes precedence and is then responsible
+# for its own drain. The reverse proxy sleeps for the same duration before quitting
+# nginx, unless canary.reverseProxy.preStopSleepSeconds is set. Set 0 to opt out.
+preStopSleepSeconds: 20
 
 image:
   repository: nginx
