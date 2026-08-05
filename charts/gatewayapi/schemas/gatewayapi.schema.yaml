@@ -528,6 +528,16 @@ $defs:
           default:
             type: object
             properties:
+              connectionDraining:
+                type: object
+                properties:
+                  drainingTimeoutSec:
+                    type: integer
+                    minimum: 0
+                    maximum: 3600
+                required:
+                  - drainingTimeoutSec
+                additionalProperties: false
               timeoutSec:
                 type: integer
                 minimum: 1
@@ -593,6 +603,14 @@ $defs:
           default:
             type: object
             properties:
+              connectionDraining:
+                type: object
+                properties:
+                  drainingTimeoutSec:
+                    type: integer
+                    minimum: 0
+                    maximum: 3600
+                additionalProperties: false
               timeoutSec:
                 type: integer
                 minimum: 1
