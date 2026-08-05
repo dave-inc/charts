@@ -105,6 +105,8 @@ gcpBackendPolicies:
         argocd.argoproj.io/sync-wave: "2"
     spec:
       default:
+        connectionDraining:
+          drainingTimeoutSec: 0
         timeoutSec: 60
         logging:
           enabled: true
