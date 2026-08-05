@@ -93,9 +93,16 @@ deploymentContainer:
 
 # terminationGracePeriodSeconds is the time to wait before forcefully terminating a pod
 # after a SIGTERM signal is sent to the container. If the preStop hook is used, this
-# value should be set to a higher value than the preStop hook timeout.
-# Setting default 1 second higher than the preStop most Dave's apps have 30 seconds
-terminationGracePeriodSeconds: 31
+# value must be higher than the preStop hook timeout, which is 30 seconds for most of
+# Dave's apps.
+#
+# A terminating Pod can still be sent traffic until the load balancer detaches its
+# endpoint from the NEG, which lagged the Pod being killed by ~12s in staging. 60
+# leaves room for that on top of the 30 second preStop.
+#
+# Applies to the control and canary Deployments. The reverse proxy inherits this value
+# unless canary.reverseProxy.terminationGracePeriodSeconds is set.
+terminationGracePeriodSeconds: 60
 
 image:
   repository: nginx
@@ -324,8 +331,8 @@ strategy:
 # progressDeadlineSeconds (600 by default) or the rollout is marked failed.
 #
 # Applies to the control and canary Deployments. The reverse proxy inherits this
-# value unless canary.reverseProxy.minReadySeconds is set.
-minReadySeconds: 0
+# value unless canary.reverseProxy.minReadySeconds is set. Set 0 to opt out.
+minReadySeconds: 60
 
 autoscaling:
   enabled: false
