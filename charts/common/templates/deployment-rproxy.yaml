@@ -12,6 +12,11 @@ override of 0 meant to opt the rproxy out of a global value. */}}
 {{- if not (kindIs "invalid" .Values.canary.reverseProxy.terminationGracePeriodSeconds) }}
 {{- $rproxyGracePeriod = .Values.canary.reverseProxy.terminationGracePeriodSeconds }}
 {{- end }}
+{{- $rproxyPreStopSleep := .Values.preStopSleepSeconds | default 0 }}
+{{- if not (kindIs "invalid" .Values.canary.reverseProxy.preStopSleepSeconds) }}
+{{- $rproxyPreStopSleep = .Values.canary.reverseProxy.preStopSleepSeconds }}
+{{- end }}
+{{- include "common.validateDrainBudget" (dict "sleep" $rproxyPreStopSleep "grace" $rproxyGracePeriod "tier" "rproxy") }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -88,13 +93,15 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.canary.reverseProxy.image.repository }}:{{ .Values.canary.reverseProxy.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- /* The sleep keeps nginx serving while the load balancer detaches this
+          Pod's endpoint; only then is a graceful quit safe. */}}
           lifecycle:
             preStop:
               exec:
                 command:
                   - sh
                   - '-c'
-                  - sleep 15 && /usr/sbin/nginx -s quit
+                  - {{ if gt ($rproxyPreStopSleep | int) 0 }}sleep {{ $rproxyPreStopSleep }} && {{ end }}/usr/sbin/nginx -s quit
           ports:
             - name: http
               containerPort: {{ .Values.deploymentContainer.port }}
