@@ -28,9 +28,14 @@ rollouts:
     # (see its Dockerfile) at this exact path, so no init container is needed
     # to fetch it -- unlike the ghcr.io-download approach the plugin's own
     # docs describe, this has no external dependency at controller startup.
+    # NOTE: this path must NOT be under /home/argo-rollouts/plugin-bin --
+    # the upstream chart unconditionally mounts an emptyDir there (see
+    # deployment.yaml), which shadows anything baked into the image at that
+    # path and makes the copy-on-startup step fail with "no such file or
+    # directory". Keep the baked file one level up, outside that mount.
     trafficRouterPlugins:
       - name: argoproj-labs/gatewayAPI
-        location: "file:///home/argo-rollouts/plugin-bin/rollouts-plugin-trafficrouter-gatewayapi"
+        location: "file:///home/argo-rollouts/rollouts-plugin-trafficrouter-gatewayapi"
 
   # The chart's built-in ClusterRole doesn't grant the extra permissions the
   # Gateway API plugin needs, so add them here. Subject is templated so it
