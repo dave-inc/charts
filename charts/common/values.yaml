@@ -104,9 +104,20 @@ deploymentContainer:
 terminationGracePeriodSeconds: 60
 
 # Seconds a Pod keeps serving after termination begins, before its process is asked to
-# shut down. This covers the window between a Pod being killed and the load balancer
-# detaching its endpoint from the NEG: that detach lagged the kill by ~12s in staging,
-# and requests can still arrive until it completes.
+# shut down. Nothing else does this: terminationGracePeriodSeconds only caps the total
+# shutdown, and the container otherwise exits as soon as it receives SIGTERM.
+#
+# Size it to cover both halves of a backend leaving a Google load balancer:
+#
+#   preStopSleepSeconds >= drainingTimeoutSec + endpoint removal latency
+#
+# Removal is not instant. It lagged the Pod being killed by ~12s in staging, and new
+# requests keep arriving until it lands, so 20 is that measurement with margin. Once
+# removed, the load balancer also holds existing connections for drainingTimeoutSec,
+# but that is 0 on our backend services today, so the removal latency is the only term
+# that binds. If connection draining is ever enabled, on a GCPBackendPolicy for Gateway
+# or a BackendConfig for Ingress, this has to grow to cover it as well, and
+# terminationGracePeriodSeconds has to stay above this.
 #
 # Rendered as a preStop sleep on the control and canary application containers, unless
 # deploymentContainer.lifecycle is set, which takes precedence and is then responsible
