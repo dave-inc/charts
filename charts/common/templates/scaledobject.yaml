@@ -1,4 +1,17 @@
 {{- if .Values.kedaScaling.enabled }}
+{{- /*
+`default` treats 0 as an empty value, so a plain `| default` pipe would silently replace an
+intentional `kedaScaling.minReplicas: 0` (scale-to-zero) with autoscaling.minReplicas. Use
+`kindIs "invalid"` instead, which is only true for an unset/nil value, so 0 is respected.
+*/}}
+{{- $minReplicas := .Values.autoscaling.minReplicas }}
+{{- if not (kindIs "invalid" .Values.kedaScaling.minReplicas) }}
+{{- $minReplicas = .Values.kedaScaling.minReplicas }}
+{{- end }}
+{{- $maxReplicas := .Values.autoscaling.maxReplicas }}
+{{- if not (kindIs "invalid" .Values.kedaScaling.maxReplicas) }}
+{{- $maxReplicas = .Values.kedaScaling.maxReplicas }}
+{{- end }}
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
@@ -10,8 +23,8 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: {{ include "common.name" . }}
-  minReplicaCount: {{ .Values.kedaScaling.minReplicas | default .Values.autoscaling.minReplicas }}
-  maxReplicaCount: {{ .Values.kedaScaling.maxReplicas | default .Values.autoscaling.maxReplicas }}
+  minReplicaCount: {{ $minReplicas }}
+  maxReplicaCount: {{ $maxReplicas }}
   {{- if .Values.hpaBehavior.enabled }}
   advanced:
     horizontalPodAutoscalerConfig:
