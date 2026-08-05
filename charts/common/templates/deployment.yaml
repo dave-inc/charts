@@ -29,13 +29,14 @@ metadata:
     {{- include "common.labels" . | nindent 4 }}
 spec:
   {{- /*
-  When canary is enabled, HPA/VPA/KEDA scaleTargetRef points at the Rollout
-  (see common.workloadKind), not this Deployment, so autoscaling.enabled /
-  kedaScaling.enabled don't apply here - this Deployment's replicas are a
-  static baseline that the Rollout scales down per canary.scaleDown once its
-  own ReplicaSet is healthy.
+  When canary is enabled, Argo Rollouts owns this Deployment's replica count
+  via workloadRef.scaleDown (scaling it down as the Rollout's own ReplicaSet
+  becomes healthy), so replicas must be omitted here - otherwise every helm
+  upgrade would reset it back to replicaCount and undo the scale-down.
+  Same reasoning as the HPA/VPA/KEDA case (scaleTargetRef then points at the
+  Rollout instead, see common.workloadKind).
   */}}
-{{- if or .Values.canary.enabled (not (or .Values.autoscaling.enabled .Values.kedaScaling.enabled)) }}
+{{- if not (or .Values.canary.enabled .Values.autoscaling.enabled .Values.kedaScaling.enabled) }}
   replicas: {{ .Values.replicaCount }}
 {{- end }}
   selector:
