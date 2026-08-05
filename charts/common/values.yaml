@@ -204,8 +204,13 @@ canary:
     # Overrides the top-level terminationGracePeriodSeconds for the reverse proxy
     # only. Being the tier fronted by the NEG, it is the one that keeps serving
     # while its endpoint is detached, so it may warrant longer than the
-    # application Deployments. Leave unset to inherit; setting 0 here explicitly
-    # opts the rproxy out of a non-zero global value.
+    # application Deployments. Leave unset to inherit.
+    #
+    # Unlike minReadySeconds above, this field is always rendered, so 0 is not an
+    # opt out: it sets a grace period of literally 0 seconds, which SIGKILLs the
+    # Pod immediately with no drain at all. It does not fall back to the
+    # Kubernetes default of 30. Reaching 0 also means setting preStopSleepSeconds
+    # to 0, since a preStop sleep may not outlast the grace period.
     # terminationGracePeriodSeconds:
     # Overrides the top-level preStopSleepSeconds for the reverse proxy only. The
     # rproxy sleeps this long before quitting nginx, so it stays in the traffic

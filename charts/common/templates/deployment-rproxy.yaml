@@ -16,7 +16,9 @@ override of 0 meant to opt the rproxy out of a global value. */}}
 {{- if not (kindIs "invalid" .Values.canary.reverseProxy.preStopSleepSeconds) }}
 {{- $rproxyPreStopSleep = .Values.canary.reverseProxy.preStopSleepSeconds }}
 {{- end }}
+{{- if gt ($rproxyPreStopSleep | int) 0 }}
 {{- include "common.validateDrainBudget" (dict "sleep" $rproxyPreStopSleep "grace" $rproxyGracePeriod "tier" "rproxy") }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
