@@ -242,65 +242,6 @@ canary:
   # image:
   #  tag: ""
 
-# Disclaimer: The gatewayapi configuration is in early stages and might change in the future.
-gatewayapi:
-  enabled: false
-  gateways:
-    standalone: {}
-    shared:
-      defaultNamespace: shared-gateways
-      refs:
-        - name: shared-gw-0
-          # Overrides defaultNamespace for this reference
-          namespace: shared-gateways
-  healthCheckPolicies:
-    main:
-      rawSpec: true
-      spec:
-        default:
-          checkIntervalSec: 10
-          config:
-            httpHealthCheck:
-              # This needs to be the pod's port, or targetPort in the svc
-              port: 8080
-              requestPath: /
-            type: HTTP
-          healthyThreshold: 1
-          logConfig:
-            enabled: true
-          timeoutSec: 1
-          unhealthyThreshold: 3
-        targetRef:
-          group: ""
-          kind: Service
-          name: example-service
-  routes:
-    main:
-      kind: HTTPRoute # GRPCRoute being another option
-      rawSpec: true
-      spec:
-        hostnames:
-          - example-service.daveapi.io
-          - example-service.daveapi.com
-        parentRefs:
-          - group: gateway.networking.k8s.io
-            kind: Gateway
-            name: shared-gw-0
-            namespace: shared-gateways
-        rules:
-          - backendRefs:
-            - group: ""
-              kind: Service
-              name: example-service
-              # This needs to be the svc port
-              port: 80
-              weight: 1
-            matches:
-            - path:
-                type: PathPrefix
-                value: /
-      config: {}
-
 ingress:
   enabled: false
   hosts:
