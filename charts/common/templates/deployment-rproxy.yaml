@@ -3,10 +3,21 @@
 {{- $effectiveCanaryWeight := min (max $canaryWeight 0) 100 }}
 {{- $remainingWeight := sub 100 $effectiveCanaryWeight }}
 {{- /* Not coalesce: it treats 0 as empty, which would silently ignore an explicit
-canary.reverseProxy.minReadySeconds of 0 meant to opt out of a global value. */}}
+override of 0 meant to opt the rproxy out of a global value. */}}
 {{- $rproxyMinReady := .Values.minReadySeconds | default 0 }}
 {{- if not (kindIs "invalid" .Values.canary.reverseProxy.minReadySeconds) }}
 {{- $rproxyMinReady = .Values.canary.reverseProxy.minReadySeconds }}
+{{- end }}
+{{- $rproxyGracePeriod := .Values.terminationGracePeriodSeconds }}
+{{- if not (kindIs "invalid" .Values.canary.reverseProxy.terminationGracePeriodSeconds) }}
+{{- $rproxyGracePeriod = .Values.canary.reverseProxy.terminationGracePeriodSeconds }}
+{{- end }}
+{{- $rproxyPreStopSleep := .Values.preStopSleepSeconds | default 0 }}
+{{- if not (kindIs "invalid" .Values.canary.reverseProxy.preStopSleepSeconds) }}
+{{- $rproxyPreStopSleep = .Values.canary.reverseProxy.preStopSleepSeconds }}
+{{- end }}
+{{- if gt ($rproxyPreStopSleep | int) 0 }}
+{{- include "common.validateDrainBudget" (dict "sleep" $rproxyPreStopSleep "grace" $rproxyGracePeriod "tier" "rproxy") }}
 {{- end }}
 apiVersion: apps/v1
 kind: Deployment
@@ -52,7 +63,7 @@ spec:
       serviceAccountName: {{ include "common.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ $rproxyGracePeriod }}
       {{- if or (.Values.topologySpreadConstraints.zone.enabled) (.Values.topologySpreadConstraints.node.enabled) }}
       topologySpreadConstraints:
         {{- if .Values.topologySpreadConstraints.zone.enabled }}
@@ -84,13 +95,15 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.canary.reverseProxy.image.repository }}:{{ .Values.canary.reverseProxy.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- /* The sleep keeps nginx serving while the load balancer detaches this
+          Pod's endpoint; only then is a graceful quit safe. */}}
           lifecycle:
             preStop:
               exec:
                 command:
                   - sh
                   - '-c'
-                  - sleep 15 && /usr/sbin/nginx -s quit
+                  - {{ if gt ($rproxyPreStopSleep | int) 0 }}sleep {{ $rproxyPreStopSleep }} && {{ end }}/usr/sbin/nginx -s quit
           ports:
             - name: http
               containerPort: {{ .Values.deploymentContainer.port }}

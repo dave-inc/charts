@@ -184,3 +184,34 @@ Reverse Proxy common name
 {{- define "common.reverseProxyName" -}}
 {{- printf "%s-rproxy" (include "common.name" .) }}
 {{- end }}
+
+{{/*
+Fail rather than let a Pod be SIGKILLed part-way through its preStop sleep.
+Expects a dict of "sleep", "grace" and "tier".
+*/}}
+{{- define "common.validateDrainBudget" -}}
+{{- if ge (.sleep | int) (.grace | int) -}}
+{{- fail (printf "%s: preStop sleep of %vs must be shorter than terminationGracePeriodSeconds of %vs, otherwise the Pod is SIGKILLed before it finishes draining" .tier .sleep .grace) -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Lifecycle for the application containers of the control and canary Deployments.
+
+An explicit deploymentContainer.lifecycle wins. Otherwise a preStop sleep keeps the
+Pod in the traffic path while the load balancer detaches its endpoint, which lags the
+Pod being killed. terminationGracePeriodSeconds cannot do this on its own: it bounds
+how long shutdown may take, it does not stop the container from exiting on SIGTERM.
+*/}}
+{{- define "common.appLifecycle" -}}
+{{- if .Values.deploymentContainer.lifecycle }}
+lifecycle:
+  {{- toYaml .Values.deploymentContainer.lifecycle | nindent 2 }}
+{{- else if gt (.Values.preStopSleepSeconds | default 0 | int) 0 }}
+{{- include "common.validateDrainBudget" (dict "sleep" .Values.preStopSleepSeconds "grace" .Values.terminationGracePeriodSeconds "tier" "application container") }}
+lifecycle:
+  preStop:
+    exec:
+      command: ["/bin/sh", "-c", "sleep {{ .Values.preStopSleepSeconds }}"]
+{{- end }}
+{{- end }}
