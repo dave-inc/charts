@@ -17,10 +17,11 @@ and backend policies.
   configured.
 - [custom-path-match](./custom-path-match.yaml): An example that restricts
   routing to requests matching a path prefix, with an HTTP health check policy.
-- [gcpbackendpolicies](./gcpbackendpolicies.yaml): How to set a custom timeout.
-  An example that attaches a GCPBackendPolicy to a backend Service to configure
-  backend-service settings (here, the response timeout), alongside an HTTP
-  health check policy.
+- [gcpbackendpolicies](./gcpbackendpolicies.yaml): How to set a custom timeout
+  and connection-draining timeout. An example that attaches a GCPBackendPolicy
+  to a backend Service to configure backend-service settings (here, the response
+  timeout and the connection-draining timeout), alongside an HTTP health check
+  policy.
 - [section-name](./section-name.yaml): An example that pins the route to a
   specific Gateway listener via `parentRefs[].sectionName`, alongside an HTTP
   health check policy and a GCPBackendPolicy.
