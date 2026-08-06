@@ -1,0 +1,77 @@
+{{- if .Values.canary.enabled }}
+{{- if .Values.canary.trafficRouting }}
+{{- if not (and .Values.canary.canaryService .Values.canary.stableService) }}
+{{- fail "canary.canaryService and canary.stableService are both required when canary.trafficRouting is set" }}
+{{- end }}
+{{- end }}
+{{- /*
+References the plain apps/v1 Deployment (deployment.yaml) via workloadRef
+instead of duplicating its pod template, per
+https://argo-rollouts.readthedocs.io/en/stable/migrating/. This Rollout has
+no .spec.template of its own - Argo Rollouts copies it from the referenced
+Deployment and runs its canary/stable ReplicaSets alongside it, scaling the
+Deployment down per canary.scaleDown once this Rollout is healthy.
+*/}}
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: {{ include "common.name" . }}
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+spec:
+  {{- /*
+  HPA/VPA/KEDA scaleTargetRef points at this Rollout (see
+  common.workloadKind) when canary is enabled, so skip replicas here the
+  same way deployment.yaml would.
+  */}}
+{{- if not (or .Values.autoscaling.enabled .Values.kedaScaling.enabled) }}
+  replicas: {{ .Values.replicaCount }}
+{{- end }}
+  selector:
+    matchLabels:
+    {{- if not .Values.podSelectorLabelsOverride }}
+      {{- include "common.selectorLabels" . | nindent 6 }}
+    {{- end }}
+    {{- if .Values.podSelectorLabelsOverride }}
+      {{- .Values.podSelectorLabelsOverride | toYaml | nindent 6 }}
+    {{- end }}
+  workloadRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "common.name" . }}
+    scaleDown: {{ .Values.canary.scaleDown }}
+  strategy:
+    canary:
+      {{- if .Values.canary.canaryService }}
+      canaryService: {{ .Values.canary.canaryService }}
+      {{- end }}
+      {{- if .Values.canary.stableService }}
+      stableService: {{ .Values.canary.stableService }}
+      {{- end }}
+      maxSurge: {{ .Values.canary.maxSurge | quote }}
+      maxUnavailable: {{ .Values.canary.maxUnavailable }}
+      {{- if .Values.canary.trafficRouting }}
+      trafficRouting:
+        {{- toYaml .Values.canary.trafficRouting | nindent 8 }}
+      {{- end }}
+      {{- if .Values.canary.analysis }}
+      analysis:
+        {{- toYaml .Values.canary.analysis | nindent 8 }}
+      {{- end }}
+      {{- /*
+      Ephemeral metadata: the deployment-group label is only meaningful per
+      ReplicaSet role (stable vs canary), which flips on promotion. A static
+      label on the pod template can't express that for a single shared
+      template, so it's applied here instead, and Argo Rollouts adds/removes
+      it on the relevant ReplicaSet's pods as their role changes.
+      https://argo-rollouts.readthedocs.io/en/stable/features/ephemeral-metadata/
+      */}}
+      canaryMetadata:
+        labels:
+          deployment-group: "canary"
+      stableMetadata:
+        labels:
+          deployment-group: "control"
+      steps:
+        {{- toYaml .Values.canary.steps | nindent 8 }}
+{{- end }}

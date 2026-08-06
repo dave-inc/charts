@@ -9,6 +9,16 @@
 ) -}}
 {{- $sqlProxyVersion := include "common.cloudsqlProxyVersion" . -}}
 {{- $sqlinstanceConnectionName := include "common.instanceConnectionName" . -}}
+{{- /*
+This Deployment always renders as a plain apps/v1 Deployment, even when
+canary.enabled. When canary is on, rollout.yaml renders a Rollout that
+references this Deployment via workloadRef instead of duplicating its pod
+template, per https://argo-rollouts.readthedocs.io/en/stable/migrating/.
+The Deployment keeps serving its own pods (labeled "control") as the
+pre-migration baseline; the Rollout adopts the same template to run its
+canary/stable ReplicaSets alongside it and scales the Deployment down per
+canary.scaleDown once healthy.
+*/}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,7 +28,15 @@ metadata:
     run: {{ include "common.name" . }}
     {{- include "common.labels" . | nindent 4 }}
 spec:
-{{- if not (or .Values.autoscaling.enabled .Values.kedaScaling.enabled) }}
+  {{- /*
+  When canary is enabled, Argo Rollouts owns this Deployment's replica count
+  via workloadRef.scaleDown (scaling it down as the Rollout's own ReplicaSet
+  becomes healthy), so replicas must be omitted here - otherwise every helm
+  upgrade would reset it back to replicaCount and undo the scale-down.
+  Same reasoning as the HPA/VPA/KEDA case (scaleTargetRef then points at the
+  Rollout instead, see common.workloadKind).
+  */}}
+{{- if not (or .Values.canary.enabled .Values.autoscaling.enabled .Values.kedaScaling.enabled) }}
   replicas: {{ .Values.replicaCount }}
 {{- end }}
   selector:
@@ -199,7 +217,22 @@ spec:
             - name: DEPLOYMENT_NAME
               value: {{ include "common.name" . }}
             - name: DD_VERSION
+              {{- /*
+              Unlike deployment-group, Argo Rollouts has no per-role
+              mechanism for container env vars (ephemeral-metadata only
+              covers pod labels/annotations) - a Rollout's canary and stable
+              ReplicaSets are just different revisions of this same
+              template, so a static "-control"/"-canary" suffix here would
+              be wrong for whichever revision is currently playing canary.
+              Drop the suffix under canary and rely on
+              tags.datadoghq.com/version (image tag) + the deployment-group
+              ephemeral label for role/version grouping in Datadog instead.
+              */}}
+              {{- if .Values.canary.enabled }}
+              value: "{{ .Values.image.tag }}-canary"
+              {{- else }}
               value: "{{ .Values.image.tag }}-control"
+              {{- end }}
             - name: NAMESPACE
               valueFrom:
                 fieldRef:
