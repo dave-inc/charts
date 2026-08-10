@@ -40,6 +40,12 @@ gcpBackendPolicies:
           # Backend-service response timeout, in seconds. The chart default is
           # 60; raised here to 120.
           timeoutSec: 120
+          # Connection draining timeout, in seconds (0-3600). Controls how long
+          # the load balancer waits for in-flight requests to finish before
+          # removing a backend. The chart default is 0 (draining disabled);
+          # set here to 30.
+          connectionDraining:
+            drainingTimeoutSec: 30
         # The Service this policy attaches to.
         targetRef:
           name: example-service
