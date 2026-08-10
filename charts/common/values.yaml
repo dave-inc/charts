@@ -266,9 +266,21 @@ canary:
     image:
       repository: nginx
       tag: 1.27.4
+    # Number of reverse proxy Pods, used only when autoscaling below is disabled.
+    # Leave unset to inherit the top-level replicaCount.
+    # replicaCount:
     autoscaling:
       enabled: true
       metrics: []
+      # minReplicas and maxReplicas are inherited from .Values.autoscaling unless
+      # set here. The inherited minimum is floored at 2, since the reverse proxy is
+      # the tier fronted by the NEG and a single replica is a single endpoint: a
+      # rollout or a zone move then leaves the load balancer with nothing to route
+      # to. The floor never exceeds maxReplicas, so a service that deliberately
+      # pins itself to one replica is left alone. Setting minReplicas here wins
+      # outright over both the floor and the inherited value, including 1.
+      # minReplicas:
+      # maxReplicas:
     resources:
       requests:
         cpu: 100m

@@ -16,6 +16,12 @@ override of 0 meant to opt the rproxy out of a global value. */}}
 {{- if not (kindIs "invalid" .Values.canary.reverseProxy.preStopSleepSeconds) }}
 {{- $rproxyPreStopSleep = .Values.canary.reverseProxy.preStopSleepSeconds }}
 {{- end }}
+{{- /* Unset by default, and without this fallback the replicas field below renders
+empty, which Kubernetes reads as 1 while ignoring the service's own replicaCount. */}}
+{{- $rproxyReplicas := .Values.replicaCount }}
+{{- if not (kindIs "invalid" .Values.canary.reverseProxy.replicaCount) }}
+{{- $rproxyReplicas = .Values.canary.reverseProxy.replicaCount }}
+{{- end }}
 {{- if gt ($rproxyPreStopSleep | int) 0 }}
 {{- include "common.validateDrainBudget" (dict "sleep" $rproxyPreStopSleep "grace" $rproxyGracePeriod "tier" "rproxy") }}
 {{- end }}
@@ -28,7 +34,7 @@ metadata:
     {{- include "common.labels" . | nindent 4 }}
 spec:
 {{- if not .Values.canary.reverseProxy.autoscaling.enabled }}
-  replicas: {{ .Values.canary.reverseProxy.replicaCount }}
+  replicas: {{ $rproxyReplicas }}
 {{- end }}
   selector:
     matchLabels:
