@@ -195,6 +195,31 @@ Expects a dict of "sleep", "grace" and "tier".
 {{- end -}}
 
 {{/*
+Effective autoscaling.minReplicas.
+
+Left unset in values.yaml so the chart can tell a deliberate value from an inherited
+one. Canary puts a second Deployment in the traffic path, and a tier at one Pod has no
+headroom while that Pod is replaced, so a canary-enabled service defaults to 2. Without
+canary a service may legitimately run a single Pod, so the default stays 1. An explicit
+autoscaling.minReplicas always wins, including 1.
+
+Only the default is capped at maxReplicas, so the chart never invents an invalid HPA,
+while an explicit min above max is still surfaced by the API server rather than masked.
+
+Expects a dict of "ctx" and "max".
+*/}}
+{{- define "common.minReplicas" -}}
+{{- /* Not default: it treats 0 as empty, which would ignore an explicit 0. */ -}}
+{{- if not (kindIs "invalid" .ctx.Values.autoscaling.minReplicas) -}}
+{{- .ctx.Values.autoscaling.minReplicas | int -}}
+{{- else if (include "common.canaryEnabled" .ctx) -}}
+{{- min 2 (.max | int) -}}
+{{- else -}}
+1
+{{- end -}}
+{{- end -}}
+
+{{/*
 Lifecycle for the application containers of the control and canary Deployments.
 
 An explicit deploymentContainer.lifecycle wins. Otherwise a preStop sleep keeps the

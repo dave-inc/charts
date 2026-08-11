@@ -1,4 +1,5 @@
 {{- if .Values.autoscaling.enabled }}
+{{- $min := include "common.minReplicas" (dict "ctx" . "max" .Values.autoscaling.maxReplicas) -}}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
@@ -10,7 +11,7 @@ spec:
     apiVersion: {{ include "common.workloadApiVersion" . }}
     kind: {{ include "common.workloadKind" . }}
     name: {{ include "common.name" . }}
-  minReplicas: {{ .Values.autoscaling.minReplicas }}
+  minReplicas: {{ $min }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:
     {{- toYaml .Values.autoscaling.metrics | nindent 4 }}
