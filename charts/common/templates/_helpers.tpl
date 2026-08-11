@@ -130,9 +130,6 @@ Either gcr.io/cloudsql-docker/gce-proxy:1.* or with gcr.io/cloud-sql-connectors/
 */}}
 {{- define "common.cloudsqlProxyVersion" -}}
 {{- if hasPrefix "gcr.io/cloudsql-docker/gce-proxy:1" .Values.cloudsqlProxy.image.repository }}
-{{- if .Values.cloudsqlProxy.nativeSidecar }}
-{{- fail "cloudsqlProxy.nativeSidecar is not supported with CloudSQL Proxy v1, use v2 (gcr.io/cloud-sql-connectors/cloud-sql-proxy) instead" }}
-{{- end }}
 {{- printf "v1" }}
 {{- else if hasPrefix "gcr.io/cloud-sql-connectors/cloud-sql-proxy:2" .Values.cloudsqlProxy.image.repository }}
 {{- printf "v2" }}
