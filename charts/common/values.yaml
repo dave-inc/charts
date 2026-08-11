@@ -521,6 +521,10 @@ cloudsqlProxy:
   # Command should be defined with the command and custom values of your CloudSQL instance
   # command: ['/cloud_sql_proxy','--dir=/cloudsql','-instances=project_name:region:instance_name']
 
+  # Set to true to opt-in to K8s 1.28+ native sidecar behavior (initContainer with restartPolicy: Always)
+  # This delegates shutdown ordering natively to Kubernetes and removes the need for preStop sleep timers.
+  nativeSidecar: false
+
   resources:
     requests:
       cpu: 50m
