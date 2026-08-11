@@ -17,15 +17,22 @@ type: application
 # either prunes the field (silently losing revision-scoped spread) or rejects the
 # manifest under strict field validation, so fail loudly at install time instead.
 #
+# cloudsqlProxy.nativeSidecar relies on the SidecarContainers feature
+# (initContainer restartPolicy: Always), which is alpha and off by default in 1.28
+# and only becomes beta/enabled-by-default in 1.29. On a cluster where the gate is
+# off, restartPolicy would be silently stripped, turning the proxy into a regular
+# init container that never exits and hangs pod startup forever. 1.29 is the floor
+# for that reason.
+#
 # The trailing -0 is required, not cosmetic: GKE reports versions such as
-# v1.33.2-gke.1036000, and a plain ">=1.27.0" constraint excludes every version
+# v1.33.2-gke.1036000, and a plain ">=1.29.0" constraint excludes every version
 # carrying a prerelease suffix, which would reject all of our clusters.
-kubeVersion: ">=1.27.0-0"
+kubeVersion: ">=1.29.0-0"
 
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 0.11.1-beta.16
+version: 0.11.1-beta.17
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to

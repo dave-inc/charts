@@ -87,7 +87,7 @@ spec:
               {{- include "common.canarySelectorLabels" . | nindent 14 }}
         {{- end }}
       {{- end }}
-      {{- if (or .Values.initContainer.enabled .Values.failOnMissingLocalSecrets.enabled) }}
+      {{- if (or .Values.initContainer.enabled .Values.failOnMissingLocalSecrets.enabled (and .Values.cloudsqlProxy.enabled .Values.cloudsqlProxy.nativeSidecar)) }}
       initContainers:
         {{- if .Values.initContainer.enabled }}
         - name: {{ .Values.initContainer.name }}
@@ -109,6 +109,54 @@ spec:
           env:
             - name: NODE_ENV
               value: {{ .Values.environment }}
+        {{- end }}
+        {{- if and .Values.cloudsqlProxy.enabled .Values.cloudsqlProxy.nativeSidecar }}
+        - name: {{ .Values.cloudsqlProxy.name }}
+          restartPolicy: Always
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.cloudsqlProxy.image.repository }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if ( eq $sqlProxyVersion "v2" ) }}
+          ports:
+            {{- toYaml .Values.cloudsqlProxy.ports | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.cloudsqlProxy.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.cloudsqlProxy.readinessProbe | nindent 12 }}
+          startupProbe:
+            {{- toYaml .Values.cloudsqlProxy.startupProbe | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.cloudsqlProxy.resources | nindent 12 }}
+          {{- if and ( eq $sqlProxyVersion "v1" ) ( $sqlinstanceConnectionName ) ( not .Values.cloudsqlProxy.command ) }}
+          command:
+            - "/cloud_sql_proxy"
+            - "--dir=/cloudsql"
+            - "-log_debug_stdout=true"
+            - "-verbose=false"
+            - "-ip_address_types=PRIVATE"
+            - "-instances={{ $sqlinstanceConnectionName }}"
+          {{- else if and ( eq $sqlProxyVersion "v1" ) (.Values.cloudsqlProxy.command) }}
+          command:
+            {{- toYaml .Values.cloudsqlProxy.command | nindent 12 }}
+          {{- end }}
+          {{- if and (eq $sqlProxyVersion "v2") ( $sqlinstanceConnectionName ) (not .Values.cloudsqlProxy.args) }}
+          args:
+            - "--private-ip"
+            - "--quiet"
+            - "{{ $sqlinstanceConnectionName }}?unix-socket-path=/cloudsql/{{ $sqlinstanceConnectionName }}"
+          {{- else if and ( eq $sqlProxyVersion "v2" ) (.Values.cloudsqlProxy.args) }}
+          args:
+            {{- toYaml .Values.cloudsqlProxy.args | nindent 12 }}
+          {{- end }}
+          {{- if and ( eq $sqlProxyVersion "v2" ) (.Values.cloudsqlProxy.env) }}
+          env:
+            {{- toYaml .Values.cloudsqlProxy.env | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: {{ .Values.cloudsqlProxy.volume }}
+              mountPath: /{{ .Values.cloudsqlProxy.volume }}
         {{- end }}
       {{- end }}
       containers:
@@ -337,7 +385,7 @@ spec:
           lifecycle:
             {{- toYaml .Values.deploymentContainer.lifecycle | nindent 12 }}
         {{- end}}{{/* end lifecycle */}}
-          {{- if .Values.cloudsqlProxy.enabled }}
+          {{- if and .Values.cloudsqlProxy.enabled (not .Values.cloudsqlProxy.nativeSidecar) }}
         - name: {{ .Values.cloudsqlProxy.name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
