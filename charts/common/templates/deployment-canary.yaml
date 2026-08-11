@@ -12,6 +12,12 @@
 {{- if and .Values.canary.image .Values.canary.image.tag }}
 {{- $imageTag = .Values.canary.image.tag }}
 {{- end }}
+{{- /* Not coalesce: it treats 0 as empty, which would silently ignore an explicit
+canary.replicaCount of 0 meant to park the canary with no Pods. */}}
+{{- $canaryReplicas := .Values.replicaCount }}
+{{- if not (kindIs "invalid" .Values.canary.replicaCount) }}
+{{- $canaryReplicas = .Values.canary.replicaCount }}
+{{- end }}
 {{- $sqlProxyVersion := include "common.cloudsqlProxyVersion" . -}}
 {{- $sqlinstanceConnectionName := include "common.instanceConnectionName" . -}}
 
@@ -25,7 +31,7 @@ metadata:
     {{- include "common.labels" . | nindent 4 }}
 spec:
 {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ $canaryReplicas }}
 {{- end }}
   selector:
     matchLabels:

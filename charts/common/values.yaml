@@ -288,6 +288,10 @@ canary:
       limits:
         memory: 256Mi
 
+  # Number of canary Pods, used only when .Values.autoscaling is disabled.
+  # Leave unset to inherit the top-level replicaCount.
+  # replicaCount:
+
   # HPA settings for canary deployment. ".Values.autoscaling" values are used to confiugre HPA.
   # minReplicas and/or maxReplicas can be overriten for canary with this configuration. Does not support overriding any other values.
   # autoscaling:
@@ -418,7 +422,13 @@ minReadySeconds: 60
 
 autoscaling:
   enabled: false
-  minReplicas: 1
+  # Null means the chart computes it: 2 when canary is enabled, otherwise 1. Canary puts
+  # a second Deployment in the traffic path, and a tier at one Pod has no headroom while
+  # that Pod is replaced. It is left null rather than given a literal so the chart can
+  # tell a deliberate value from an inherited one; set it to override, including to 1.
+  # The reverse proxy keeps its own floor of 2 and its own
+  # canary.reverseProxy.autoscaling.minReplicas override.
+  minReplicas: ~
   maxReplicas: 100
   metrics: []
 
