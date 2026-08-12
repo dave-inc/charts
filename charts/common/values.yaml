@@ -688,15 +688,21 @@ cloudsqlProxy:
     # Defaults to 1 for readiness probe.
     successThreshold: 1
     failureThreshold: 6
-  # lifecycle is added by default to the cloudsqlProxy container with preStop 30 seconds
-  # but you can overwrite it here
+  # A preStop hook is added to the cloudsqlProxy container by default. It waits, then
+  # removes the socket. The wait is terminationGracePeriodSeconds minus one, so the proxy
+  # outlives the application it serves the database to: the application may keep working
+  # until the grace period expires, and a proxy that exits first takes the database away
+  # from a process that is still draining.
+  #
+  # Overriding this makes the hook's timing your responsibility, and the chart stops
+  # keeping it ahead of the application.
   # lifecycle:
   #   preStop:
   #     exec:
   #       command:
   #         - /bin/sh
   #         - -c
-  #         - /bin/sleep 30 && rm -f /cloudsql/project_name:region:instance_name
+  #         - /bin/sleep 59 && rm -f /cloudsql/project_name:region:instance_name
   ports:
     - containerPort: 9801
       protocol: TCP

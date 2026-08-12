@@ -319,17 +319,7 @@ spec:
             {{- toYaml .Values.cloudsqlProxy.ports | nindent 12 }}
           livenessProbe:
             {{- toYaml .Values.cloudsqlProxy.livenessProbe | nindent 12 }}
-          lifecycle:
-          {{- if .Values.cloudsqlProxy.lifecycle }}
-            {{- toYaml .Values.cloudsqlProxy.lifecycle | nindent 12 }}
-          {{- else }}
-            preStop:
-              exec:
-                command:
-                  - /bin/sh
-                  - -c
-                  - /bin/sleep 30 && rm -f /cloudsql/{{ $sqlinstanceConnectionName }}
-          {{- end }}
+          {{- include "common.cloudsqlProxyLifecycle" . | nindent 10 }}
           readinessProbe:
             {{- toYaml .Values.cloudsqlProxy.readinessProbe | nindent 12 }}
           startupProbe:
