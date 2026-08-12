@@ -348,13 +348,29 @@ strategy:
     maxUnavailable: 25%
   type: RollingUpdate
 
-# Seconds a new Pod must stay Ready before it counts as Available and the
-# rollout retires an old Pod. Unlike maxUnavailable this delay does not trust the
-# readiness signal, so it still holds the old Pod alive when GKE marks the
-# load-balancer-neg-ready gate True before the NEG is attached to a
-# health-checked backend service. Google recommends 60 or higher for workloads
-# behind container-native load balancing. Must stay below
-# progressDeadlineSeconds (600 by default) or the rollout is marked failed.
+# Seconds a new Pod must stay Ready before it counts as Available and the rollout
+# retires an old Pod. Unlike maxUnavailable, this delay does not trust the readiness
+# signal. Two separate things want it, and only the first is about load balancers.
+#
+# It covers the gap between a Pod being Ready and the data plane knowing about it. That
+# gap is worst behind container-native load balancing, where GKE marks the
+# load-balancer-neg-ready gate True before the NEG is attached to a health-checked
+# backend service, and Google recommends 60 or higher there. A ClusterIP-only service
+# has the same gap in miniature, since an EndpointSlice update still has to reach every
+# node and clients still hold pooled connections and cached DNS.
+#
+# It also gives a new revision time to fail. Without it a Pod counts as Available the
+# instant readiness flips, so a container that passes its probe and then dies half a
+# minute later, on an OOM, a lazily initialized dependency or an exhausted connection
+# pool, is rolled across every replica before anything notices. That reason holds for
+# workloads with no endpoints at all, such as pubsub consumers and task handlers, which
+# is why this is defaulted for everything rather than only behind a NEG.
+#
+# The cost is near constant rather than proportional to size: with the surge and
+# unavailable above, a rollout moves in roughly four waves whatever the replica count,
+# so this adds about four minutes, felt most in an emergency rollback. Must stay below
+# progressDeadlineSeconds (600 by default) or the rollout is marked failed, which leaves
+# room for those four waves unless the container is also slow to start.
 #
 # Applies to the control and canary Deployments. The reverse proxy inherits this
 # value unless canary.reverseProxy.minReadySeconds is set. Set 0 to opt out.
