@@ -88,15 +88,26 @@ for when the proxy needs different timing from the application it fronts, which 
 the proxy is the tier the load balancer actually detaches from, so it often wants the
 longer drain.
 
-### Known interaction: Cloud SQL proxy
+### The Cloud SQL proxy now tracks the grace period
 
-If `cloudsqlProxy.enabled` is set, be aware that its `preStop` hook sleeps for a hardcoded
-30 seconds before removing the socket, while the application may now drain for up to the
-full 60 second grace period. The proxy therefore exits while the application can still be
-finishing in-flight work, and database calls in that window will fail.
+If `cloudsqlProxy.enabled` is set, the sidecar's `preStop` hook no longer waits for a
+hardcoded 30 seconds. It waits `terminationGracePeriodSeconds` minus one, so with the new
+default it sleeps 59 seconds rather than 30.
 
-This was previously masked, because the old default grace period of 31 seconds sat just
-past the proxy's 30. Services sensitive to it can either override `cloudsqlProxy.lifecycle`
-or keep `terminationGracePeriodSeconds: 31`. The general fix is to run the proxy as a
-native sidecar, which Kubernetes terminates only after the main containers exit; that work
-is tracked separately.
+This keeps a pairing that already existed but was easy to miss. The application reaches
+its database through the proxy, so the proxy has to outlive the application's entire
+shutdown, not just its `preStop` sleep. The old literal 30 was really the old default
+grace period of 31 minus one; raising the grace period to 60 without changing it would
+have left the application draining for its last 30 seconds with no database. Deriving the
+value keeps the two aligned whatever the grace period is set to, and it fixes services
+that already pin a longer grace period, which have been exposed to a smaller version of
+this gap all along.
+
+The visible cost is that Pod deletion now takes about a minute rather than about thirty
+seconds, since a Pod is not gone until every container exits. Pods evict in parallel, so a
+node drain takes roughly that long in total rather than per Pod.
+
+Setting `cloudsqlProxy.lifecycle` overrides the hook and makes its timing your
+responsibility. The longer-term fix is running the proxy as a native sidecar, which
+Kubernetes terminates only after the main containers exit, removing the need to coordinate
+two timers at all.

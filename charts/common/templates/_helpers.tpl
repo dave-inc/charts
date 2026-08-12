@@ -246,3 +246,39 @@ lifecycle:
       seconds: {{ .Values.preStopSleepSeconds | int }}
 {{- end }}
 {{- end }}
+
+{{/*
+Lifecycle for the cloudsqlProxy sidecar.
+
+An explicit cloudsqlProxy.lifecycle wins. Otherwise the proxy waits, then removes the
+socket it serves the database over.
+
+The wait has to outlast the whole of the application's shutdown, not just its preStop
+sleep. The application reaches its database through this container, and it may keep
+working until terminationGracePeriodSeconds; a proxy that exits earlier takes the
+database away from a process that is still draining. That is why this is derived rather
+than a constant: preStopSleepSeconds only delays the application's SIGTERM, so it says
+nothing about when the application is finally done.
+
+grace - 1 is the tightest value that works. Long enough to cover the application to the
+moment it is SIGKILLed, and short enough that this hook still finishes, so the socket is
+removed rather than the container being killed part-way through. The literal 30 this
+replaces was the same expression written out, from when terminationGracePeriodSeconds
+defaulted to 31.
+
+Cannot use the preStop sleep action, since the hook combines the wait with the removal.
+*/}}
+{{- define "common.cloudsqlProxyLifecycle" -}}
+lifecycle:
+{{- if .Values.cloudsqlProxy.lifecycle }}
+  {{- toYaml .Values.cloudsqlProxy.lifecycle | nindent 2 }}
+{{- else }}
+{{- $sleep := max (sub (.Values.terminationGracePeriodSeconds | int) 1) 0 | int }}
+  preStop:
+    exec:
+      command:
+        - /bin/sh
+        - -c
+        - {{ if gt $sleep 0 }}/bin/sleep {{ $sleep }} && {{ end }}rm -f /cloudsql/{{ include "common.instanceConnectionName" . }}
+{{- end }}
+{{- end }}
