@@ -84,12 +84,17 @@ deploymentContainer:
   # customStartupProbe that overrides the default one
   customStartupProbe: {}
 
-  ## If you want to add a preStop hooks, or any other lifecycles to your
-  ## deployment, you can define them here:
+  ## If you want to add a preStop hook, or any other lifecycles to your
+  ## deployment, you can define them here. This replaces the preStop sleep the chart
+  ## would otherwise render from preStopSleepSeconds, so a hook set here is then
+  ## responsible for the whole drain, and the chart stops checking it against
+  ## terminationGracePeriodSeconds. Prefer preStopSleepSeconds if all you need is a
+  ## drain window. Prefer the sleep action over an exec of /bin/sh: it needs no shell
+  ## in the image.
   #lifecycle:
   # preStop:
-  #   exec:
-  #     command: ["/bin/sh", "-c", "echo 'PreStop hook'"]
+  #   sleep:
+  #     seconds: 20
 
 # terminationGracePeriodSeconds is the whole budget for shutdown: the time from
 # termination starting until the container is SIGKILLed, spanning both the preStop hook
