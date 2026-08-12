@@ -368,7 +368,7 @@ autoscaling:
   # tell a deliberate value from an inherited one; set it to override, including to 1.
   # The reverse proxy keeps its own floor of 2 and its own
   # canary.reverseProxy.autoscaling.minReplicas override.
-  minReplicas: ~
+  minReplicas: null
   maxReplicas: 100
   metrics: []
 
