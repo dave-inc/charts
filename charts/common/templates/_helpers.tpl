@@ -226,6 +226,13 @@ An explicit deploymentContainer.lifecycle wins. Otherwise a preStop sleep keeps 
 Pod in the traffic path while the load balancer detaches its endpoint, which lags the
 Pod being killed. terminationGracePeriodSeconds cannot do this on its own: it bounds
 how long shutdown may take, it does not stop the container from exiting on SIGTERM.
+
+Uses the native sleep action rather than an exec of /bin/sh. It needs no shell in the
+image, so it also works on distroless and scratch bases, where an exec hook fails with
+FailedPreStopHook and silently leaves the container with no drain at all. The reverse
+proxy and the cloudsqlProxy sidecar still use exec because their hooks combine the
+sleep with another command, which the sleep action cannot express. Requires the
+kubeVersion floor in Chart.yaml.
 */}}
 {{- define "common.appLifecycle" -}}
 {{- if .Values.deploymentContainer.lifecycle }}
@@ -235,7 +242,7 @@ lifecycle:
 {{- include "common.validateDrainBudget" (dict "sleep" .Values.preStopSleepSeconds "grace" .Values.terminationGracePeriodSeconds "tier" "application container") }}
 lifecycle:
   preStop:
-    exec:
-      command: ["/bin/sh", "-c", "sleep {{ .Values.preStopSleepSeconds }}"]
+    sleep:
+      seconds: {{ .Values.preStopSleepSeconds | int }}
 {{- end }}
 {{- end }}
