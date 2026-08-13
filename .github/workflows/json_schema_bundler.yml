@@ -33,7 +33,8 @@ jobs:
         uniq |
         tee changed_dirs.txt
 
-        echo CHANGED_DIRS="$(cat changed_dirs.txt)" >> $GITHUB_ENV
+        # Remove the new lines and insert a space so that multiple file changes don't cause an issue
+        echo "CHANGED_DIRS=$(tr '\n' ' ' < changed_dirs.txt)" >> "$GITHUB_ENV"
     - name: Bundle json schema files and validate charts against them
       run: |
         npm install -g @skriptfabrik/json-schema-bundler
