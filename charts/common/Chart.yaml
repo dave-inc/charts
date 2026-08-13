@@ -12,10 +12,22 @@ description: Standard Service Template
 # pipeline. Library charts do not define any templates and therefore cannot be deployed.
 type: application
 
-# The Deployment templates render topologySpreadConstraints.matchLabelKeys, which
-# is beta and enabled by default only from 1.27. On older clusters the API server
-# either prunes the field (silently losing revision-scoped spread) or rejects the
-# manifest under strict field validation, so fail loudly at install time instead.
+# Two features set this floor, and the higher one wins:
+#
+#   1.27  topologySpreadConstraints.matchLabelKeys, rendered by the Deployment
+#         templates, is beta and enabled by default only from 1.27.
+#   1.30  the preStop sleep action used by common.appLifecycle is beta and enabled
+#         by default from 1.30, and stable from 1.34.
+#
+# Both fail the same way below their version: the API server either prunes the field,
+# silently leaving a Pod with no drain or no revision-scoped spread, or rejects the
+# manifest under strict field validation. Neither is visible in a rendered template,
+# so fail loudly at install time instead.
+#
+# Every cluster we run is well past this: the lowest is 1.34, where the sleep action
+# is stable rather than merely enabled by default. The floor stays at the real
+# requirement rather than tracking the fleet, so the chart keeps working on a kind or
+# minikube cluster used for local testing.
 #
 # cloudsqlProxy.nativeSidecar relies on the SidecarContainers feature
 # (initContainer restartPolicy: Always), which is alpha and off by default in 1.28
@@ -25,14 +37,14 @@ type: application
 # for that reason.
 #
 # The trailing -0 is required, not cosmetic: GKE reports versions such as
-# v1.33.2-gke.1036000, and a plain ">=1.29.0" constraint excludes every version
+# v1.34.8-gke.1278000, and a plain ">=1.30.0" constraint excludes every version
 # carrying a prerelease suffix, which would reject all of our clusters.
-kubeVersion: ">=1.29.0-0"
+kubeVersion: ">=1.30.0-0"
 
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 0.11.1-beta.18
+version: 0.11.1-beta.20
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to

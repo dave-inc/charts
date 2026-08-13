@@ -84,18 +84,51 @@ deploymentContainer:
   # customStartupProbe that overrides the default one
   customStartupProbe: {}
 
-  ## If you want to add a preStop hooks, or any other lifecycles to your
-  ## deployment, you can define them here:
+  ## If you want to add a preStop hook, or any other lifecycles to your
+  ## deployment, you can define them here. This replaces the preStop sleep the chart
+  ## would otherwise render from preStopSleepSeconds, so a hook set here is then
+  ## responsible for the whole drain, and the chart stops checking it against
+  ## terminationGracePeriodSeconds. Prefer preStopSleepSeconds if all you need is a
+  ## drain window. Prefer the sleep action over an exec of /bin/sh: it needs no shell
+  ## in the image.
   #lifecycle:
   # preStop:
-  #   exec:
-  #     command: ["/bin/sh", "-c", "echo 'PreStop hook'"]
+  #   sleep:
+  #     seconds: 20
 
-# terminationGracePeriodSeconds is the time to wait before forcefully terminating a pod
-# after a SIGTERM signal is sent to the container. If the preStop hook is used, this
-# value should be set to a higher value than the preStop hook timeout.
-# Setting default 1 second higher than the preStop most Dave's apps have 30 seconds
-terminationGracePeriodSeconds: 31
+# terminationGracePeriodSeconds is the whole budget for shutdown: the time from
+# termination starting until the container is SIGKILLed, spanning both the preStop hook
+# and the SIGTERM handling after it. It is a ceiling, not a delay, and on its own it
+# does not keep a Pod in the traffic path. preStopSleepSeconds below does that.
+#
+# 60 leaves the process around 40s to finish in-flight work once the default 20s preStop
+# sleep is done. Must exceed preStopSleepSeconds or the Pod is SIGKILLed mid-drain.
+#
+# Applies to the control and canary Deployments. The reverse proxy inherits this value
+# unless canary.reverseProxy.terminationGracePeriodSeconds is set.
+terminationGracePeriodSeconds: 60
+
+# Seconds a Pod keeps serving after termination begins, before its process is asked to
+# shut down. Nothing else does this: terminationGracePeriodSeconds only caps the total
+# shutdown, and the container otherwise exits as soon as it receives SIGTERM.
+#
+# Size it to cover both halves of a backend leaving a Google load balancer:
+#
+#   preStopSleepSeconds >= drainingTimeoutSec + endpoint removal latency
+#
+# Removal is not instant. It lagged the Pod being killed by ~12s in staging, and new
+# requests keep arriving until it lands, so 20 is that measurement with margin. Once
+# removed, the load balancer also holds existing connections for drainingTimeoutSec,
+# but that is 0 on our backend services today, so the removal latency is the only term
+# that binds. If connection draining is ever enabled, on a GCPBackendPolicy for Gateway
+# or a BackendConfig for Ingress, this has to grow to cover it as well, and
+# terminationGracePeriodSeconds has to stay above this.
+#
+# Rendered as a preStop sleep on the control and canary application containers, unless
+# deploymentContainer.lifecycle is set, which takes precedence and is then responsible
+# for its own drain. The reverse proxy sleeps for the same duration before quitting
+# nginx, unless canary.reverseProxy.preStopSleepSeconds is set. Set 0 to opt out.
+preStopSleepSeconds: 20
 
 image:
   repository: nginx
@@ -173,6 +206,22 @@ canary:
     # than the application Deployments. Leave unset to inherit; setting 0 here
     # explicitly opts the rproxy out of a non-zero global value.
     # minReadySeconds:
+    # Overrides the top-level terminationGracePeriodSeconds for the reverse proxy
+    # only. Being the tier fronted by the NEG, it is the one that keeps serving
+    # while its endpoint is detached, so it may warrant longer than the
+    # application Deployments. Leave unset to inherit.
+    #
+    # Unlike minReadySeconds above, this field is always rendered, so 0 is not an
+    # opt out: it sets a grace period of literally 0 seconds, which SIGKILLs the
+    # Pod immediately with no drain at all. It does not fall back to the
+    # Kubernetes default of 30. Reaching 0 also means setting preStopSleepSeconds
+    # to 0, since a preStop sleep may not outlast the grace period.
+    # terminationGracePeriodSeconds:
+    # Overrides the top-level preStopSleepSeconds for the reverse proxy only. The
+    # rproxy sleeps this long before quitting nginx, so it stays in the traffic
+    # path until the load balancer has detached its endpoint. Leave unset to
+    # inherit; setting 0 here quits nginx immediately with no drain window.
+    # preStopSleepSeconds:
     # WARNING: enabling this will cause every request to be logged. That is a lot of logs.
     enableAccessLogs: false
     # Minimum number of upstreams to duplicate; the actual count: max(.Values.canary.reverseProxy.minUpstreams, .Values.autoscaling.maxReplicas)
@@ -222,15 +271,31 @@ canary:
     image:
       repository: nginx
       tag: 1.27.4
+    # Number of reverse proxy Pods, used only when autoscaling below is disabled.
+    # Leave unset to inherit the top-level replicaCount.
+    # replicaCount:
     autoscaling:
       enabled: true
       metrics: []
+      # minReplicas and maxReplicas are inherited from .Values.autoscaling unless
+      # set here. The inherited minimum is floored at 2, since the reverse proxy is
+      # the tier fronted by the NEG and a single replica is a single endpoint: a
+      # rollout or a zone move then leaves the load balancer with nothing to route
+      # to. The floor never exceeds maxReplicas, so a service that deliberately
+      # pins itself to one replica is left alone. Setting minReplicas here wins
+      # outright over both the floor and the inherited value, including 1.
+      # minReplicas:
+      # maxReplicas:
     resources:
       requests:
         cpu: 100m
         memory: 256Mi
       limits:
         memory: 256Mi
+
+  # Number of canary Pods, used only when .Values.autoscaling is disabled.
+  # Leave unset to inherit the top-level replicaCount.
+  # replicaCount:
 
   # HPA settings for canary deployment. ".Values.autoscaling" values are used to confiugre HPA.
   # minReplicas and/or maxReplicas can be overriten for canary with this configuration. Does not support overriding any other values.
@@ -348,21 +413,43 @@ strategy:
     maxUnavailable: 25%
   type: RollingUpdate
 
-# Seconds a new Pod must stay Ready before it counts as Available and the
-# rollout retires an old Pod. Unlike maxUnavailable this delay does not trust the
-# readiness signal, so it still holds the old Pod alive when GKE marks the
-# load-balancer-neg-ready gate True before the NEG is attached to a
-# health-checked backend service. Google recommends 60 or higher for workloads
-# behind container-native load balancing. Must stay below
-# progressDeadlineSeconds (600 by default) or the rollout is marked failed.
+# Seconds a new Pod must stay Ready before it counts as Available and the rollout
+# retires an old Pod. Unlike maxUnavailable, this delay does not trust the readiness
+# signal. Two separate things want it, and only the first is about load balancers.
+#
+# It covers the gap between a Pod being Ready and the data plane knowing about it. That
+# gap is worst behind container-native load balancing, where GKE marks the
+# load-balancer-neg-ready gate True before the NEG is attached to a health-checked
+# backend service, and Google recommends 60 or higher there. A ClusterIP-only service
+# has the same gap in miniature, since an EndpointSlice update still has to reach every
+# node and clients still hold pooled connections and cached DNS.
+#
+# It also gives a new revision time to fail. Without it a Pod counts as Available the
+# instant readiness flips, so a container that passes its probe and then dies half a
+# minute later, on an OOM, a lazily initialized dependency or an exhausted connection
+# pool, is rolled across every replica before anything notices. That reason holds for
+# workloads with no endpoints at all, such as pubsub consumers and task handlers, which
+# is why this is defaulted for everything rather than only behind a NEG.
+#
+# The cost is near constant rather than proportional to size: with the surge and
+# unavailable above, a rollout moves in roughly four waves whatever the replica count,
+# so this adds about four minutes, felt most in an emergency rollback. Must stay below
+# progressDeadlineSeconds (600 by default) or the rollout is marked failed, which leaves
+# room for those four waves unless the container is also slow to start.
 #
 # Applies to the control and canary Deployments. The reverse proxy inherits this
-# value unless canary.reverseProxy.minReadySeconds is set.
-minReadySeconds: 0
+# value unless canary.reverseProxy.minReadySeconds is set. Set 0 to opt out.
+minReadySeconds: 60
 
 autoscaling:
   enabled: false
-  minReplicas: 1
+  # Null means the chart computes it: 2 when canary is enabled, otherwise 1. Canary puts
+  # a second Deployment in the traffic path, and a tier at one Pod has no headroom while
+  # that Pod is replaced. It is left null rather than given a literal so the chart can
+  # tell a deliberate value from an inherited one; set it to override, including to 1.
+  # The reverse proxy keeps its own floor of 2 and its own
+  # canary.reverseProxy.autoscaling.minReplicas override.
+  minReplicas: null
   maxReplicas: 100
   metrics: []
 
@@ -606,15 +693,21 @@ cloudsqlProxy:
     # Defaults to 1 for readiness probe.
     successThreshold: 1
     failureThreshold: 6
-  # lifecycle is added by default to the cloudsqlProxy container with preStop 30 seconds
-  # but you can overwrite it here
+  # A preStop hook is added to the cloudsqlProxy container by default. It waits, then
+  # removes the socket. The wait is terminationGracePeriodSeconds minus one, so the proxy
+  # outlives the application it serves the database to: the application may keep working
+  # until the grace period expires, and a proxy that exits first takes the database away
+  # from a process that is still draining.
+  #
+  # Overriding this makes the hook's timing your responsibility, and the chart stops
+  # keeping it ahead of the application.
   # lifecycle:
   #   preStop:
   #     exec:
   #       command:
   #         - /bin/sh
   #         - -c
-  #         - /bin/sleep 30 && rm -f /cloudsql/project_name:region:instance_name
+  #         - /bin/sleep 59 && rm -f /cloudsql/project_name:region:instance_name
   ports:
     - containerPort: 9801
       protocol: TCP

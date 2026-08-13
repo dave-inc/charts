@@ -184,3 +184,102 @@ Reverse Proxy common name
 {{- define "common.reverseProxyName" -}}
 {{- printf "%s-rproxy" (include "common.name" .) }}
 {{- end }}
+
+{{/*
+Fail rather than let a Pod be SIGKILLed part-way through its preStop sleep.
+Expects a dict of "sleep", "grace" and "tier".
+*/}}
+{{- define "common.validateDrainBudget" -}}
+{{- if ge (.sleep | int) (.grace | int) -}}
+{{- fail (printf "%s: preStop sleep of %vs must be shorter than terminationGracePeriodSeconds of %vs, otherwise the Pod is SIGKILLed before it finishes draining" .tier .sleep .grace) -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Effective autoscaling.minReplicas.
+
+Left unset in values.yaml so the chart can tell a deliberate value from an inherited
+one. Canary puts a second Deployment in the traffic path, and a tier at one Pod has no
+headroom while that Pod is replaced, so a canary-enabled service defaults to 2. Without
+canary a service may legitimately run a single Pod, so the default stays 1. An explicit
+autoscaling.minReplicas always wins, including 1.
+
+Only the default is capped at maxReplicas, so the chart never invents an invalid HPA,
+while an explicit min above max is still surfaced by the API server rather than masked.
+
+Expects a dict of "ctx" and "max".
+*/}}
+{{- define "common.minReplicas" -}}
+{{- /* Not default: it treats 0 as empty, which would ignore an explicit 0. */ -}}
+{{- if not (kindIs "invalid" .ctx.Values.autoscaling.minReplicas) -}}
+{{- .ctx.Values.autoscaling.minReplicas | int -}}
+{{- else if .ctx.Values.canary.enabled -}}
+{{- min 2 (.max | int) -}}
+{{- else -}}
+1
+{{- end -}}
+{{- end -}}
+
+{{/*
+Lifecycle for the application containers of the control and canary Deployments.
+
+An explicit deploymentContainer.lifecycle wins. Otherwise a preStop sleep keeps the
+Pod in the traffic path while the load balancer detaches its endpoint, which lags the
+Pod being killed. terminationGracePeriodSeconds cannot do this on its own: it bounds
+how long shutdown may take, it does not stop the container from exiting on SIGTERM.
+
+Uses the native sleep action rather than an exec of /bin/sh. It needs no shell in the
+image, so it also works on distroless and scratch bases, where an exec hook fails with
+FailedPreStopHook and silently leaves the container with no drain at all. The reverse
+proxy and the cloudsqlProxy sidecar still use exec because their hooks combine the
+sleep with another command, which the sleep action cannot express. Requires the
+kubeVersion floor in Chart.yaml.
+*/}}
+{{- define "common.appLifecycle" -}}
+{{- if .Values.deploymentContainer.lifecycle }}
+lifecycle:
+  {{- toYaml .Values.deploymentContainer.lifecycle | nindent 2 }}
+{{- else if gt (.Values.preStopSleepSeconds | default 0 | int) 0 }}
+{{- include "common.validateDrainBudget" (dict "sleep" .Values.preStopSleepSeconds "grace" .Values.terminationGracePeriodSeconds "tier" "application container") }}
+lifecycle:
+  preStop:
+    sleep:
+      seconds: {{ .Values.preStopSleepSeconds | int }}
+{{- end }}
+{{- end }}
+
+{{/*
+Lifecycle for the cloudsqlProxy sidecar.
+
+An explicit cloudsqlProxy.lifecycle wins. Otherwise the proxy waits, then removes the
+socket it serves the database over.
+
+The wait has to outlast the whole of the application's shutdown, not just its preStop
+sleep. The application reaches its database through this container, and it may keep
+working until terminationGracePeriodSeconds; a proxy that exits earlier takes the
+database away from a process that is still draining. That is why this is derived rather
+than a constant: preStopSleepSeconds only delays the application's SIGTERM, so it says
+nothing about when the application is finally done.
+
+grace - 1 is the tightest value that works. Long enough to cover the application to the
+moment it is SIGKILLed, and short enough that this hook still finishes, so the socket is
+removed rather than the container being killed part-way through. The literal 30 this
+replaces was the same expression written out, from when terminationGracePeriodSeconds
+defaulted to 31.
+
+Cannot use the preStop sleep action, since the hook combines the wait with the removal.
+*/}}
+{{- define "common.cloudsqlProxyLifecycle" -}}
+lifecycle:
+{{- if .Values.cloudsqlProxy.lifecycle }}
+  {{- toYaml .Values.cloudsqlProxy.lifecycle | nindent 2 }}
+{{- else }}
+{{- $sleep := max (sub (.Values.terminationGracePeriodSeconds | int) 1) 0 | int }}
+  preStop:
+    exec:
+      command:
+        - /bin/sh
+        - -c
+        - {{ if gt $sleep 0 }}/bin/sleep {{ $sleep }} && {{ end }}rm -f /cloudsql/{{ include "common.instanceConnectionName" . }}
+{{- end }}
+{{- end }}
