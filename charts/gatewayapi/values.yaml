@@ -162,10 +162,11 @@ routes:
           group: ""
           kind: Service
           weight: 1
-          # Default weight for the canary half of a `canary: true` backendRef
-          # (see below) -- 0 so a freshly-created route sends no traffic to
-          # the canary Service until Argo Rollouts' Gateway API plugin takes
-          # over and starts mutating this weight as the rollout progresses.
+          # Default weight for the canary half of the pair every backendRef
+          # expands into when `global.canary.enabled` is true (see below) --
+          # 0 so a freshly-created route sends no traffic to the canary
+          # Service until Argo Rollouts' Gateway API plugin takes over and
+          # starts mutating this weight as the rollout progresses.
           canaryWeight: 0
         match:
           path:
@@ -189,11 +190,15 @@ routes:
 #            - name: example-service
 #              port: 80
 
-## Canary route example: `canary: true` expands a single backendRef into the
-## stable+canary pair (named "<name>-stable"/"<name>-canary") that the
-## `common` chart always creates when its own `canary.enabled` is true.
-## Turning on canary in `common` and pointing a route at the same base `name`
-## here is all that's needed -- no need to hand-type both Service names.
+## Canary route example: whenever `global.canary.enabled` is true (a single
+## toggle set once at the umbrella-chart level and shared automatically with
+## every subchart, including `common` -- see
+## charts/common/templates/_helpers.tpl `common.canaryEnabled`), every
+## backendRef here expands into the stable+canary pair (named
+## "<name>-stable"/"<name>-canary") that the `common` chart always creates
+## in that case. Pointing a route at the same base `name` is all that's
+## needed -- no need to hand-type both Service names, and no per-backendRef
+## setting to turn on.
 #  - name: example-service
 #    spec:
 #      hostnames:
@@ -204,7 +209,6 @@ routes:
 #        - backendRefs:
 #            - name: example-service
 #              port: 80
-#              canary: true
 #              # Optional overrides -- defaults are 1 (stable) and 0 (canary),
 #              # which is functionally identical (100% of traffic to stable)
 #              # since weight is relative between the two backendRefs.

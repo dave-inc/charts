@@ -46,17 +46,28 @@ Selector labels
 {{- end }}
 
 {{/*
+Whether canary is enabled. Driven entirely by `global.canary.enabled` -- the
+umbrella chart's single toggle that also drives the `gatewayapi` chart's
+stable+canary backendRef expansion (see
+charts/gatewayapi/templates/httproute.yaml). There is no chart-local override.
+Emits "true" when enabled, "" otherwise -- safe to use directly as an `if` condition.
+*/}}
+{{- define "common.canaryEnabled" -}}
+{{- if (dig "canary" "enabled" false (default dict .Values.global)) }}true{{ end -}}
+{{- end }}
+
+{{/*
 Workload API version. Rollout (Argo Rollouts) when canary is enabled, otherwise Deployment.
 */}}
 {{- define "common.workloadApiVersion" -}}
-{{- if .Values.canary.enabled }}argoproj.io/v1alpha1{{- else }}apps/v1{{- end }}
+{{- if (include "common.canaryEnabled" .) }}argoproj.io/v1alpha1{{- else }}apps/v1{{- end }}
 {{- end }}
 
 {{/*
 Workload kind. Rollout (Argo Rollouts) when canary is enabled, otherwise Deployment.
 */}}
 {{- define "common.workloadKind" -}}
-{{- if .Values.canary.enabled }}Rollout{{- else }}Deployment{{- end }}
+{{- if (include "common.canaryEnabled" .) }}Rollout{{- else }}Deployment{{- end }}
 {{- end }}
 
 {{/*

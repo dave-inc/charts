@@ -224,18 +224,12 @@ $defs:
                       kind:
                         type: string
                         const: Service
-                      canary:
-                        type: boolean
-                        description: >-
-                          Shorthand: expands this single entry into a
-                          stable+canary backendRef pair named
-                          "<name>-stable"/"<name>-canary" (matching what the
-                          `common` chart derives by default for the same base
-                          name when its own canary.enabled is true).
                       canaryWeight:
                         type: integer
-                        # Only meaningful alongside canary: true -- the
-                        # weight of the "<name>-canary" half of the pair.
+                        # Only meaningful when global.canary.enabled is true --
+                        # the weight of the "<name>-canary" half of the pair
+                        # every backendRef expands into in that case (see
+                        # charts/gatewayapi/templates/httproute.yaml).
                         minimum: 0
                         maximum: 1000000
                     required:

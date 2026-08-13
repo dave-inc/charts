@@ -36,7 +36,7 @@ spec:
   Same reasoning as the HPA/VPA/KEDA case (scaleTargetRef then points at the
   Rollout instead, see common.workloadKind).
   */}}
-{{- if not (or .Values.canary.enabled .Values.autoscaling.enabled .Values.kedaScaling.enabled) }}
+{{- if not (or (include "common.canaryEnabled" .) .Values.autoscaling.enabled .Values.kedaScaling.enabled) }}
   replicas: {{ .Values.replicaCount }}
 {{- end }}
   selector:

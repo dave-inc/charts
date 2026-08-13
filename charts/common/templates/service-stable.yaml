@@ -1,4 +1,4 @@
-{{- if and .Values.service.enabled .Values.canary.enabled -}}
+{{- if and .Values.service.enabled (include "common.canaryEnabled" .) -}}
 apiVersion: v1
 kind: Service
 metadata:

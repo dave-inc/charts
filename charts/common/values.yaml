@@ -155,7 +155,11 @@ service:
 # https://argo-rollouts.readthedocs.io/en/stable/migrating/. HPA/VPA/KEDA
 # scaleTargetRef then points at the Rollout instead of the Deployment.
 canary:
-  enabled: false
+  # Whether canary is on is controlled entirely by `global.canary.enabled`
+  # (not set here) -- a single toggle at the umbrella-chart level (see
+  # sre/charts/<service>/*/values.yaml in the deployment repo) that drives
+  # both this chart and the `gatewayapi` chart's stable+canary backendRef
+  # expansion, so the same boolean never needs to be set in two places.
   # What the Rollout does to the referenced Deployment once its own
   # ReplicaSet is healthy: "never" leaves it running at full size,
   # "onsuccess" scales it to 0 once, "progressively" scales it down in step
@@ -171,9 +175,9 @@ canary:
   maxSurge: "25%"
   maxUnavailable: 0
   # This chart always creates canary/stable Services named
-  # "<name>-canary"/"<name>-stable" whenever canary.enabled is true (see
+  # "<name>-canary"/"<name>-stable" whenever canary is enabled (see
   # service-canary.yaml/service-stable.yaml) -- not configurable, so the
-  # `gatewayapi` chart's `canary: true` backendRef shorthand can always
+  # `gatewayapi` chart's stable+canary backendRef expansion can always
   # derive the same two names from the app name alone, with nothing to keep
   # in sync between the two charts. Argo Rollouts manages the pod selector on
   # these Services itself; the chart only needs to create them with the same
@@ -186,10 +190,9 @@ canary:
   # For Gateway API (the `gatewayapi` chart), use the argoproj-labs/gatewayAPI
   # plugin (baked into the argo-rollouts controller image, see the
   # `argo-rollouts` chart) and point it at an HTTPRoute whose backendRefs
-  # reference this app's canary pair -- e.g. via the `gatewayapi` chart's
-  # `canary: true` backendRef shorthand, which derives the same
-  # "<name>-canary"/"<name>-stable" names automatically. See
-  # charts/gatewayapi/examples/canary.yaml:
+  # reference this app's canary pair -- the `gatewayapi` chart expands every
+  # backendRef into the same "<name>-canary"/"<name>-stable" pair whenever
+  # `global.canary.enabled` is true. See charts/gatewayapi/examples/canary.yaml:
   #
   # trafficRouting:
   #   plugins:

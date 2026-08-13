@@ -54,15 +54,22 @@ spec:
       {{- if .backendRefs }}
       backendRefs:
         {{- range .backendRefs }}
-        {{- if .canary }}
         {{- /*
-        `canary: true` is a shorthand for the stable+canary backendRef pair
-        Argo Rollouts' Gateway API traffic router plugin expects, so a canary
-        route doesn't require hand-typing both Service names and weights.
-        `name` here is the app's base name -- the expanded Service names
-        below match what the `common` chart derives by default for the same
-        base name (see `common.canaryServiceName`/`common.stableServiceName`
-        in charts/common/templates/_helpers.tpl): "<name>-stable"/"<name>-canary".
+        Whether canary is on is controlled entirely by `global.canary.enabled`
+        -- the same umbrella-level toggle the `common` chart's
+        `common.canaryEnabled` helper reads (see
+        charts/common/templates/_helpers.tpl) -- so the same boolean never
+        needs to be set again here per backendRef.
+        */}}
+        {{- if (dig "canary" "enabled" false (default dict $.Values.global)) }}
+        {{- /*
+        Every backendRef expands into the stable+canary pair Argo Rollouts'
+        Gateway API traffic router plugin expects, so a canary route doesn't
+        require hand-typing both Service names and weights. `name` here is
+        the app's base name -- the expanded Service names below match what
+        the `common` chart derives by default for the same base name (see
+        `common.canaryServiceName`/`common.stableServiceName` in
+        charts/common/templates/_helpers.tpl): "<name>-stable"/"<name>-canary".
         */}}
         - group: {{ .group | default $.Values.routes.default.spec.rule.backendRef.group | quote }}
           kind: {{ .kind | default $.Values.routes.default.spec.rule.backendRef.kind }}

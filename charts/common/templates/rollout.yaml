@@ -1,4 +1,4 @@
-{{- if .Values.canary.enabled }}
+{{- if (include "common.canaryEnabled" .) }}
 {{- /*
 References the plain apps/v1 Deployment (deployment.yaml) via workloadRef
 instead of duplicating its pod template, per
