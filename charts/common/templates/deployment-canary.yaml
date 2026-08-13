@@ -12,6 +12,12 @@
 {{- if and .Values.canary.image .Values.canary.image.tag }}
 {{- $imageTag = .Values.canary.image.tag }}
 {{- end }}
+{{- /* Not coalesce: it treats 0 as empty, which would silently ignore an explicit
+canary.replicaCount of 0 meant to park the canary with no Pods. */}}
+{{- $canaryReplicas := .Values.replicaCount }}
+{{- if not (kindIs "invalid" .Values.canary.replicaCount) }}
+{{- $canaryReplicas = .Values.canary.replicaCount }}
+{{- end }}
 {{- $sqlProxyVersion := include "common.cloudsqlProxyVersion" . -}}
 {{- $sqlinstanceConnectionName := include "common.instanceConnectionName" . -}}
 
@@ -25,7 +31,7 @@ metadata:
     {{- include "common.labels" . | nindent 4 }}
 spec:
 {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ $canaryReplicas }}
 {{- end }}
   selector:
     matchLabels:
@@ -333,10 +339,7 @@ spec:
             {{- toYaml .Values.customVolumes.volumeMounts | nindent 12 }}
           {{- end }}
           {{- end }}{{/* end volumeMounts */}}
-        {{- if .Values.deploymentContainer.lifecycle }}
-          lifecycle:
-            {{- toYaml .Values.deploymentContainer.lifecycle | nindent 12 }}
-        {{- end}}{{/* end lifecycle */}}
+          {{- include "common.appLifecycle" . | nindent 10 }}{{/* end lifecycle */}}
           {{- if .Values.cloudsqlProxy.enabled }}
         - name: {{ .Values.cloudsqlProxy.name }}
           securityContext:
@@ -348,17 +351,7 @@ spec:
             {{- toYaml .Values.cloudsqlProxy.ports | nindent 12 }}
           livenessProbe:
             {{- toYaml .Values.cloudsqlProxy.livenessProbe | nindent 12 }}
-          lifecycle:
-          {{- if .Values.cloudsqlProxy.lifecycle }}
-            {{- toYaml .Values.cloudsqlProxy.lifecycle | nindent 12 }}
-          {{- else }}
-            preStop:
-              exec:
-                command:
-                  - /bin/sh
-                  - -c
-                  - /bin/sleep 30 && rm -f /cloudsql/{{ $sqlinstanceConnectionName }}
-          {{- end }}
+          {{- include "common.cloudsqlProxyLifecycle" . | nindent 10 }}
           readinessProbe:
             {{- toYaml .Values.cloudsqlProxy.readinessProbe | nindent 12 }}
           startupProbe:

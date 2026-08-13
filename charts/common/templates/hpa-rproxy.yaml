@@ -1,8 +1,17 @@
 {{- if and .Values.canary.enabled .Values.canary.reverseProxy.autoscaling.enabled }}
 {{- $rpAuto := .Values.canary.reverseProxy.autoscaling -}}
 {{- $rootAuto := .Values.autoscaling -}}
-{{- $min := coalesce $rpAuto.minReplicas $rootAuto.minReplicas -}}
 {{- $max := coalesce $rpAuto.maxReplicas $rootAuto.maxReplicas -}}
+{{- /* The rproxy is the tier fronted by the NEG, so one replica is one endpoint, and a
+rollout or a zone move can leave the load balancer with nothing to route to. Floor the
+inherited minimum at 2 rather than giving the field a default, which coalesce would
+then prefer over a service's own larger autoscaling.minReplicas. Kept at or below
+maxReplicas so a deliberately pinned single-replica service still renders. */}}
+{{- $min := min (max (include "common.minReplicas" (dict "ctx" . "max" $max) | int) 2) ($max | int) -}}
+{{- /* Not coalesce: an explicit override wins outright, including 1. */}}
+{{- if not (kindIs "invalid" $rpAuto.minReplicas) -}}
+{{- $min = $rpAuto.minReplicas | int -}}
+{{- end -}}
 {{- $metrics := coalesce $rpAuto.metrics $rootAuto.metrics -}}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler

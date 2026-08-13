@@ -4,7 +4,10 @@
 intentional `kedaScaling.minReplicas: 0` (scale-to-zero) with autoscaling.minReplicas. Use
 `kindIs "invalid"` instead, which is only true for an unset/nil value, so 0 is respected.
 */}}
-{{- $minReplicas := .Values.autoscaling.minReplicas }}
+{{- /* include returns a string, while the kedaScaling branch below assigns an int. Cast
+so $minReplicas has one type either way, and a numeric comparison added against it later
+does not silently compare strings. */}}
+{{- $minReplicas := include "common.minReplicas" (dict "ctx" . "max" .Values.autoscaling.maxReplicas) | int }}
 {{- if not (kindIs "invalid" .Values.kedaScaling.minReplicas) }}
 {{- $minReplicas = .Values.kedaScaling.minReplicas }}
 {{- end }}
