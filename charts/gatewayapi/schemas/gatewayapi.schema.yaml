@@ -198,10 +198,12 @@ $defs:
               properties:
                 backendRefs:
                   type: array
-                  # For the time being, we only support a single backend ref per rule,
-                  # so minItems and maxItems are both set to 1
+                  # Up to 2 backendRefs per rule: a single backend, or a
+                  # stable+canary pair for Argo Rollouts' Gateway API traffic
+                  # router plugin, which mutates the weight fields in place as
+                  # a rollout progresses.
                   minItems: 1
-                  maxItems: 1
+                  maxItems: 2
                   items:
                     type: object
                     properties:
@@ -213,15 +215,29 @@ $defs:
                         maximum: 65535
                       weight:
                         type: integer
-                        # For the time being, we only support a single backend ref per rule,
-                        # so weight must be 1
-                        const: 1
+                        # Matches the Gateway API spec's bounds on BackendRef.weight.
+                        minimum: 0
+                        maximum: 1000000
                       group:
                         type: string
                         const: ""
                       kind:
                         type: string
                         const: Service
+                      canary:
+                        type: boolean
+                        description: >-
+                          Shorthand: expands this single entry into a
+                          stable+canary backendRef pair named
+                          "<name>-stable"/"<name>-canary" (matching what the
+                          `common` chart derives by default for the same base
+                          name when its own canary.enabled is true).
+                      canaryWeight:
+                        type: integer
+                        # Only meaningful alongside canary: true -- the
+                        # weight of the "<name>-canary" half of the pair.
+                        minimum: 0
+                        maximum: 1000000
                     required:
                       - name
                       - port
@@ -401,7 +417,12 @@ $defs:
                     const: Service
                   weight:
                     type: integer
-                    const: 1
+                    minimum: 0
+                    maximum: 1000000
+                  canaryWeight:
+                    type: integer
+                    minimum: 0
+                    maximum: 1000000
                 additionalProperties: false
               match:
                 type: object

@@ -148,6 +148,50 @@ routes:
         ...
 ```
 
+### Canary rollouts via Argo Rollouts' Gateway API plugin
+
+Turn on `canary.enabled` in the `common` chart for the same app, then add
+`canary: true` to a single `backendRefs` entry here — no need to hand-type
+either Service name:
+
+```yaml
+routes:
+  items:
+    - name: example-service
+      spec:
+        hostnames:
+          - example-service.trydave.com
+        parentRefs:
+          - name: default
+        rules:
+          - backendRefs:
+              - name: example-service
+                port: 80
+                canary: true
+```
+
+`canary: true` expands that single entry into a stable+canary backendRef
+pair named `example-service-stable`/`example-service-canary` — the same
+`"<name>-stable"/"<name>-canary"` convention the `common` chart always uses
+for its canary/stable Services, as long as both charts are given the same
+base app name. Initial weights default to all traffic on stable, none on
+canary (override via `weight`/`canaryWeight` on the same entry if you need
+something else).
+
+Argo Rollouts' `argoproj-labs/gatewayAPI` traffic router plugin then mutates
+these two backendRefs' `weight` fields in place as the rollout progresses
+through its canary steps — the defaults above are only the starting point.
+The route's `name` must match the `httpRoute` value configured under the
+Rollout's `strategy.canary.trafficRouting.plugins["argoproj-labs/gatewayAPI"]`
+(passed through as-is via the `common` chart's `canary.trafficRouting`).
+See [examples/canary.yaml](./examples/canary.yaml) for a full example.
+
+> **Note:** because the plugin mutates `weight` on the live resource outside
+> of Helm/Argo CD, keep this route out of Argo CD's drift detection for that
+> field (e.g. via `spec.ignoreDifferences` on the Argo CD `Application`) —
+> otherwise the next sync will reset the weights and fight the rollout, the
+> same way an un-excluded `replicas` field fights a Rollout-managed Deployment.
+
 ## Further configuration
 
 This document only covers the most common use cases. For a full list of

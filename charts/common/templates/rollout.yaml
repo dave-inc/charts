@@ -1,9 +1,4 @@
 {{- if .Values.canary.enabled }}
-{{- if .Values.canary.trafficRouting }}
-{{- if not (and .Values.canary.canaryService .Values.canary.stableService) }}
-{{- fail "canary.canaryService and canary.stableService are both required when canary.trafficRouting is set" }}
-{{- end }}
-{{- end }}
 {{- /*
 References the plain apps/v1 Deployment (deployment.yaml) via workloadRef
 instead of duplicating its pod template, per
@@ -42,12 +37,8 @@ spec:
     scaleDown: {{ .Values.canary.scaleDown }}
   strategy:
     canary:
-      {{- if .Values.canary.canaryService }}
-      canaryService: {{ .Values.canary.canaryService }}
-      {{- end }}
-      {{- if .Values.canary.stableService }}
-      stableService: {{ .Values.canary.stableService }}
-      {{- end }}
+      canaryService: {{ include "common.canaryServiceName" . }}
+      stableService: {{ include "common.stableServiceName" . }}
       maxSurge: {{ .Values.canary.maxSurge | quote }}
       maxUnavailable: {{ .Values.canary.maxUnavailable }}
       {{- if .Values.canary.trafficRouting }}

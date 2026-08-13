@@ -171,14 +171,32 @@ canary:
     - pause: {}
   maxSurge: "25%"
   maxUnavailable: 0
-  # canaryService/stableService are only required when trafficRouting is set.
-  # Argo Rollouts manages the pod selector on these Services itself; the chart
-  # only needs to create them with the same base selector as the main service.
-  canaryService: ""
-  stableService: ""
+  # This chart always creates canary/stable Services named
+  # "<name>-canary"/"<name>-stable" whenever canary.enabled is true (see
+  # service-canary.yaml/service-stable.yaml) -- not configurable, so the
+  # `gatewayapi` chart's `canary: true` backendRef shorthand can always
+  # derive the same two names from the app name alone, with nothing to keep
+  # in sync between the two charts. Argo Rollouts manages the pod selector on
+  # these Services itself; the chart only needs to create them with the same
+  # base selector as the main service.
+  #
   # Optional traffic routing config, passed as-is to .spec.strategy.canary.trafficRouting
   # (e.g. nginx, istio, alb, smi). Leave empty for basic weighted-replica canary,
   # which needs no service mesh or ingress controller support.
+  #
+  # For Gateway API (the `gatewayapi` chart), use the argoproj-labs/gatewayAPI
+  # plugin (baked into the argo-rollouts controller image, see the
+  # `argo-rollouts` chart) and point it at an HTTPRoute whose backendRefs
+  # reference this app's canary pair -- e.g. via the `gatewayapi` chart's
+  # `canary: true` backendRef shorthand, which derives the same
+  # "<name>-canary"/"<name>-stable" names automatically. See
+  # charts/gatewayapi/examples/canary.yaml:
+  #
+  # trafficRouting:
+  #   plugins:
+  #     argoproj-labs/gatewayAPI:
+  #       httpRoute: <name of the HTTPRoute created by the gatewayapi chart>
+  #       namespace: <namespace of that HTTPRoute, if not this Rollout's own>
   trafficRouting: {}
   # Optional background analysis config, passed as-is to .spec.strategy.canary.analysis
   # https://argo-rollouts.readthedocs.io/en/stable/features/analysis/

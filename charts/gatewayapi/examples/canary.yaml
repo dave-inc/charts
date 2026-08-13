@@ -1,0 +1,41 @@
+# Splits traffic for `example-service.trydave.com` across the stable and
+# canary Services the `common` chart always creates whenever its own
+# `canary.enabled` is true (see charts/common/templates/service-stable.yaml
+# and service-canary.yaml). `canary: true` below expands into that same
+# "<name>-stable"/"<name>-canary" pair by name convention alone -- there is
+# no need to hand-type either Service name.
+#
+# The initial weights (all traffic to stable, none to canary) are just a
+# starting point -- once the Rollout controller's Gateway API traffic router
+# plugin takes over, it mutates the two expanded backendRefs' `weight` fields
+# in place as the rollout progresses through its canary steps. This route's
+# `name` must match the `httpRoute` value under the Rollout's
+# `strategy.canary.trafficRouting.plugins["argoproj-labs/gatewayAPI"]` config
+# (see charts/common/values.yaml `canary.trafficRouting`).
+enabled: true
+routes:
+  items:
+    - name: example-service
+      spec:
+        hostnames:
+          - example-service.trydave.com
+        parentRefs:
+          - name: default
+        rules:
+          - backendRefs:
+              - name: example-service
+                port: 80
+                canary: true
+healthCheckPolicies:
+  items:
+    - name: example-service
+      spec:
+        default:
+          config:
+            httpHealthCheck:
+              port: 8080
+              requestPath: /healthz
+        targetRef:
+          # The health check targets the stable Service; the canary Service
+          # shares the same underlying Pods while the rollout is in progress.
+          name: example-service-stable

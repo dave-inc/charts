@@ -162,6 +162,11 @@ routes:
           group: ""
           kind: Service
           weight: 1
+          # Default weight for the canary half of a `canary: true` backendRef
+          # (see below) -- 0 so a freshly-created route sends no traffic to
+          # the canary Service until Argo Rollouts' Gateway API plugin takes
+          # over and starts mutating this weight as the rollout progresses.
+          canaryWeight: 0
         match:
           path:
             type: PathPrefix
@@ -183,6 +188,28 @@ routes:
 #        - backendRefs:
 #            - name: example-service
 #              port: 80
+
+## Canary route example: `canary: true` expands a single backendRef into the
+## stable+canary pair (named "<name>-stable"/"<name>-canary") that the
+## `common` chart always creates when its own `canary.enabled` is true.
+## Turning on canary in `common` and pointing a route at the same base `name`
+## here is all that's needed -- no need to hand-type both Service names.
+#  - name: example-service
+#    spec:
+#      hostnames:
+#        - example-service.daveapi.io
+#      parentRefs:
+#        - name: default
+#      rules:
+#        - backendRefs:
+#            - name: example-service
+#              port: 80
+#              canary: true
+#              # Optional overrides -- defaults are 1 (stable) and 0 (canary),
+#              # which is functionally identical (100% of traffic to stable)
+#              # since weight is relative between the two backendRefs.
+#              # weight: 100
+#              # canaryWeight: 0
 
 ## Elaborated route example, no defaults:
 #  - name: main

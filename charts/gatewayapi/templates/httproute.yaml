@@ -54,11 +54,38 @@ spec:
       {{- if .backendRefs }}
       backendRefs:
         {{- range .backendRefs }}
+        {{- if .canary }}
+        {{- /*
+        `canary: true` is a shorthand for the stable+canary backendRef pair
+        Argo Rollouts' Gateway API traffic router plugin expects, so a canary
+        route doesn't require hand-typing both Service names and weights.
+        `name` here is the app's base name -- the expanded Service names
+        below match what the `common` chart derives by default for the same
+        base name (see `common.canaryServiceName`/`common.stableServiceName`
+        in charts/common/templates/_helpers.tpl): "<name>-stable"/"<name>-canary".
+        */}}
+        - group: {{ .group | default $.Values.routes.default.spec.rule.backendRef.group | quote }}
+          kind: {{ .kind | default $.Values.routes.default.spec.rule.backendRef.kind }}
+          name: {{ .name }}-stable
+          port: {{ .port }}
+          weight: {{ if hasKey . "weight" }}{{ .weight }}{{ else }}{{ $.Values.routes.default.spec.rule.backendRef.weight }}{{ end }}
+        - group: {{ .group | default $.Values.routes.default.spec.rule.backendRef.group | quote }}
+          kind: {{ .kind | default $.Values.routes.default.spec.rule.backendRef.kind }}
+          name: {{ .name }}-canary
+          port: {{ .port }}
+          weight: {{ if hasKey . "canaryWeight" }}{{ .canaryWeight }}{{ else }}{{ $.Values.routes.default.spec.rule.backendRef.canaryWeight }}{{ end }}
+        {{- else }}
         - group: {{ .group | default $.Values.routes.default.spec.rule.backendRef.group | quote }}
           kind: {{ .kind | default $.Values.routes.default.spec.rule.backendRef.kind }}
           name: {{ .name }}
           port: {{ .port }}
-          weight: {{ .weight | default $.Values.routes.default.spec.rule.backendRef.weight }}
+          {{- /*
+          `default` treats 0 as empty, which would silently replace an
+          explicit `weight: 0` (the common starting point for a canary
+          backendRef) with the default weight. Check for the key instead.
+          */}}
+          weight: {{ if hasKey . "weight" }}{{ .weight }}{{ else }}{{ $.Values.routes.default.spec.rule.backendRef.weight }}{{ end }}
+        {{- end }}
         {{- end }}
       {{- end }}
       {{- if .matches }}

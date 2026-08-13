@@ -60,6 +60,22 @@ Workload kind. Rollout (Argo Rollouts) when canary is enabled, otherwise Deploym
 {{- end }}
 
 {{/*
+Canary/stable Service names Argo Rollouts manages the pod selector on when
+canary.enabled (see rollout.yaml, service-canary.yaml, service-stable.yaml).
+Always "<common.name>-canary"/"<common.name>-stable" -- not configurable, so
+anything that needs to reference this app's canary pair by name (e.g. a
+gatewayapi HTTPRoute's `canary: true` backendRef shorthand) can always derive
+it from the app name alone.
+*/}}
+{{- define "common.canaryServiceName" -}}
+{{- printf "%s-canary" (include "common.name" .) -}}
+{{- end }}
+
+{{- define "common.stableServiceName" -}}
+{{- printf "%s-stable" (include "common.name" .) -}}
+{{- end }}
+
+{{/*
 Create the name of the service account to use
 */}}
 {{- define "common.serviceAccountName" -}}
