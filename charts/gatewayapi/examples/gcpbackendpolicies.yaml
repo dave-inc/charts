@@ -42,7 +42,7 @@ gcpBackendPolicies:
           timeoutSec: 120
           # Connection draining timeout, in seconds (0-3600). Controls how long
           # the load balancer waits for in-flight requests to finish before
-          # removing a backend. The chart default is 0 (draining disabled);
+          # removing a backend. The chart default is found in values.yaml;
           # set here to 30.
           connectionDraining:
             drainingTimeoutSec: 30

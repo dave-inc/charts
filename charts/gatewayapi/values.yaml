@@ -106,7 +106,7 @@ gcpBackendPolicies:
     spec:
       default:
         connectionDraining:
-          drainingTimeoutSec: 0
+          drainingTimeoutSec: 7
         timeoutSec: 60
         logging:
           enabled: true
