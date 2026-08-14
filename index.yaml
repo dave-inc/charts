@@ -188,6 +188,17 @@ entries:
   common:
   - apiVersion: v2
     appVersion: 1.17.0
+    created: "2026-08-14T19:17:01.737047984Z"
+    description: Standard Service Template
+    digest: bab0074cb3d5bd314b6efcb65bb344136ba7be613a07de36c2c0504f189f143c
+    kubeVersion: '>=1.30.0-0'
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.12.1-plat-1724-beta.10/common-0.12.1-plat-1724-beta.10.tgz
+    version: 0.12.1-plat-1724-beta.10
+  - apiVersion: v2
+    appVersion: 1.17.0
     created: "2026-08-13T21:51:33.301069258Z"
     description: Standard Service Template
     digest: 32bc3fd89eef7e43f4e4b603aba0721a14e55c1805691f47350157112ceb5cd0
@@ -1060,9 +1071,9 @@ entries:
     version: 0.8.9
   - apiVersion: v2
     appVersion: 1.17.0
-    created: "2024-09-18T02:33:58.165516692Z"
+    created: "2024-09-18T23:07:53.957992564Z"
     description: Standard Service Template
-    digest: ea5aa7d7405aacbc682f3a8bfffec3b5997a9743adf8fd680f7c81f3a492ee54
+    digest: c7e242bc43a7734a20e868ad3ad6e13ee5cb946482122f743ff485de32804d62
     name: common
     type: application
     urls:
@@ -1070,9 +1081,9 @@ entries:
     version: 0.8.9-bei-719
   - apiVersion: v2
     appVersion: 1.17.0
-    created: "2024-09-17T17:51:00.885390099Z"
+    created: "2024-09-18T02:33:58.165516692Z"
     description: Standard Service Template
-    digest: 3d1b70a5c8e1bda6322e7edfec75b0234f66b5cc0ba5526637451b462ec58dbc
+    digest: ea5aa7d7405aacbc682f3a8bfffec3b5997a9743adf8fd680f7c81f3a492ee54
     name: common
     type: application
     urls:
@@ -1090,9 +1101,9 @@ entries:
     version: 0.8.9-bei-719
   - apiVersion: v2
     appVersion: 1.17.0
-    created: "2024-09-18T23:07:53.957992564Z"
+    created: "2024-09-17T17:51:00.885390099Z"
     description: Standard Service Template
-    digest: c7e242bc43a7734a20e868ad3ad6e13ee5cb946482122f743ff485de32804d62
+    digest: 3d1b70a5c8e1bda6322e7edfec75b0234f66b5cc0ba5526637451b462ec58dbc
     name: common
     type: application
     urls:
@@ -2155,6 +2166,18 @@ entries:
   gatewayapi:
   - apiVersion: v2
     appVersion: 0.1.0
+    created: "2026-08-14T19:17:01.930025437Z"
+    description: 'Standalone chart for managing Kubernetes Gateway API resources (HTTPRoute
+      / GRPCRoute) and GKE HealthCheckPolicy / GCPBackendPolicy resources. Originally
+      extracted from the gateway-related features of the `common` chart. '
+    digest: dbfde194092eeb58f6ca362313a681340724ba082f24273b00cbec2f69f5c2cf
+    name: gatewayapi
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/gatewayapi-2.10.1-plat-1724-beta.1/gatewayapi-2.10.1-plat-1724-beta.1.tgz
+    version: 2.10.1-plat-1724-beta.1
+  - apiVersion: v2
+    appVersion: 0.1.0
     created: "2026-08-13T19:41:32.96291518Z"
     description: 'Standalone chart for managing Kubernetes Gateway API resources (HTTPRoute
       / GRPCRoute) and GKE HealthCheckPolicy / GCPBackendPolicy resources. Originally
@@ -3056,4 +3079,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2026-08-13T21:51:33.506011945Z"
+generated: "2026-08-14T19:17:01.932483508Z"
