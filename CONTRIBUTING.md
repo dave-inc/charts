@@ -1,0 +1,103 @@
+# Contributing
+
+## Do not edit chart versions
+
+`version` in `Chart.yaml` is managed by release-please. Editing it by hand will
+be overwritten, and the old habit of tacking a Jira suffix onto the version
+(`1.0.0-bei-719`) is no longer how you test a branch. See
+[Testing a chart before release](#testing-a-chart-before-release).
+
+## Your PR title is the only thing that matters
+
+This repo squash-merges, so your PR title becomes the single commit message on
+`master`. That message is what release-please parses to decide the next version.
+Commit messages inside your branch are discarded on merge and are not linted.
+
+Titles follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>: <description>
+```
+
+| Type | Version impact |
+| --- | --- |
+| `feat` | minor bump (`0.3.1` to `0.4.0`) |
+| `fix` | patch bump (`0.3.1` to `0.3.2`) |
+| `feat!`, or `BREAKING CHANGE:` in the body | major bump (`0.3.1` to `1.0.0`) |
+| `chore`, `docs`, `refactor`, `test`, `ci`, `build`, `style` | no release |
+
+A scope is optional and has no effect on which chart is released. Use one if it
+helps a human read the log.
+
+## How a change becomes a release
+
+Charts are attributed **by file path**, not by scope. A commit touching
+`charts/common/**` releases `common`, and nothing else. A commit touching two
+charts releases both.
+
+1. You merge a PR titled `fix: correct probe defaults`, touching `charts/job/`.
+2. release-please opens or updates a PR called
+   `chore(master): release`. It bumps `version` in `charts/job/Chart.yaml`,
+   writes `charts/job/CHANGELOG.md`, and records the new version in
+   `.release-please-manifest.json`.
+3. That release PR sits open and accumulates further merges until someone merges
+   it. Nothing is published before then, so merging to `master` is safe.
+4. Merging the release PR lands the version bump on `master`, which triggers
+   chart-releaser: it packages the chart, tags `job-0.3.2`, creates the GitHub
+   Release, and updates `index.yaml` on `gh-pages`.
+
+Step 4 is unchanged from how this repo has always worked. The only difference is
+that a bot writes the version bump instead of you.
+
+### Sweeping changes
+
+Because attribution is by file path, a change that touches every chart releases
+every chart. Renaming a shared label or reformatting all `values.yaml` files will
+produce eight releases. If that is not what you want, split the change so each
+chart moves on its own PR, or use a non-releasing type like `chore`.
+
+## Testing a chart before release
+
+Package the chart locally and point your consuming chart at the tarball. Nothing
+needs to be published, and no version needs to be invented.
+
+```sh
+cd charts/common
+helm dependency update .
+helm package . -d /tmp/charts
+```
+
+Then in the consuming repo:
+
+```yaml
+dependencies:
+  - name: common
+    version: 0.11.0
+    repository: "file:///tmp/charts"
+```
+
+## Adding a chart
+
+1. Create `charts/<name>/` with a `Chart.yaml` whose `name` matches the
+   directory name. CI enforces this, because release-please derives the release
+   tag from `Chart.yaml`'s `name` while chart-releaser derives it from the
+   directory.
+2. Add the path to `release-please-config.json` under `packages`.
+3. Add the path to `.release-please-manifest.json` with the version you consider
+   already released. Use `0.0.0` for a brand new chart.
+
+CI fails if a chart is missing from either file, since a chart release-please
+does not know about is silently frozen forever.
+
+## Schemas
+
+`values.schema.json` is generated from each chart's `schemas/` directory but is
+committed to the repo, because Helm needs it at install time. Regenerate it
+whenever you touch `schemas/`:
+
+```sh
+make schemas
+```
+
+CI regenerates and fails if the committed copy differs, so a stale schema cannot
+reach a release.

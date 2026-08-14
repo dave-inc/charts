@@ -1,3 +1,13 @@
 .vscode
 .idea
 .DS_Store
+
+# Produced by `helm dependency update`. Committing these makes every local lint
+# look like a chart change, which release-please would then turn into a release.
+charts/*/charts/
+charts/*/Chart.lock
+
+# Produced by `helm package` and chart-releaser.
+*.tgz
+.cr-release-packages/
+.cr-index/
