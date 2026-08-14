@@ -4,7 +4,7 @@
   "include-component-in-tag": true,
   "include-v-in-tag": false,
   "skip-github-release": true,
-  "pull-request-footer": "Tracked by SRE-0000.\n\nThis pull request is generated from commits that were each reviewed and approved on their own pull request. The ticket reference above exists so SOC-CI's Jira validation can resolve an open ticket for the release itself. That ticket must stay open, because SOC-CI rejects tickets whose status category is `done`.\n\nGenerated with [Release Please](https://github.com/googleapis/release-please).",
+  "pull-request-footer": "Tracked by SRE-7412.\n\nThis pull request is generated from commits that were each reviewed and approved on their own pull request. The ticket reference above exists so SOC-CI's Jira validation can resolve an open ticket for the release itself. That ticket must stay open, because SOC-CI rejects tickets whose status category is `done`.\n\nGenerated with [Release Please](https://github.com/googleapis/release-please).",
   "packages": {
     "charts/cloudsql-proxy": {},
     "charts/common": {},
