@@ -1,0 +1,37 @@
+name: Release Please
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release-please-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      # Opens/updates a PR that bumps `version` in each changed chart's Chart.yaml
+      # and writes its CHANGELOG.md. Charts are attributed by file path, so a commit
+      # only affects the charts it actually touches.
+      #
+      # Releasing is still chart-releaser's job. `skip-github-release` in
+      # release-please-config.json keeps this action away from tags and GitHub
+      # Releases, so merging the PR lands the version bump on master and the
+      # existing Release Charts workflow publishes it exactly as it does today.
+      #
+      # Uses a PAT rather than the default GITHUB_TOKEN because GitHub does not run
+      # workflows on PRs opened by GITHUB_TOKEN. Without it the release PR gets no
+      # lint or SOC-CI run, and you would be merging an unverified version bump.
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

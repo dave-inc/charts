@@ -1,0 +1,32 @@
+name: Lint PR Title
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+
+permissions:
+  pull-requests: read
+
+jobs:
+  # This repo squash-merges, so the PR title becomes the only commit message on
+  # master, and that message is what release-please parses to decide the version
+  # bump. Individual commit messages inside the PR are discarded on merge, so the
+  # title is the only thing worth linting.
+  lint-pr-title:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Scopes are deliberately unrestricted. release-please attributes commits
+          # to charts by file path, not by scope, so a scope enum here would be
+          # decoration that needs updating every time a chart is added or removed.
+          requireScope: false
+          subjectPattern: ^(?![A-Z]).+$
+          subjectPatternError: |
+            The subject "{subject}" should start with a lowercase character.

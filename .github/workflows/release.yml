@@ -10,12 +10,29 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
+      # Twingate only connects when the key is configured. Forks do not have the
+      # secret, and without this guard the whole workflow fails there before doing
+      # any work.
+      - name: Check Twingate configuration
+        id: twingate
+        env:
+          TWINGATE_SERVICE_KEY: ${{ secrets.TWINGATE_SERVICE_KEY }}
+        run: |
+          if [ -n "$TWINGATE_SERVICE_KEY" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "TWINGATE_SERVICE_KEY not set, skipping Twingate"
+          fi
+
       - name: Connect to Twingate
+        if: steps.twingate.outputs.enabled == 'true'
         uses: twingate/github-action@a8e6c2471f32650531a4683f45e485a2e97e048c # v1.5
         with:
-          service-key: ${{ secrets.TWINGATE_SERVICE_KEY}}
+          service-key: ${{ secrets.TWINGATE_SERVICE_KEY }}
+
       - name: Checkout
-        uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
 
@@ -24,6 +41,10 @@ jobs:
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
+      # Unchanged. chart-releaser packages every chart whose Chart.yaml version has
+      # no matching tag yet, then tags it, creates the GitHub Release and updates
+      # index.yaml on gh-pages. Previously those versions were bumped by hand in a
+      # PR; now release-please bumps them in a PR. Nothing downstream cares which.
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@a3454e46a6f5ac4811069a381e646961dda2e1bf # v1.4.0
         with:

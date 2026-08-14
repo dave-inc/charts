@@ -1,0 +1,17 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "helm",
+  "include-component-in-tag": true,
+  "include-v-in-tag": false,
+  "skip-github-release": true,
+  "packages": {
+    "charts/cloudsql-proxy": {},
+    "charts/common": {},
+    "charts/dave-npd": {},
+    "charts/gateway-bundle": {},
+    "charts/gatewayapi": {},
+    "charts/job": {},
+    "charts/kyverno-policies": {},
+    "charts/workflow": {}
+  }
+}
