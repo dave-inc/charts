@@ -44,6 +44,20 @@ spec:
       {{- if .Values.canary.trafficRouting }}
       trafficRouting:
         {{- toYaml .Values.canary.trafficRouting | nindent 8 }}
+      {{- else if not (kindIs "bool" .Values.canary.trafficRouting) }}
+      {{- /*
+      Zero-config default: an HTTPRoute named after this app (the same
+      `common.name` convention canary/stable Services already use) is assumed
+      to exist -- see the `gatewayapi` chart's stable+canary backendRef
+      expansion. Set `canary.trafficRouting` explicitly to use a different
+      traffic router (nginx/istio/alb/smi) or to point at a differently-named
+      HTTPRoute, or set it to `false` to fall back to basic weighted-replica
+      canary with no traffic-routing resource at all.
+      */}}
+      trafficRouting:
+        plugins:
+          argoproj-labs/gatewayAPI:
+            httpRoute: {{ include "common.name" . }}
       {{- end }}
       {{- if .Values.canary.analysis }}
       analysis:

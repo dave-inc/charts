@@ -183,22 +183,27 @@ canary:
   # these Services itself; the chart only needs to create them with the same
   # base selector as the main service.
   #
-  # Optional traffic routing config, passed as-is to .spec.strategy.canary.trafficRouting
-  # (e.g. nginx, istio, alb, smi). Leave empty for basic weighted-replica canary,
-  # which needs no service mesh or ingress controller support.
+  # Traffic routing config, passed as-is to .spec.strategy.canary.trafficRouting.
+  # Left at {} (the default), the chart auto-configures the argoproj-labs/gatewayAPI
+  # plugin (baked into the argo-rollouts controller image, see the `argo-rollouts`
+  # chart) to manage an HTTPRoute named after this app -- the same "<name>-canary"/
+  # "<name>-stable" convention the chart's own canary/stable Services use (see
+  # service-canary.yaml/service-stable.yaml), matching how the `gatewayapi` chart
+  # expands every backendRef into that same pair whenever `global.canary.enabled`
+  # is true. See charts/gatewayapi/examples/canary.yaml. No manual wiring needed.
   #
-  # For Gateway API (the `gatewayapi` chart), use the argoproj-labs/gatewayAPI
-  # plugin (baked into the argo-rollouts controller image, see the
-  # `argo-rollouts` chart) and point it at an HTTPRoute whose backendRefs
-  # reference this app's canary pair -- the `gatewayapi` chart expands every
-  # backendRef into the same "<name>-canary"/"<name>-stable" pair whenever
-  # `global.canary.enabled` is true. See charts/gatewayapi/examples/canary.yaml:
+  # Override this to use a different traffic router (nginx, istio, alb, smi) or to
+  # point at a differently-named/namespaced HTTPRoute, e.g.:
   #
   # trafficRouting:
   #   plugins:
   #     argoproj-labs/gatewayAPI:
   #       httpRoute: <name of the HTTPRoute created by the gatewayapi chart>
   #       namespace: <namespace of that HTTPRoute, if not this Rollout's own>
+  #
+  # Set this to `false` instead to disable traffic routing entirely and fall back
+  # to basic weighted-replica canary, which needs no service mesh, ingress
+  # controller, or HTTPRoute at all.
   trafficRouting: {}
   # Optional background analysis config, passed as-is to .spec.strategy.canary.analysis
   # https://argo-rollouts.readthedocs.io/en/stable/features/analysis/
