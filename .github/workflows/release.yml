@@ -19,9 +19,9 @@ jobs:
   # Release, with the per-release changelog as the release body. The publish job
   # below then attaches the packaged chart and updates the repo index.
   #
-  # This step fails with "GitHub Actions is not permitted to create or approve
-  # pull requests" unless the repo enables that setting or AUTOMATION_TOKEN is set.
-  # GITHUB_TOKEN alone cannot open a PR by default. See docs/repo-setup.md.
+  # Opening the PR fails with "GitHub Actions is not permitted to create or
+  # approve pull requests" unless either the repo enables that setting or this
+  # runs as something other than GITHUB_TOKEN. See docs/repo-setup.md.
   release-please:
     runs-on: ubuntu-latest
     permissions:
@@ -31,10 +31,21 @@ jobs:
       releases_created: ${{ steps.release.outputs.releases_created }}
       paths_released: ${{ steps.release.outputs.paths_released }}
     steps:
+      # Minted per run and revoked when the job ends, so no long-lived credential
+      # is stored on the repo. `continue-on-error` keeps this working before the
+      # app is installed, falling back to GITHUB_TOKEN below.
+      - name: Mint an app token
+        id: app-token
+        continue-on-error: true
+        uses: dave-inc/common-workflows/.github/actions/create-github-app-token@main
+        with:
+          app-id: ${{ secrets.DEVX_GH_APP_ID }}
+          private-key: ${{ secrets.DEVX_GH_APP_S_KEY }}
+
       - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         id: release
         with:
-          token: ${{ secrets.AUTOMATION_TOKEN || secrets.GITHUB_TOKEN }}
+          token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 

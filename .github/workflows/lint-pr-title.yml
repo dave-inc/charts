@@ -15,9 +15,13 @@ jobs:
   # With squash merging the PR title becomes the only commit message on master,
   # and that message is what release-please parses to decide the version bump.
   #
-  # This check must be a required status check. release-please treats a
-  # non-conventional subject as "no release", so an unlinted title does not fail
-  # loudly, it silently publishes nothing and the chart quietly stops releasing.
+  # Advisory, not a required status check. Making it required would block the
+  # release PR permanently, because a bot opens it and GitHub starts no workflow
+  # runs for it, so it would report no checks at all. See docs/repo-setup.md.
+  #
+  # Treat a failure here as real even though nothing enforces it. release-please
+  # reads a non-conventional subject as "no release", so a bad title does not fail
+  # loudly, it silently publishes nothing and that change never ships.
   lint-pr-title:
     runs-on: ubuntu-latest
     steps:

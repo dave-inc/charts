@@ -1,27 +1,16 @@
 # Repository setup for the release pipeline
 
-The release pipeline is inert until four repository settings change on
-`dave-inc/charts`. Three of them fail loudly. One fails silently, and that is the
-one to care about most.
+The release pipeline is inert until two repository settings change on
+`dave-inc/charts`. One fails loudly. One fails silently, and that is the one to
+care about most.
 
-All four are repository-level and need the **Admin** role on the repo. None of them
-need org admin, and none of them touch the existing org rulesets.
+Both are repository-level and need the **Admin** role on the repo. Neither needs
+org admin, and neither touches the existing org rulesets. Installing the DevX app,
+described in step 2, is the only part that may need someone outside the repo.
 
 The reasoning behind each setting is in
 [release-pipeline.md](release-pipeline.md#repository-settings-this-depends-on).
 This page is the checklist.
-
-## Do step 4 last, and do step 3 before it
-
-Step 4 makes `lint` and `lint-pr-title` required. Two things must be true first,
-or releases deadlock with no manual way out:
-
-- Those workflows must already be on `master`, or every open PR becomes
-  unmergeable against checks that cannot run.
-- `AUTOMATION_TOKEN` must be set, for the reason in step 3. Without it the release
-  PR never gets a check run at all, and not even an admin can merge it.
-
-Steps 1 through 3 are safe to apply in any order.
 
 ## 1. Squash merging only
 
@@ -57,16 +46,50 @@ The org ruleset `Copilot-PR-Review` lists `allowed_merge_methods` as `merge`,
 org admin. The effective set is the intersection of the ruleset and the repository
 setting, so restricting the repository to squash is sufficient.
 
-## 2. Allow Actions to create pull requests
+## 2. Let release-please open its pull request
 
 Without this, release-please fails outright on its first run with
-`GitHub Actions is not permitted to create or approve pull requests`.
+`GitHub Actions is not permitted to create or approve pull requests`. Either option
+below fixes it. The app is the better one.
 
-In the UI this is Settings, Actions, General, Workflow permissions, the checkbox
-reading *Allow GitHub Actions to create and approve pull requests*.
+### Option A, install the DevX app
 
-By API, read the current value first, because the PUT replaces both fields and the
-`default_workflow_permissions` value should be preserved rather than guessed:
+The workflows already try to mint a token from the app the org uses elsewhere,
+falling back to `GITHUB_TOKEN` if it is unavailable:
+
+```yaml
+- name: Mint an app token
+  id: app-token
+  continue-on-error: true
+  uses: dave-inc/common-workflows/.github/actions/create-github-app-token@main
+  with:
+    app-id: ${{ secrets.DEVX_GH_APP_ID }}
+    private-key: ${{ secrets.DEVX_GH_APP_S_KEY }}
+```
+
+Two grants are needed, both of existing things rather than anything new:
+
+- Install the DevX app on `dave-inc/charts` with `contents: write` and
+  `pull requests: write`.
+- Make `DEVX_GH_APP_ID` and `DEVX_GH_APP_S_KEY` visible to the repo, which is how
+  `dave-inc/sre` already consumes them.
+
+The token is minted at job start and revoked when the job ends, so nothing
+long-lived is stored on the repo, and it is not tied to a person who may leave.
+`dave-inc/buckshot`, `dave-inc/core-backend` and `dave-inc/sre` already use this
+action.
+
+The app also fixes a second, quieter problem. GitHub does not start workflow runs
+from anything done with `GITHUB_TOKEN`, so when `schemas.yml` commits a rebuilt
+schema, no check re-runs against the new commit.
+
+### Option B, enable the repository setting
+
+In the UI, Settings, Actions, General, Workflow permissions, the checkbox reading
+*Allow GitHub Actions to create and approve pull requests*.
+
+By API, read the current value first, because the PUT replaces both fields and
+`default_workflow_permissions` should be preserved rather than guessed:
 
 ```bash
 gh api repos/dave-inc/charts/actions/permissions/workflow
@@ -79,108 +102,57 @@ gh api -X PUT repos/dave-inc/charts/actions/permissions/workflow \
 The API field name `can_approve_pull_request_reviews` is misleading. It gates
 creating pull requests, not only approving them.
 
-If org policy forbids this setting, skip it and do step 3, which is not subject to
-the restriction.
+## Required status checks, deliberately not added
 
-## 3. `AUTOMATION_TOKEN` secret
+An earlier version of this page had a fourth step making `lint` and
+`lint-pr-title` required on the default branch. It has been dropped, and the
+reasoning is worth keeping because the idea is an easy one to have again.
 
-Required, and required *before* step 4. This was confirmed by testing rather than
-reasoned about, after an earlier version of this page got it wrong.
+Both checks are redundant by the time the release PR exists. Every commit in it was
+already linted on its own PR, and the release PR's title is generated by
+release-please, always `chore: release master`, so `lint-pr-title` would only ever
+be checking a machine's output against a machine's rule.
 
-GitHub does not start workflow runs from pushes or pull requests made with
-`GITHUB_TOKEN`. The release PR is opened by the bot, so with `GITHUB_TOKEN` it
-receives no `lint` or `lint-pr-title` run at all. Those are the two checks step 4
-makes required, so the release PR reports zero checks and sits at
-`mergeStateStatus: BLOCKED` forever.
-
-There is no way out of that state by hand. A ruleset created with no bypass actors
-cannot be overridden even by a repository admin, and `gh pr merge --admin` fails
-with:
+Making them required actively breaks releases. The release PR is opened by a bot,
+GitHub does not start workflow runs for it, so it reports zero checks and sits at
+`mergeStateStatus: BLOCKED` forever. A ruleset created without bypass actors cannot
+be overridden by anyone, including a repository admin:
 
 ```
 GraphQL: Repository rule violations found
 2 of 2 required status checks are expected.
 ```
 
-Applying step 4 without step 3 therefore deadlocks releases completely. The
-recovery is to set `AUTOMATION_TOKEN`, or to disable the ruleset, merge, and
-re-enable it.
+The only escape is to disable the ruleset, merge, and re-enable it, once per
+release, by hand, by an admin. That was confirmed by testing, not reasoned about.
 
-The same mechanism bites a second time once things are running: when `schemas.yml`
-commits a rebuilt schema, nothing re-runs against the new commit, so a required
-check's result sits on the previous commit and the PR cannot be merged until
-something else pushes.
+`SOC-CI` and `Codeowners Enforcement` are unaffected and still gate the release PR.
+They are dispatched by an app reacting to webhooks rather than by a workflow in
+this repo, and webhook delivery is not subject to the `GITHUB_TOKEN` suppression.
+`dave-inc/sre#10854`, authored by `app/github-actions`, carries both.
 
-Create a fine-grained PAT or GitHub App installation token scoped to
-`dave-inc/charts` with `contents: write` and `pull requests: write`, then add it as
-a repository secret named `AUTOMATION_TOKEN` under Settings, Secrets and variables,
-Actions.
+So the release PR is still reviewed, still compliance-checked, and still merged by
+a human deciding to release. That human gate is the intended control.
 
-`release.yml` and `schemas.yml` both read it and fall back to
-`GITHUB_TOKEN`, so adding it later is a no-op for anything already working.
-
-Whichever identity owns the token becomes the author of the release PR. That
-identity does not bypass `SOC-CI`; the only bypass in the SOC-CI workflow is a
-hardcoded Dependabot user id. This is why the release PR carries a Jira reference
-in its footer.
-
-## 4. Required status checks
-
-Add `lint` and `lint-pr-title` as required checks on the default branch.
-
-The three rulesets already on this repo, `SOC-CI`, `Enforce Codeownership 2.0` and
-`Copilot-PR-Review`, are all `source_type: Organization`. A repo admin cannot edit
-them and should not try. Rulesets are additive, so a new repository-level ruleset
-layers on top without disturbing them:
-
-```bash
-gh api -X POST repos/dave-inc/charts/rulesets --input - <<'EOF'
-{
-  "name": "Release pipeline checks",
-  "target": "branch",
-  "enforcement": "active",
-  "conditions": { "ref_name": { "include": ["~DEFAULT_BRANCH"], "exclude": [] } },
-  "rules": [{
-    "type": "required_status_checks",
-    "parameters": {
-      "strict_required_status_checks_policy": false,
-      "do_not_enforce_on_create": true,
-      "required_status_checks": [
-        { "context": "lint" },
-        { "context": "lint-pr-title" }
-      ]
-    }
-  }]
-}
-EOF
-```
-
-`lint-pr-title` matters because release-please treats a non-conventional PR title
-as "no release". An unlinted title does not fail anything, it publishes nothing,
-and the chart quietly stops releasing until someone notices.
-
-Verify, then confirm an open PR still reports `MERGEABLE`:
-
-```bash
-gh api repos/dave-inc/charts/rulesets --jq '.[] | select(.source_type=="Repository") | .name'
-gh pr view <any open PR> --repo dave-inc/charts --json mergeable,mergeStateStatus
-```
+`lint` and `lint-pr-title` continue to run on every PR and report failures. They
+are advisory rather than blocking. The cost is that a contributor can merge a PR
+whose title is not a conventional commit, in which case release-please attributes
+no release to it and that change silently never ships. It shows as a red check
+before merge. Worth revisiting once the app in step 2 is installed, since that
+removes the reason not to require them.
 
 ## What was already verified
 
-Steps 1, 2 and 4 were applied to a fork of this repo and exercised end to end
-before being written down here.
+Step 1 and the required-checks behaviour were applied to a fork of this repo and
+exercised end to end before being written down here.
 
 - The step 1 command returned exactly the intended state.
-- The step 4 ruleset was accepted as written.
-- A pull request touching only a documentation file, which is the case most likely
-  to expose a required check that never fires, came back `MERGEABLE` with
-  `mergeStateStatus: CLEAN` and both `lint` and `lint-pr-title` completing
-  successfully. `schemas.yml` correctly stayed idle and does not block, because it
-  is not a required check.
-- With step 2 unset, release-please failed with the error quoted above. With it
-  set, it opened a release PR, and merging that PR published charts through
-  chart-releaser.
+- A full release ran through: a chart change opened a release PR, merging it
+  created the tag and GitHub Release with the changelog as its body, and the
+  publish job attached the packaged chart and updated `index.yaml`.
+- With step 2 unset, release-please failed with the error quoted above.
+- With required checks enabled and no app token, the release PR was unmergeable
+  even with `--admin`, which is why that step was dropped.
 
 ## Rollback
 
@@ -193,19 +165,15 @@ gh api -X PATCH repos/dave-inc/charts \
   -f squash_merge_commit_title=COMMIT_OR_PR_TITLE \
   -f squash_merge_commit_message=COMMIT_MESSAGES
 
-# 2
+# 2, option A: uninstall the app from the repo
+# 2, option B:
 gh api -X PUT repos/dave-inc/charts/actions/permissions/workflow \
   -F can_approve_pull_request_reviews=false \
   -f default_workflow_permissions=<original value>
-
-# 3: delete the AUTOMATION_TOKEN secret
-
-# 4
-gh api -X DELETE repos/dave-inc/charts/rulesets/<id>
 ```
 
-Reverting step 1 or step 4 leaves the pipeline running in a degraded state rather
-than stopping it, which is the argument for reverting step 2 or 3 instead if the
-pipeline needs to be switched off in a hurry. Removing the ability to open the
-release PR stops it cleanly and changes nothing about how charts already published
-are consumed.
+Reverting step 1 leaves the pipeline running in a degraded state rather than
+stopping it, which is the argument for reverting step 2 instead if the pipeline
+needs to be switched off in a hurry. Removing the ability to open the release PR
+stops it cleanly and changes nothing about how charts already published are
+consumed.
