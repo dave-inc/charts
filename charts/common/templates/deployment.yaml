@@ -261,6 +261,19 @@ spec:
               value: {{ .Values.apm.commitSha }}
             - name: DD_GIT_REPOSITORY_URL
               value: {{ .Values.apm.repositoryUrl }}
+            {{- /*
+            deployment-group flips between "canary" and "control" per-ReplicaSet via
+            the Rollout's canaryMetadata/stableMetadata (see rollout.yaml) when canary
+            is enabled, and is otherwise always "control" (the static pod label above).
+            DD_TAGS is the Datadog Agent/tracer-recognized env var for global tags, so
+            this surfaces the role as a real Datadog tag with no extra chart config.
+            */}}
+            - name: DEPLOYMENT_GROUP
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['deployment-group']
+            - name: DD_TAGS
+              value: "deployment_group:$(DEPLOYMENT_GROUP)"
           {{- end }}
           envFrom:
             {{- if .Values.existingConfigMapName }}
