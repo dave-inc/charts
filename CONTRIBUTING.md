@@ -49,6 +49,22 @@ charts releases both.
 Step 4 is unchanged from how this repo has always worked. The only difference is
 that a bot writes the version bump instead of you.
 
+### The release PR and SOC-CI
+
+SOC-CI validates that every pull request references an open Jira ticket, and it
+does not exempt the release bot. Its only bypass is a hardcoded Dependabot user
+id. The release PR is generated, so it has no ticket of its own.
+
+`pull-request-footer` in `release-please-config.json` carries a standing ticket
+reference to satisfy that check. Two things follow from this:
+
+- **That ticket must never be closed.** SOC-CI rejects any ticket whose status
+  category is `done`, so closing it breaks every future release PR with an error
+  that points at Jira rather than at this repo. CI checks that the reference is
+  present, but it cannot check that the ticket is still open.
+- The individual PRs that feed a release still need their own tickets. The
+  standing ticket covers the generated PR only.
+
 ### Sweeping changes
 
 Because attribution is by file path, a change that touches every chart releases

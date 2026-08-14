@@ -72,6 +72,32 @@ jobs:
 
           exit $fail
 
+      # SOC-CI runs validate_pull_request against release-please's own release PR
+      # and fails it unless the title or body resolves to an open Jira ticket. The
+      # only bypass in soc-ci-gha-workflow.yml is a hardcoded Dependabot user id,
+      # which the release bot does not have. The footer carries that reference.
+      - name: Verify release PR will satisfy SOC-CI
+        run: |
+          set -euo pipefail
+          footer=$(jq -r '.["pull-request-footer"] // ""' release-please-config.json)
+
+          if [ -z "$footer" ]; then
+            echo "::error::pull-request-footer is missing. The release PR will fail SOC-CI."
+            exit 1
+          fi
+
+          # Same expression validate_jira.py uses.
+          if ! echo "$footer" | grep -qE '\b[A-Z0-9]{1,10}-[0-9]+\b'; then
+            echo "::error::pull-request-footer has no Jira ticket reference."
+            exit 1
+          fi
+
+          if echo "$footer" | grep -qE '\bSRE-0000\b'; then
+            echo "::error::pull-request-footer still has the SRE-0000 placeholder."
+            echo "::error::Replace it with a real, permanently open ticket."
+            exit 1
+          fi
+
       # values.schema.json is generated from schemas/ but committed to the repo.
       # Nothing regenerates it at release time, so this check is what keeps the
       # committed file from drifting away from its sources.
