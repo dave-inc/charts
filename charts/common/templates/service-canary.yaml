@@ -3,6 +3,10 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ include "common.canaryServiceName" . }}
+  annotations:
+    # The Gateway API HTTPRoute is applied in wave 2. Its backendRefs need both
+    # Rollouts-managed Services to exist before that reconciliation begins.
+    argocd.argoproj.io/sync-wave: "1"
   labels:
     {{- include "common.labels" . | nindent 4 }}
 spec:

@@ -121,17 +121,30 @@ The `Gateway` helm chart is found [here](../gateway-bundle).
 
 Every `HTTPRoute`, `HealthCheckPolicy` and `GCPBackendPolicy` this chart renders
 is annotated with `argocd.argoproj.io/sync-wave: "2"` by default. All three
-attach to a `Service` (via `targetRef` / `backendRefs`), and those Services are
-created at `argocd.argoproj.io/sync-wave: "1"` by the `common` / `cloudarmor`
-charts. Defaulting these resources to wave `"2"` guarantees Argo CD reconciles
-the target Service first, so a route or policy never reconciles ahead of the
-backend it binds to (which would fail to bind or briefly mark the backend
-unhealthy).
+attach to a `Service` (via `targetRef` / `backendRefs`). Ordinary `common` /
+`cloudarmor` Services are in the implicit default wave `"0"`; the `common`
+chart's canary and stable Services are in wave `"1"`. Defaulting these
+resources to wave `"2"` still guarantees Argo CD reconciles every target
+Service well before the route or policy, giving the Service's GCP-side
+NEG/backend real wall-clock time to register so a route never reconciles ahead
+of the backend it binds to (which would briefly mark that backend unhealthy
+until the NEG catches up).
 
 The default is overridable — per item via its `metadata.annotations` (setting
 `argocd.argoproj.io/sync-wave` there wins over the chart default), and
 chart-wide by changing `<resource>.default.metadata.annotations` in your values
 (e.g. `routes.default.metadata.annotations`).
+
+When canary is enabled, this `HTTPRoute` is also load-bearing for the Rollout's
+own health: Argo Rollouts' Gateway API traffic-routing plugin (see
+`charts/common/templates/rollout.yaml`) has to patch this route's weights for
+the Rollout to ever go healthy. Rather than pull the route earlier (and give up
+its buffer after the Services it targets), the `common` chart instead gives the
+Rollout — and, since its `scaleTargetRef` follows it, the HPA/VPA/KEDA
+`ScaledObject` — a later sync-wave than this route's default `"2"`, so the
+dependency runs one direction only: Services → route → Rollout → autoscaler.
+See `charts/common/templates/rollout.yaml` and `charts/common/README.md` for
+the wave assignments on that side.
 
 ### Full spec control
 

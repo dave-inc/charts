@@ -8,6 +8,18 @@ Configuration reference lives in [values.yaml](./values.yaml), which is commente
 place. This file covers only what changes between versions and what you have to do about
 it.
 
+## Argo CD order for canary rollouts
+
+When canary is enabled, the chart applies the stable and canary Services in sync wave
+`"1"`, then the Gateway API chart applies its `HTTPRoute` in wave `"2"`. The Rollout is
+in wave `"3"`, allowing its Gateway API traffic-routing plugin to update an existing
+route, and an HPA, VPA, or KEDA `ScaledObject` targeting that Rollout is in wave `"4"`.
+The referenced Deployment remains in the default wave `"0"`.
+
+This breaks the resource cycle as one direction: Deployment/Services → HTTPRoute →
+Rollout → autoscaler. If a canary HTTPRoute overrides its default sync-wave, keep it
+below the Rollout's wave or override the Rollout and autoscaler waves together.
+
 ## Upgrading to 0.11.1
 
 This release changes shutdown and rollout defaults for every service, so a Pod that

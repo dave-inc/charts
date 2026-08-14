@@ -16,6 +16,16 @@ kind: HTTPRoute
 metadata:
   {{- $userAnnotations := dig "metadata" "annotations" dict $routeDefinition }}
   {{- $defaultAnnotations := dig "default" "metadata" "annotations" dict $.Values.routes }}
+  {{- /*
+  When canary is enabled, this HTTPRoute is load-bearing for the Rollout's own
+  health: Argo Rollouts' gatewayAPI traffic-routing plugin (see
+  charts/common/templates/rollout.yaml) has to patch this route's weights for
+  the Rollout to ever go healthy. That makes the Rollout depend on this route,
+  so the Rollout is given a sync-wave (see rollout.yaml) *after* this route's
+  default "2" instead of the reverse -- keeping this route at "2" preserves its
+  own buffer after the Services it targets (see values.yaml), rather than
+  trading that buffer away to unblock the Rollout.
+  */}}
   {{- if or $userAnnotations $defaultAnnotations }}
   annotations:
     {{- range $k, $v := $defaultAnnotations }}

@@ -30,8 +30,8 @@ healthCheckPolicies:
   # When an items entry rawSpec is false, the spec block will be merged with defaults defined here.
   default:
     # Default annotations applied to every rendered resource, overridable per item
-    # via metadata.annotations. sync-wave "2" ensures the target Service (created
-    # at sync-wave "1" by the common/cloudarmor charts) reconciles first.
+    # via metadata.annotations. sync-wave "2" leaves time after the target
+    # Service is created for its GCP-side NEG/backend registration to settle.
     metadata:
       annotations:
         argocd.argoproj.io/sync-wave: "2"
@@ -98,8 +98,8 @@ gcpBackendPolicies:
   # When an items entry rawSpec is false, the spec block will be merged with defaults defined here.
   default:
     # Default annotations applied to every rendered resource, overridable per item
-    # via metadata.annotations. sync-wave "2" ensures the target Service (created
-    # at sync-wave "1" by the common/cloudarmor charts) reconciles first.
+    # via metadata.annotations. sync-wave "2" leaves time after the target
+    # Service is created for its GCP-side NEG/backend registration to settle.
     metadata:
       annotations:
         argocd.argoproj.io/sync-wave: "2"
@@ -147,8 +147,8 @@ routes:
   # When an items entry rawSpec is false, the spec block will be merged with defaults defined here.
   default:
     # Default annotations applied to every rendered resource, overridable per item
-    # via metadata.annotations. sync-wave "2" ensures the target Service (created
-    # at sync-wave "1" by the common/cloudarmor charts) reconciles first.
+    # via metadata.annotations. sync-wave "2" leaves time after the target
+    # Service is created for its GCP-side NEG/backend registration to settle.
     metadata:
       annotations:
         argocd.argoproj.io/sync-wave: "2"

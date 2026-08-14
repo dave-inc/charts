@@ -11,6 +11,11 @@ apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
   name: {{ include "common.name" . }}
+  annotations:
+    # Wave 2 creates the Gateway API HTTPRoute whose weights the Rollouts
+    # traffic-routing plugin manages. Applying the Rollout afterward prevents
+    # it from reconciling before that required route exists.
+    argocd.argoproj.io/sync-wave: "3"
   labels:
     {{- include "common.labels" . | nindent 4 }}
 spec:
