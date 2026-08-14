@@ -188,6 +188,17 @@ entries:
   common:
   - apiVersion: v2
     appVersion: 1.17.0
+    created: "2026-08-14T19:30:03.358055081Z"
+    description: Standard Service Template
+    digest: 0e55b32b343172fc46d9aca18258a2c3a30bda9b46785571a37d5729cb159b3f
+    kubeVersion: '>=1.30.0-0'
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.12.1-plat-1724-beta.11/common-0.12.1-plat-1724-beta.11.tgz
+    version: 0.12.1-plat-1724-beta.11
+  - apiVersion: v2
+    appVersion: 1.17.0
     created: "2026-08-14T19:17:01.737047984Z"
     description: Standard Service Template
     digest: bab0074cb3d5bd314b6efcb65bb344136ba7be613a07de36c2c0504f189f143c
@@ -1071,6 +1082,16 @@ entries:
     version: 0.8.9
   - apiVersion: v2
     appVersion: 1.17.0
+    created: "2024-09-18T16:21:03.735084914Z"
+    description: Standard Service Template
+    digest: 7bb442d82472d79639f3a077bf8317ab46a4ae1bf9463a270126f28b1baa1b47
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.8.9-bei-719/common-0.8.9-bei-719.tgz
+    version: 0.8.9-bei-719
+  - apiVersion: v2
+    appVersion: 1.17.0
     created: "2024-09-18T23:07:53.957992564Z"
     description: Standard Service Template
     digest: c7e242bc43a7734a20e868ad3ad6e13ee5cb946482122f743ff485de32804d62
@@ -1084,16 +1105,6 @@ entries:
     created: "2024-09-18T02:33:58.165516692Z"
     description: Standard Service Template
     digest: ea5aa7d7405aacbc682f3a8bfffec3b5997a9743adf8fd680f7c81f3a492ee54
-    name: common
-    type: application
-    urls:
-    - https://github.com/dave-inc/charts/releases/download/common-0.8.9-bei-719/common-0.8.9-bei-719.tgz
-    version: 0.8.9-bei-719
-  - apiVersion: v2
-    appVersion: 1.17.0
-    created: "2024-09-18T16:21:03.735084914Z"
-    description: Standard Service Template
-    digest: 7bb442d82472d79639f3a077bf8317ab46a4ae1bf9463a270126f28b1baa1b47
     name: common
     type: application
     urls:
@@ -3079,4 +3090,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2026-08-14T19:17:01.932483508Z"
+generated: "2026-08-14T19:30:03.361181858Z"
