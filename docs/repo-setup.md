@@ -28,11 +28,18 @@ gh api -X PATCH repos/dave-inc/charts \
   -F allow_squash_merge=true \
   -F allow_merge_commit=false \
   -F allow_rebase_merge=false \
+  -F allow_auto_merge=true \
   -f squash_merge_commit_title=PR_TITLE \
   -f squash_merge_commit_message=BLANK
 ```
 
 In the UI this is Settings, General, Pull Requests.
+
+`allow_auto_merge` is the one item here that is a convenience rather than a
+requirement. The workflow queues the release PR to merge itself once its checks
+and approval land, so nobody has to return to the PR to press the button. Without
+it, the release PR is merged by hand and nothing else changes. See
+[Auto-merging the release PR](release-pipeline.md#auto-merging-the-release-pr).
 
 Verify:
 

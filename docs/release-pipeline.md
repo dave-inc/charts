@@ -222,6 +222,31 @@ dependency resolution unless `--devel` is passed. To test an unreleased chart,
 point an Argo CD Application at this repo with `targetRevision` set to the
 branch. See CONTRIBUTING.md.
 
+## Auto-merging the release PR
+
+`release.yml` arms GitHub's auto-merge on the release PR as soon as release-please
+opens it, so it merges itself once it is mergeable.
+
+This does not remove a review. `master` carries classic branch protection on top of
+the org ruleset, and that protection is where the approval requirement comes from.
+The org ruleset itself asks for zero approvals, which is misleading if you read
+only the rulesets. Auto-merge waits for the same approval and the same checks a
+person would; it removes the second trip where whoever approved has to come back
+and press the button.
+
+What it does change is batching. Today the release PR accumulates changes until
+somebody merges it, so several charts tend to ship together. Armed, it merges at the
+first moment it is allowed to, so releases become smaller and more frequent. Each
+one still consists of changes already reviewed on their own pull requests.
+
+To turn it off, unset `allow_auto_merge` on the repository. The step then logs a
+warning and the release PR waits to be merged by hand. Nothing else depends on it.
+
+Genuinely unattended releases, with no approval at all, would need a repository
+admin to add the app as a bypass actor on master's branch protection. That is a
+larger decision than this pipeline needs, and it is not required for any of the
+above.
+
 ## SOC-CI and the release PR
 
 The release PR is generated, so it has no Jira ticket of its own, and SOC-CI does

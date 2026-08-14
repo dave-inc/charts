@@ -66,6 +66,28 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
+      # Queues the release PR to merge itself once its checks pass and it has the
+      # approval master's branch protection requires. This does not skip that
+      # approval, it removes the second trip where whoever approved has to come back
+      # later and press merge.
+      #
+      # Re-arming an already-armed PR is a no-op, so running this on every push is
+      # harmless. Failure is not fatal: without `allow_auto_merge` on the repo this
+      # step is the only thing that breaks, and the release PR is still merged by
+      # hand exactly as before. See docs/repo-setup.md.
+      - name: Queue the release PR to merge itself
+        if: steps.release.outputs.prs_created == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+          PR: ${{ fromJSON(steps.release.outputs.pr || '{"number":0}').number }}
+        run: |
+          set -uo pipefail
+          if gh pr merge "$PR" --auto --squash --repo "$GITHUB_REPOSITORY"; then
+            echo "release PR #$PR will merge once its checks and approval land"
+          else
+            echo "::warning::Could not arm auto-merge on #$PR. Is allow_auto_merge enabled? See docs/repo-setup.md."
+          fi
+
   # Packages the charts release-please just released, attaches each package to the
   # release release-please created, and regenerates index.yaml on gh-pages.
   #
