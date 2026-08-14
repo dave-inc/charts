@@ -11,11 +11,17 @@ The reasoning behind each setting is in
 [release-pipeline.md](release-pipeline.md#repository-settings-this-depends-on).
 This page is the checklist.
 
-## Do step 4 last
+## Do step 4 last, and do step 3 before it
 
-Step 4 makes `lint` and `lint-pr-title` required. Those workflows must already be
-on `master` before it is applied, or every open PR becomes unmergeable against
-checks that cannot run. Steps 1 through 3 are safe to apply in any order.
+Step 4 makes `lint` and `lint-pr-title` required. Two things must be true first,
+or releases deadlock with no manual way out:
+
+- Those workflows must already be on `master`, or every open PR becomes
+  unmergeable against checks that cannot run.
+- `AUTOMATION_TOKEN` must be set, for the reason in step 3. Without it the release
+  PR never gets a check run at all, and not even an admin can merge it.
+
+Steps 1 through 3 are safe to apply in any order.
 
 ## 1. Squash merging only
 
@@ -78,17 +84,32 @@ the restriction.
 
 ## 3. `AUTOMATION_TOKEN` secret
 
-Step 2 or step 3 is required. Step 3 is worth doing even when step 2 is done.
+Required, and required *before* step 4. This was confirmed by testing rather than
+reasoned about, after an earlier version of this page got it wrong.
 
 GitHub does not start workflow runs from pushes or pull requests made with
-`GITHUB_TOKEN`. Two consequences:
+`GITHUB_TOKEN`. The release PR is opened by the bot, so with `GITHUB_TOKEN` it
+receives no `lint` or `lint-pr-title` run at all. Those are the two checks step 4
+makes required, so the release PR reports zero checks and sits at
+`mergeStateStatus: BLOCKED` forever.
 
-- The release PR gets no `lint` run. `SOC-CI` and `Codeowners Enforcement` are
-  dispatched from other repositories, so they still report and the PR stays
-  mergeable.
-- When `schemas.yml` commits a rebuilt schema, nothing re-runs against the new
-  commit. With `lint` required, its result sits on the previous commit and the PR
-  cannot be merged until something else pushes. This is the one that bites.
+There is no way out of that state by hand. A ruleset created with no bypass actors
+cannot be overridden even by a repository admin, and `gh pr merge --admin` fails
+with:
+
+```
+GraphQL: Repository rule violations found
+2 of 2 required status checks are expected.
+```
+
+Applying step 4 without step 3 therefore deadlocks releases completely. The
+recovery is to set `AUTOMATION_TOKEN`, or to disable the ruleset, merge, and
+re-enable it.
+
+The same mechanism bites a second time once things are running: when `schemas.yml`
+commits a rebuilt schema, nothing re-runs against the new commit, so a required
+check's result sits on the previous commit and the PR cannot be merged until
+something else pushes.
 
 Create a fine-grained PAT or GitHub App installation token scoped to
 `dave-inc/charts` with `contents: write` and `pull requests: write`, then add it as

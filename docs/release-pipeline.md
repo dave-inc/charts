@@ -45,6 +45,50 @@ last release" from the GitHub Releases, cross-checked against
 `.release-please-manifest.json`. If the Releases are missing, release-please scans
 too far back and proposes versions that include already-released commits.
 
+### Release tags must point at a commit that touches the chart
+
+release-please turns a release into a starting point by filtering commits to the
+chart's path *first*, then looking for the release's commit sha in what remains.
+If the tag points at a commit that touches no file under that chart, the sha is
+never found, the cut-off is lost, and the chart's entire history is reconsidered.
+The result is a release PR that proposes a bump built from commits that already
+shipped, which looks plausible and is wrong.
+
+This is a real failure that happened while testing, and it is worth recognising
+because nothing about it is reported as an error:
+
+```
+Found release for path charts/common, common-0.12.0
+release for path: charts/common, version: 0.12.0, sha: dbbe643
+Considering: 46 commits          <- should have been 0
+```
+
+The cause was a tag created by chart-releaser at whatever `HEAD` happened to be
+when the publish ran, which was a `ci:` commit touching only a workflow file,
+because an earlier publish attempt had failed and the retry landed one commit
+later.
+
+Now that release-please creates the tags, it tags its own release commit, which by
+construction edits `Chart.yaml` and `CHANGELOG.md` for every chart in the release.
+The hazard is designed out rather than guarded against. It only needs
+understanding when inheriting tags made some other way, as when this pipeline is
+first switched on.
+
+The fix, if it happens, is to repoint the offending tag at the release commit:
+
+```bash
+gh api -X PATCH repos/OWNER/REPO/git/refs/tags/TAG -f sha=RELEASE_COMMIT -F force=true
+```
+
+Verify with a dry run, which should report `Considering: 0 commits` for every
+untouched package:
+
+```bash
+npx release-please release-pr --token="$(gh auth token)" --repo-url=OWNER/REPO \
+  --config-file=release-please-config.json \
+  --manifest-file=.release-please-manifest.json --dry-run --debug
+```
+
 ## Repository settings this depends on
 
 These are not cosmetic. Each one is load-bearing, and the failure mode for most of
@@ -114,9 +158,10 @@ and fall back to `GITHUB_TOKEN`.
 Even with the setting enabled, `AUTOMATION_TOKEN` is worth having, because GitHub
 does not start workflow runs from pushes or PRs made with `GITHUB_TOKEN`:
 
-- The release PR gets no `lint` run. `SOC-CI` and `Codeowners Enforcement` are
-  dispatched from other repositories, so they still report and the PR stays
-  mergeable.
+- The release PR gets no `lint` or `lint-pr-title` run. Both are required checks,
+  so the PR reports zero checks and is permanently blocked. A ruleset with no
+  bypass actors cannot be overridden, so `gh pr merge --admin` fails too. This is
+  a deadlock, not an inconvenience.
 - When `schemas.yml` commits a rebuilt schema, no check re-runs against the new
   commit. If `lint` is a required check, its result sits on the previous commit
   and the PR cannot be merged until something else pushes.

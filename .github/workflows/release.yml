@@ -157,8 +157,12 @@ jobs:
           CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+          # cr writes the merged index to .cr-index/index.yaml and does not create
+          # the directory itself, so without this it exits on a missing path.
+          mkdir -p .cr-index
           cr index \
             --owner "${{ github.repository_owner }}" \
             --git-repo "${{ github.event.repository.name }}" \
             --package-path .cr-release-packages \
+            --index-path .cr-index/index.yaml \
             --push
