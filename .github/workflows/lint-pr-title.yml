@@ -12,10 +12,12 @@ permissions:
   pull-requests: read
 
 jobs:
-  # This repo squash-merges, so the PR title becomes the only commit message on
-  # master, and that message is what release-please parses to decide the version
-  # bump. Individual commit messages inside the PR are discarded on merge, so the
-  # title is the only thing worth linting.
+  # With squash merging the PR title becomes the only commit message on master,
+  # and that message is what release-please parses to decide the version bump.
+  #
+  # This check must be a required status check. release-please treats a
+  # non-conventional subject as "no release", so an unlinted title does not fail
+  # loudly, it silently publishes nothing and the chart quietly stops releasing.
   lint-pr-title:
     runs-on: ubuntu-latest
     steps:

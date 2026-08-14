@@ -9,9 +9,17 @@ be overwritten, and the old habit of tacking a Jira suffix onto the version
 
 ## Your PR title is the only thing that matters
 
-This repo squash-merges, so your PR title becomes the single commit message on
-`master`. That message is what release-please parses to decide the next version.
-Commit messages inside your branch are discarded on merge and are not linted.
+Merge your PR with **Squash and merge**. Your PR title then becomes the single
+commit message on `master`, and that message is what release-please parses to
+decide the next version. Commit messages inside your branch are discarded, so
+they are not linted and do not need to follow any convention.
+
+This matters more than it looks. release-please walks every commit reachable from
+`master`, not just the first-parent chain. If a PR is merged with a merge commit
+instead, each individual branch commit is parsed for a release trigger, and a
+stray `feat:` or `BREAKING CHANGE:` in a work-in-progress commit will cut a
+release you did not intend. Squashing is what keeps the release surface equal to
+the title CI actually checked.
 
 Titles follow [Conventional Commits](https://www.conventionalcommits.org/):
 

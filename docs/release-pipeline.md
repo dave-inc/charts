@@ -1,0 +1,133 @@
+# Release pipeline
+
+How a chart change becomes a published release, and which repository settings the
+pipeline depends on to work correctly.
+
+## Moving parts
+
+Two workflows split the job, and neither does the other's work.
+
+`release-please.yml` decides versions. On every push to `master` it opens or
+updates a single PR that bumps `version` in each changed chart's `Chart.yaml`,
+writes that chart's `CHANGELOG.md`, and records the new version in
+`.release-please-manifest.json`. It does not tag and does not publish, because
+`skip-github-release` is set in `release-please-config.json`.
+
+`release.yml` publishes. Merging the release PR lands the version bumps on
+`master`, which runs chart-releaser: it packages any chart whose `Chart.yaml`
+version has no matching tag, tags it, creates the GitHub Release, and updates
+`index.yaml` on `gh-pages`. This is unchanged from how the repo worked when
+versions were edited by hand.
+
+The two are coupled in one non-obvious way. release-please works out "what did I
+last release" from the GitHub Releases that chart-releaser creates, cross-checked
+against `.release-please-manifest.json`. If the Releases are missing, release-please
+scans too far back and proposes versions that include already-released commits.
+
+## Repository settings this depends on
+
+These are not cosmetic. Each one is load-bearing, and the failure mode for most of
+them is silence rather than an error.
+
+### Squash merging only
+
+Set **Squash and merge** as the only allowed merge method. Disable merge commits
+and rebase merging.
+
+release-please walks every commit reachable from `master`, not only the
+first-parent chain. Under merge commits, every individual branch commit is parsed
+for a release trigger, so a work-in-progress commit reading `feat: wip` cuts a
+minor release nobody asked for. Squashing reduces each PR to exactly one commit
+whose message is the PR title, which is the string CI already checked.
+
+### Squash commit title: `PR_TITLE`
+
+The GitHub default is `COMMIT_OR_PR_TITLE`, which uses the *commit* subject when a
+PR contains exactly one commit. That silently bypasses PR title linting for
+single-commit PRs, which are the common case for small chart fixes.
+
+### Squash commit message: `BLANK`
+
+The default `COMMIT_MESSAGES` concatenates every branch commit message into the
+squash commit body, and release-please parses that body for `BREAKING CHANGE:`
+footers. One such line in an abandoned work-in-progress commit produces a major
+version bump.
+
+With `BLANK`, a major release is requested explicitly with `!` in the title, as in
+`feat(common)!: drop support for x`. That is the only path to a major, which is
+the point.
+
+### Required status checks
+
+`SOC-CI` and `Codeowners Enforcement` are already required. Add:
+
+- `lint-pr-title`, because release-please treats a non-conventional subject as "no
+  release". An unlinted title does not fail, it publishes nothing, and the chart
+  quietly stops releasing until someone notices.
+- `lint`, so charts are linted and the release config is checked for drift.
+
+### `RELEASE_PLEASE_TOKEN`
+
+Optional, recommended. GitHub does not run a repository's own workflows on PRs
+opened with the default `GITHUB_TOKEN`, so without this the release PR gets no
+`lint` run. `SOC-CI` and `Codeowners Enforcement` are dispatched from other
+repositories and are unaffected, so the PR stays mergeable either way.
+
+`.github/workflows/release-please.yml` reads
+`secrets.RELEASE_PLEASE_TOKEN` and falls back to `GITHUB_TOKEN`.
+
+## Bootstrapping
+
+`.release-please-manifest.json` is seeded with each chart's last stable released
+version. release-please maintains it from then on, and the only manual edit is
+adding a line when a chart is added.
+
+Seeded values were taken from the newest non-prerelease tag per chart:
+
+| chart | seeded from |
+| --- | --- |
+| cloudsql-proxy | `cloudsql-proxy-0.1.0` |
+| common | `common-0.11.0` |
+| dave-npd | `dave-npd-0.3.0` |
+| gateway-bundle | `gateway-bundle-2.2.0` |
+| gatewayapi | `gatewayapi-2.10.0` |
+| job | `job-0.2.1` |
+| kyverno-policies | `kyverno-policies-0.1.1` |
+| workflow | `workflow-0.1.0` |
+
+The first release PR will therefore replace the hand-maintained `-beta.N` suffixes
+currently sitting in `Chart.yaml` with clean stable versions. `common` moves from
+`0.11.1-beta.19` to `0.12.0` rather than continuing the beta chain. This looks
+like a jump and is expected.
+
+## SOC-CI and the release PR
+
+The release PR is generated, so it has no Jira ticket of its own, and SOC-CI does
+not exempt it. Its only bypass is a hardcoded Dependabot user id.
+
+`pull-request-footer` in `release-please-config.json` carries
+[SRE-7412](https://demoforthedaves.atlassian.net/browse/SRE-7412), a permanent
+Epic labelled `do-not-close` that exists solely to satisfy that check. It follows
+the same arrangement already used for Dependabot PRs in `dave-inc/terraform`.
+
+If SRE-7412 is ever closed, every release PR fails SOC-CI, and the error points at
+Jira rather than at this repo. `lint` verifies a ticket reference is present but
+cannot verify it is still open.
+
+## When something does not release
+
+Work through these in order.
+
+A chart did not release. Check that a commit actually changed a file under that
+chart's directory, since attribution is by path and nothing else. A change to a
+shared workflow does not release any chart.
+
+Nothing released at all. Check the merged commit's subject on `master`. If it is
+not a conventional commit, or its type is `chore`, `docs`, `refactor`, `test`,
+`ci`, `build` or `style`, release-please deliberately does nothing.
+
+A chart released a version you did not expect. Compare
+`.release-please-manifest.json` against the GitHub Releases for that chart. A
+missing Release makes release-please look further back than it should.
+
+The release PR cannot be merged. Confirm SRE-7412 is still open.

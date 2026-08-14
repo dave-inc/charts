@@ -5,7 +5,9 @@ Collection of common sub charts to bootstrap common applications
 1. Helm 4.2
 
 Chart versions are managed by [release-please](https://github.com/googleapis/release-please)
-and must not be edited by hand. See [CONTRIBUTING.md](CONTRIBUTING.md).
+and must not be edited by hand. See [CONTRIBUTING.md](CONTRIBUTING.md) for the
+day-to-day workflow and [docs/release-pipeline.md](docs/release-pipeline.md) for
+how releases are produced.
 
 ## To develop locally
 1. Choose the chart you wish to update, for example `common`. Leave its version alone.
