@@ -27,10 +27,13 @@ jobs:
       # Releases, so merging the PR lands the version bump on master and the
       # existing Release Charts workflow publishes it exactly as it does today.
       #
-      # GitHub does not start workflow runs for PRs opened with GITHUB_TOKEN, so
-      # without AUTOMATION_TOKEN the release PR gets no `lint` run. SOC-CI and
-      # Codeowners Enforcement are dispatched from other repositories and report
-      # either way, so the PR stays mergeable, just less verified.
+      # This step fails with "GitHub Actions is not permitted to create or approve
+      # pull requests" unless the repo enables that setting or AUTOMATION_TOKEN is
+      # set. GITHUB_TOKEN alone cannot open a PR by default.
+      #
+      # AUTOMATION_TOKEN is worth setting regardless: GitHub does not start
+      # workflow runs for PRs opened with GITHUB_TOKEN, so the release PR would
+      # get no `lint` run.
       - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           token: ${{ secrets.AUTOMATION_TOKEN || secrets.GITHUB_TOKEN }}

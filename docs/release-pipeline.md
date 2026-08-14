@@ -71,14 +71,29 @@ the point.
   quietly stops releasing until someone notices.
 - `lint`, so charts are linted and the release config is checked for drift.
 
-### `AUTOMATION_TOKEN`
+Making `lint` required means bot pushes must come from `AUTOMATION_TOKEN`, for the
+reason in the next section.
 
-A single PAT or GitHub App token, used by both `release-please.yml` and
-`schemas.yml`. Both fall back to `GITHUB_TOKEN`, so the pipeline runs without it,
-but degrades in ways worth understanding.
+### Let Actions create pull requests, or configure `AUTOMATION_TOKEN`
 
-GitHub deliberately does not start workflow runs from pushes or PRs made with
-`GITHUB_TOKEN`, to stop workflows triggering themselves. Two consequences:
+One of these is **required**, not optional. Without either, release-please fails
+outright with:
+
+```
+GitHub Actions is not permitted to create or approve pull requests.
+```
+
+`GITHUB_TOKEN` cannot open a PR unless the repository or organization enables
+*Allow GitHub Actions to create and approve pull requests*. That setting is off by
+default. Note the API field is `can_approve_pull_request_reviews`, which is
+misleadingly named: it gates creating PRs too, not just approving them.
+
+The alternative is `AUTOMATION_TOKEN`, a PAT or GitHub App token, which is not
+subject to that restriction. `release-please.yml` and `schemas.yml` both read it
+and fall back to `GITHUB_TOKEN`.
+
+Even with the setting enabled, `AUTOMATION_TOKEN` is worth having, because GitHub
+does not start workflow runs from pushes or PRs made with `GITHUB_TOKEN`:
 
 - The release PR gets no `lint` run. `SOC-CI` and `Codeowners Enforcement` are
   dispatched from other repositories, so they still report and the PR stays
@@ -87,8 +102,7 @@ GitHub deliberately does not start workflow runs from pushes or PRs made with
   commit. If `lint` is a required check, its result sits on the previous commit
   and the PR cannot be merged until something else pushes.
 
-The second is the one that bites. Configure `AUTOMATION_TOKEN` if you make `lint`
-required.
+The second is the one that bites.
 
 ## Bootstrapping
 
