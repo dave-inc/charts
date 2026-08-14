@@ -34,6 +34,9 @@ scans too far back and proposes versions that include already-released commits.
 These are not cosmetic. Each one is load-bearing, and the failure mode for most of
 them is silence rather than an error.
 
+This section explains why. [repo-setup.md](repo-setup.md) is the checklist for
+applying them, written for whoever holds admin on the repo.
+
 ### Squash merging only
 
 Set **Squash and merge** as the only allowed merge method. Disable merge commits
