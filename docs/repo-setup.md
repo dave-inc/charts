@@ -61,11 +61,18 @@ falling back to `GITHUB_TOKEN` if it is unavailable:
 - name: Mint an app token
   id: app-token
   continue-on-error: true
-  uses: dave-inc/common-workflows/.github/actions/create-github-app-token@main
+  uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
   with:
     app-id: ${{ secrets.DEVX_GH_APP_ID }}
     private-key: ${{ secrets.DEVX_GH_APP_S_KEY }}
+    owner: ${{ github.repository_owner }}
 ```
+
+This calls the public action directly rather than
+`dave-inc/common-workflows/.github/actions/create-github-app-token`, which wraps
+the same action at the same version. The wrapper lives in a private repo, and an
+action that cannot be resolved fails the job during *Set up job*, before
+`continue-on-error` applies. Calling the action directly keeps the fallback real.
 
 Two grants are needed, both of existing things rather than anything new:
 

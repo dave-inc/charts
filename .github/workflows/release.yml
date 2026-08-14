@@ -32,15 +32,21 @@ jobs:
       paths_released: ${{ steps.release.outputs.paths_released }}
     steps:
       # Minted per run and revoked when the job ends, so no long-lived credential
-      # is stored on the repo. `continue-on-error` keeps this working before the
-      # app is installed, falling back to GITHUB_TOKEN below.
+      # is stored on the repo. `continue-on-error` falls back to GITHUB_TOKEN
+      # below when the app is not installed or its secrets are absent.
+      #
+      # This calls the same action, at the same version, that
+      # dave-inc/common-workflows wraps. Using the wrapper directly would make
+      # this job fail at "Set up job" anywhere that private repo cannot be
+      # resolved, and action resolution happens before continue-on-error applies.
       - name: Mint an app token
         id: app-token
         continue-on-error: true
-        uses: dave-inc/common-workflows/.github/actions/create-github-app-token@main
+        uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
         with:
           app-id: ${{ secrets.DEVX_GH_APP_ID }}
           private-key: ${{ secrets.DEVX_GH_APP_S_KEY }}
+          owner: ${{ github.repository_owner }}
 
       - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         id: release
