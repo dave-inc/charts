@@ -6,6 +6,13 @@ on:
       - master
   workflow_dispatch: {}
 
+# chart-releaser creates tags, GitHub Releases and pushes index.yaml to gh-pages,
+# all of which need write access. Without this block the job inherits the repo's
+# default workflow permissions, so tightening that org-wide default to read-only
+# would break publishing with a 403 that only appears at release time.
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
