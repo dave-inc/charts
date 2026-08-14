@@ -197,6 +197,24 @@ currently sitting in `Chart.yaml` with clean stable versions. `common` moves fro
 `0.11.1-beta.19` to `0.12.0` rather than continuing the beta chain. This looks
 like a jump and is expected.
 
+### Betas are retired
+
+Both routes that produced a beta are closed, deliberately and by construction
+rather than by a check someone can forget:
+
+- Committing a `-beta.N` version to master no longer publishes it, because a push
+  to master only publishes what a release PR released.
+- Dispatching this workflow against a feature branch no longer publishes it,
+  because release-please always targets master, so `releases_created` is false
+  and the publish job is skipped. This is how the `plat-1724` betas were cut.
+
+Already published betas are untouched, so anything pinning one keeps resolving.
+They also cannot confuse a stable release: release-please anchors on the manifest
+rather than on the newest tag, and helm hides prerelease versions from search and
+dependency resolution unless `--devel` is passed. To test an unreleased chart,
+point an Argo CD Application at this repo with `targetRevision` set to the
+branch. See CONTRIBUTING.md.
+
 ## SOC-CI and the release PR
 
 The release PR is generated, so it has no Jira ticket of its own, and SOC-CI does

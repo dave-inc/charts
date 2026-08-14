@@ -86,8 +86,35 @@ chart moves on its own PR, or use a non-releasing type like `chore`.
 
 ## Testing a chart before release
 
-Package the chart locally and point your consuming chart at the tarball. Nothing
-needs to be published, and no version needs to be invented.
+We no longer cut betas. Nothing publishes a `-beta.N` version any more: pushes
+to master only publish what a release PR releases, and dispatching the release
+workflow against a branch does nothing, because release-please always targets
+master.
+
+Beta versions already published stay published, so anything pinning one keeps
+resolving. Move those pins to a stable version when convenient.
+
+Render your branch directly instead.
+
+### In a cluster
+
+Point the Argo CD Application at this repo and set `targetRevision` to your
+branch. Argo renders the chart straight from git, so your branch is what runs,
+with no version invented and nothing published.
+
+```yaml
+spec:
+  source:
+    repoURL: "git@github.com:dave-inc/charts"
+    path: charts/common
+    targetRevision: my-branch # instead of HEAD
+```
+
+Set `targetRevision` back to `HEAD` before merging.
+
+### Locally
+
+Package the chart and point your consuming chart at the tarball.
 
 ```sh
 cd charts/common
