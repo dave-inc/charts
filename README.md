@@ -72,4 +72,6 @@ to be published to test a branch.
 1. Merge your PR to master with a `feat:` or `fix:` title.
 2. release-please opens a PR titled `chore(master): release` containing the
    version bump and changelog. Get approvals from #sre-support on that PR.
-3. Merge the release PR. chart-releaser then packages, tags and publishes.
+3. Merge the release PR. release-please tags and creates the GitHub Release with
+   the changelog as its notes, then chart-releaser packages the chart and updates
+   the repo index.

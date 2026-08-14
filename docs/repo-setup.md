@@ -95,7 +95,7 @@ Create a fine-grained PAT or GitHub App installation token scoped to
 a repository secret named `AUTOMATION_TOKEN` under Settings, Secrets and variables,
 Actions.
 
-`release-please.yml` and `schemas.yml` both read it and fall back to
+`release.yml` and `schemas.yml` both read it and fall back to
 `GITHUB_TOKEN`, so adding it later is a no-op for anything already working.
 
 Whichever identity owns the token becomes the author of the release PR. That

@@ -50,12 +50,14 @@ charts releases both.
    `.release-please-manifest.json`.
 3. That release PR sits open and accumulates further merges until someone merges
    it. Nothing is published before then, so merging to `master` is safe.
-4. Merging the release PR lands the version bump on `master`, which triggers
-   chart-releaser: it packages the chart, tags `job-0.3.2`, creates the GitHub
-   Release, and updates `index.yaml` on `gh-pages`.
+4. Merging the release PR lands the version bump on `master`. release-please then
+   tags `job-0.3.2` and creates the GitHub Release, using the changelog it wrote
+   as the release notes. chart-releaser packages the chart, attaches the `.tgz` to
+   that release, and updates `index.yaml` on `gh-pages`.
 
-Step 4 is unchanged from how this repo has always worked. The only difference is
-that a bot writes the version bump instead of you.
+The published result is the same as it has always been, from the same tags and the
+same `index.yaml`. The differences are that a bot writes the version bump instead
+of you, and the release notes are the changelog rather than the chart description.
 
 ### The release PR and SOC-CI
 

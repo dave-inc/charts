@@ -153,6 +153,13 @@ Merge the release PR, or show https://github.com/danryan-dave/charts/releases.
 > GitHub release with the packaged chart attached, and an updated entry in the Helm
 > repository index.
 
+Open one release and point at the body.
+
+> The release notes are the same changelog you just read in the release pull
+> request, per chart and per version. You are not getting a generic "chart
+> description" here, you are getting the list of changes that actually went in.
+> Anyone asking "what changed in common 0.12.0" has one page to look at.
+
 Point at the tag names, `common-0.12.0` and similar.
 
 > The tag format is unchanged from what this repo has always used, chart name and
