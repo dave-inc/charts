@@ -45,7 +45,7 @@ charts releases both.
 
 1. You merge a PR titled `fix: correct probe defaults`, touching `charts/job/`.
 2. release-please opens or updates a PR called
-   `chore(master): release`. It bumps `version` in `charts/job/Chart.yaml`,
+   `chore: release master`. It bumps `version` in `charts/job/Chart.yaml`,
    writes `charts/job/CHANGELOG.md`, and records the new version in
    `.release-please-manifest.json`.
 3. That release PR sits open and accumulates further merges until someone merges

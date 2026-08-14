@@ -5,6 +5,7 @@ on:
     branches:
       - '**'
 
+# Keep in step with the same variable in release.yml.
 env:
   HELM_VERSION: v4.2.4
 
@@ -86,7 +87,9 @@ jobs:
             exit 1
           fi
 
-          # Same expression validate_jira.py uses.
+          # Deliberately looser than validate_jira.py, whose pattern is
+          # \b(?!\d+-)[A-Z0-9]{1,10}-\d+\b. grep -E has no negative lookahead, and
+          # this only needs to catch a footer with no ticket in it at all.
           if ! echo "$footer" | grep -qE '\b[A-Z0-9]{1,10}-[0-9]+\b'; then
             echo "::error::pull-request-footer has no Jira ticket reference."
             exit 1

@@ -168,6 +168,13 @@ The better option is a GitHub App token, which is not subject to that restrictio
 fall back to `GITHUB_TOKEN` when the app is unavailable. It is scoped to this repo,
 minted per run, revoked when the job ends, and not tied to a person.
 
+Getting that scope requires leaving `owner` unset on the action. Setting `owner`
+without also setting `repositories` scopes the token to every repository in the
+installation instead, and the token inherits every permission the installation
+holds unless `permission-*` inputs narrow it. Both workflows therefore omit `owner`
+and name the permissions they need. This matters most in `schemas.yml`, which runs
+`npx` from a branch with the token present in `.git/config`.
+
 The app also fixes a quieter problem. GitHub does not start workflow runs from
 pushes made with `GITHUB_TOKEN`, so when `schemas.yml` commits a rebuilt schema, no
 check re-runs against the new commit and the PR's checks describe the commit
@@ -246,3 +253,26 @@ A chart released a version you did not expect. Compare
 missing Release makes release-please look further back than it should.
 
 The release PR cannot be merged. Confirm SRE-7412 is still open.
+
+## A release exists but the chart will not install
+
+Different failure, and the one worth knowing by heart, because everything on the
+GitHub side looks finished. The release page is there, the `.tgz` is attached, and
+`helm install` still cannot find the version, because the chart is absent from
+`index.yaml`.
+
+It happens when the `publish` job dies after creating releases and before finishing
+the index. `cr index` only looks at packages from the current run, and only adds an
+entry when one is missing, so it never goes back and fills a gap. No later run
+repairs it either: the next push to master releases nothing, so `releases_created`
+is false and `publish` is skipped entirely. The gap is permanent until someone acts.
+
+The fix is to re-run the `publish` job on the original workflow run, from the
+Actions tab. It replays with the same `paths_released`, and `gh release upload
+--clobber` makes repeating the upload harmless.
+
+The `Verify every released chart is in the index` step exists to make this loud
+rather than something discovered by a consumer weeks later. A real instance of this
+is visible on the test fork, where `kyverno-policies-0.1.3` has a release and a
+`.tgz` but no index entry, from a run that failed before the `.cr-index` directory
+bug was fixed.

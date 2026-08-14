@@ -11,3 +11,7 @@ charts/*/Chart.lock
 *.tgz
 .cr-release-packages/
 .cr-index/
+
+# `make schemas` writes here and moves it into place, so it only survives a run
+# that was killed part way through. Committing one would be pure noise.
+charts/*/values.schema.json.tmp

@@ -4,6 +4,12 @@ The release pipeline is inert until two repository settings change on
 `dave-inc/charts`. One fails loudly. One fails silently, and that is the one to
 care about most.
 
+Apply both **before** merging the PR that adds the pipeline, not after. "Inert"
+overstates it: with step 2 missing, every push to master runs the release workflow
+and fails at the point it tries to open a pull request, so the default branch shows
+red rather than nothing. With step 1 missing, the first release is computed from
+individual branch commits rather than reviewed PR titles.
+
 Both are repository-level and need the **Admin** role on the repo. Neither needs
 org admin, and neither touches the existing org rulesets. Installing the DevX app,
 described in step 2, is the only part that may need someone outside the repo.
@@ -147,6 +153,37 @@ whose title is not a conventional commit, in which case release-please attribute
 no release to it and that change silently never ships. It shows as a red check
 before merge. Worth revisiting once the app in step 2 is installed, since that
 removes the reason not to require them.
+
+## 3. Dry run before merging
+
+Not a setting, but do it in the same sitting. This computes the first release PR
+without writing anything, and is the only chance to see what the bootstrap will
+propose while it is still cheap to change.
+
+```bash
+npx release-please release-pr --token="$(gh auth token)" \
+  --repo-url=dave-inc/charts \
+  --config-file=release-please-config.json \
+  --manifest-file=.release-please-manifest.json --dry-run --debug
+```
+
+Two things to confirm in the output.
+
+Every package reports a `release for path: ..., sha: ...` line. A package with no
+resolved release has lost its anchor and will rebuild from its entire history. See
+[Release tags must point at a commit that touches the chart](release-pipeline.md#release-tags-must-point-at-a-commit-that-touches-the-chart).
+
+`Considering: 0 commits` appears for every chart you expect not to move. Anything
+else means it is about to release something.
+
+This matters more for the first run than any later one, because every commit now on
+master arrived by merge commit, so the bootstrap is computed from history that
+predates the squash-only rule.
+
+Last run against `dave-inc/charts` at the time of writing: all eight anchors
+resolved, three charts reported zero commits, and the proposal was
+`cloudsql-proxy 0.2.0`, `common 0.12.0`, `job 0.3.0`, `kyverno-policies 0.1.2` and
+`workflow 0.2.0`.
 
 ## What was already verified
 

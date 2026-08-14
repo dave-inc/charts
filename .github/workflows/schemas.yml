@@ -10,6 +10,12 @@ on:
 permissions:
   contents: write
 
+# Two pushes in quick succession would otherwise race, and the second run's push
+# fails as a non-fast-forward, showing up as a failed check on the PR.
+concurrency:
+  group: schemas-${{ github.head_ref }}
+  cancel-in-progress: true
+
 jobs:
   bundle:
     runs-on: ubuntu-latest
@@ -26,6 +32,13 @@ jobs:
       # dave-inc/common-workflows wraps. Using the wrapper directly would make
       # this job fail at "Set up job" anywhere that private repo cannot be
       # resolved, and action resolution happens before continue-on-error applies.
+      #
+      # Scope matters more here than in release.yml. This job checks out branch
+      # code and runs `make schemas`, which is `npx` against a package.json this
+      # repo does not control, with the token sitting in .git/config. `owner` is
+      # therefore deliberately unset: setting it without `repositories` widens the
+      # token to every repo in the installation, whereas leaving both out defaults
+      # to this one. Contents is the only permission the push needs.
       - name: Mint an app token
         id: app-token
         continue-on-error: true
@@ -33,7 +46,7 @@ jobs:
         with:
           app-id: ${{ secrets.DEVX_GH_APP_ID }}
           private-key: ${{ secrets.DEVX_GH_APP_S_KEY }}
-          owner: ${{ github.repository_owner }}
+          permission-contents: write
 
       - name: Checkout PR branch
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
