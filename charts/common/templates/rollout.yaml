@@ -53,11 +53,18 @@ spec:
       traffic router (nginx/istio/alb/smi) or to point at a differently-named
       HTTPRoute, or set it to `false` to fall back to basic weighted-replica
       canary with no traffic-routing resource at all.
+
+      namespace is required here even though the HTTPRoute lives in this same
+      Release's namespace: the gatewayAPI plugin does not default an empty
+      namespace to the Rollout's own, it errors reconciling with "an empty
+      namespace may not be set when a resource name is provided", which is
+      fatal enough to block the Rollout from ever going healthy.
       */}}
       trafficRouting:
         plugins:
           argoproj-labs/gatewayAPI:
             httpRoute: {{ include "common.name" . }}
+            namespace: {{ .Release.Namespace }}
       {{- end }}
       {{- if .Values.canary.analysis }}
       analysis:
