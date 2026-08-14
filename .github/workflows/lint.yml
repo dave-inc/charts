@@ -98,17 +98,14 @@ jobs:
             exit 1
           fi
 
-      # values.schema.json is generated from schemas/ but committed to the repo.
-      # Nothing regenerates it at release time, so this check is what keeps the
-      # committed file from drifting away from its sources.
+      # Backstop only. The Bundle Schemas workflow regenerates and commits this
+      # file on the PR, so this should normally pass without doing anything. It
+      # still matters for fork PRs, which that workflow cannot push to, and for
+      # any PR that does not touch schemas/ and so never triggers it.
       - name: Verify values.schema.json is current
         run: |
           set -euo pipefail
-          npm install -g @skriptfabrik/json-schema-bundler
-          for dir in charts/*/; do
-            [ -f "$dir/schemas/schema.yaml" ] || continue
-            (cd "$dir" && json-schema-bundler -d schemas/schema.yaml | jq . > values.schema.json)
-          done
+          make schemas
           if ! git diff --exit-code -- '**/values.schema.json'; then
             echo "::error::values.schema.json is stale. Run 'make schemas' and commit the result."
             exit 1

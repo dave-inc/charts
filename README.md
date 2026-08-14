@@ -31,9 +31,9 @@ dependencies:
 ## Validations through JSON schema
 
 > [!IMPORTANT]
-> `values.schema.json` is generated but committed. Run `make schemas` after
-> editing anything under a chart's `schemas/` directory. CI regenerates and fails
-> if the committed copy is stale.
+> `values.schema.json` is generated but committed. You do not need to regenerate
+> it by hand: a PR touching a chart's `schemas/` directory gets the rebuilt file
+> committed to the branch automatically. Run `make schemas` if you want it sooner.
 
 We use JSON schema to validate our custom charts. To enable that feature a `values.schema.json` file at the root directory for a given chart must be present. e.g. `charts/common/values.schema.json`.
 
@@ -60,7 +60,8 @@ helm lint .
 That should be enough to get you started with JSON schema validations.
 
 `values.schema.json` is generated, but it is committed, because Helm reads it at
-install time. Always commit the regenerated file alongside your `schemas/` change.
+install time. CI keeps it in sync for you, so the usual reason to run `make
+schemas` yourself is to lint locally before pushing.
 
 ## To test your changes from a feature branch
 Package the chart locally and consume it over `file://`. See

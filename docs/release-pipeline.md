@@ -5,7 +5,12 @@ pipeline depends on to work correctly.
 
 ## Moving parts
 
-Two workflows split the job, and neither does the other's work.
+Three workflows split the job, and none does another's work.
+
+`schemas.yml` keeps generated files current. When a PR touches a chart's
+`schemas/` directory it rebuilds that chart's `values.schema.json` and pushes the
+result to the PR branch. `helm lint` regenerates and fails on any leftover
+difference, which covers fork PRs that this workflow cannot push to.
 
 `release-please.yml` decides versions. On every push to `master` it opens or
 updates a single PR that bumps `version` in each changed chart's `Chart.yaml`,
@@ -66,15 +71,24 @@ the point.
   quietly stops releasing until someone notices.
 - `lint`, so charts are linted and the release config is checked for drift.
 
-### `RELEASE_PLEASE_TOKEN`
+### `AUTOMATION_TOKEN`
 
-Optional, recommended. GitHub does not run a repository's own workflows on PRs
-opened with the default `GITHUB_TOKEN`, so without this the release PR gets no
-`lint` run. `SOC-CI` and `Codeowners Enforcement` are dispatched from other
-repositories and are unaffected, so the PR stays mergeable either way.
+A single PAT or GitHub App token, used by both `release-please.yml` and
+`schemas.yml`. Both fall back to `GITHUB_TOKEN`, so the pipeline runs without it,
+but degrades in ways worth understanding.
 
-`.github/workflows/release-please.yml` reads
-`secrets.RELEASE_PLEASE_TOKEN` and falls back to `GITHUB_TOKEN`.
+GitHub deliberately does not start workflow runs from pushes or PRs made with
+`GITHUB_TOKEN`, to stop workflows triggering themselves. Two consequences:
+
+- The release PR gets no `lint` run. `SOC-CI` and `Codeowners Enforcement` are
+  dispatched from other repositories, so they still report and the PR stays
+  mergeable.
+- When `schemas.yml` commits a rebuilt schema, no check re-runs against the new
+  commit. If `lint` is a required check, its result sits on the previous commit
+  and the PR cannot be merged until something else pushes.
+
+The second is the one that bites. Configure `AUTOMATION_TOKEN` if you make `lint`
+required.
 
 ## Bootstrapping
 

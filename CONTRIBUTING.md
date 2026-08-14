@@ -118,12 +118,19 @@ does not know about is silently frozen forever.
 ## Schemas
 
 `values.schema.json` is generated from each chart's `schemas/` directory but is
-committed to the repo, because Helm needs it at install time. Regenerate it
-whenever you touch `schemas/`:
+committed to the repo, because Helm needs it at install time.
+
+You do not have to regenerate it. When a PR touches anything under a chart's
+`schemas/`, the Bundle Schemas workflow rebuilds `values.schema.json` and pushes
+the result to your branch as a `chore(schemas):` commit. Pull before you push
+again, or you will conflict with it.
+
+If you would rather not wait for CI, or your PR comes from a fork where the
+workflow cannot push for you:
 
 ```sh
 make schemas
 ```
 
-CI regenerates and fails if the committed copy differs, so a stale schema cannot
-reach a release.
+`helm lint` regenerates and fails on any remaining difference, so a stale schema
+cannot reach a release either way.
