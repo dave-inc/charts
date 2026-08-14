@@ -3,6 +3,7 @@ Collection of common sub charts to bootstrap common applications
 
 ## Prereq
 1. Helm 4.2
+2. Node.js and `jq`, only for `make schemas`
 
 Chart versions are managed by [release-please](https://github.com/googleapis/release-please)
 and must not be edited by hand. See [CONTRIBUTING.md](CONTRIBUTING.md) for the
@@ -20,7 +21,7 @@ name: notification-service
 version: 1.0.0
 dependencies:
   - name: common
-    version: 0.11.0 #<-- current version from charts/common/Chart.yaml
+    version: 0.11.0 #<-- example only, copy the current value from charts/common/Chart.yaml
     repository: "file://../charts/charts/common" #<--Note!
     alias: notification-service
 ...
@@ -49,7 +50,8 @@ The reason  we don't use plain `$refs` pointing to a file path is because resolv
 
 If you want to introduce a new schema or update an existing one, you can do so by creating a new yaml file under `charts/common/schemas` and then referencing it in `charts/common/schemas/schema.yaml`. The bundler will take care of the rest.
 
-Regenerate and lint locally:
+Regenerate and lint locally. `make schemas` shells out to `npx` and `jq`, so it
+needs Node.js installed:
 
 ```sh
 make schemas
