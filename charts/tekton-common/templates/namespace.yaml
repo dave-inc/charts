@@ -1,9 +1,0 @@
-{{- range $namespace, $spec := .Values.development.namespaces }}
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: {{ $namespace }}
-  labels:
-    {{- include "tekton-common.labels" $ | nindent 4 }}
----
-{{- end }}
