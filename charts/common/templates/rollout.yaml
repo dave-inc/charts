@@ -45,14 +45,16 @@ spec:
     scaleDown: {{ .Values.canary.scaleDown }}
   strategy:
     canary:
+      {{- if .Values.service.enabled }}
       canaryService: {{ include "common.canaryServiceName" . }}
       stableService: {{ include "common.stableServiceName" . }}
+      {{- end }}
       maxSurge: {{ .Values.canary.maxSurge | quote }}
       maxUnavailable: {{ .Values.canary.maxUnavailable }}
       {{- if .Values.canary.trafficRouting }}
       trafficRouting:
         {{- toYaml .Values.canary.trafficRouting | nindent 8 }}
-      {{- else if not (kindIs "bool" .Values.canary.trafficRouting) }}
+      {{- else if and .Values.service.enabled (not (kindIs "bool" .Values.canary.trafficRouting)) }}
       {{- /*
       Zero-config default: an HTTPRoute named after this app (the same
       `common.name` convention canary/stable Services already use) is assumed
@@ -61,6 +63,12 @@ spec:
       traffic router (nginx/istio/alb/smi) or to point at a differently-named
       HTTPRoute, or set it to `false` to fall back to basic weighted-replica
       canary with no traffic-routing resource at all.
+
+      This default only applies when `service.enabled` is true -- the plugin
+      routes between the stable/canary Services, which don't exist otherwise.
+      With `service.enabled: false` and `trafficRouting` left unset, this
+      falls through to the same no-trafficRouting basic canary as explicitly
+      setting `trafficRouting: false`.
 
       namespace is required here even though the HTTPRoute lives in this same
       Release's namespace: the gatewayAPI plugin does not default an empty
