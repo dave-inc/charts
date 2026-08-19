@@ -27,6 +27,9 @@ spec:
 {{- if not (or .Values.autoscaling.enabled .Values.kedaScaling.enabled) }}
   replicas: {{ .Values.replicaCount }}
 {{- end }}
+  revisionHistoryLimit: 5
+  rollbackWindow:
+    revisions: 2
   selector:
     matchLabels:
     {{- if not .Values.podSelectorLabelsOverride }}
