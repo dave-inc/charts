@@ -1,0 +1,52 @@
+suite: Rollout canary service/trafficRouting wiring
+templates:
+  - rollout.yaml
+values:
+  - ./fixtures/minimal-values.yaml
+set:
+  global.canary.enabled: true
+tests:
+  - it: wires canaryService/stableService when service.enabled is true
+    set:
+      service.enabled: true
+    asserts:
+      - isKind:
+          of: Rollout
+      - equal:
+          path: spec.strategy.canary.canaryService
+          value: test-app-canary
+      - equal:
+          path: spec.strategy.canary.stableService
+          value: test-app-stable
+
+  - it: omits canaryService/stableService and any trafficRouting block when service.enabled is false, with default trafficRouting
+    set:
+      service.enabled: false
+    asserts:
+      - notExists:
+          path: spec.strategy.canary.canaryService
+      - notExists:
+          path: spec.strategy.canary.stableService
+      - notExists:
+          path: spec.strategy.canary.trafficRouting
+
+  - it: honors an explicit canary.trafficRouting override even when service.enabled is false
+    set:
+      service.enabled: false
+      canary.trafficRouting:
+        plugins:
+          argoproj-labs/gatewayAPI:
+            httpRoute: custom-route
+            namespace: custom-ns
+    asserts:
+      - notExists:
+          path: spec.strategy.canary.canaryService
+      - notExists:
+          path: spec.strategy.canary.stableService
+      - equal:
+          path: spec.strategy.canary.trafficRouting
+          value:
+            plugins:
+              argoproj-labs/gatewayAPI:
+                httpRoute: custom-route
+                namespace: custom-ns
