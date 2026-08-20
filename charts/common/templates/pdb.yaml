@@ -17,10 +17,5 @@ spec:
 {{- end }}
   selector:
     matchLabels:
-    {{- if not .Values.podSelectorLabelsOverride }}
-      {{- include "common.selectorLabels" . | nindent 6 }}
-    {{- end }}
-    {{- if .Values.podSelectorLabelsOverride }}
-      {{- .Values.podSelectorLabelsOverride | toYaml | nindent 6 }}
-    {{- end }}
+      {{- include "common.labels" . | nindent 6 }}
 {{- end }}
