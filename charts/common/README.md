@@ -1,11 +1,24 @@
 # common
 
-The shared application chart. It renders the Deployment, Service, HPA and, when canary
-is enabled, the canary and reverse proxy tiers that sit alongside them.
+The shared application chart. It renders the Deployment, Service and HPA, and, when
+canary is enabled, a Rollout (Argo Rollouts) that references the Deployment via
+`workloadRef` instead of duplicating it.
 
 Configuration reference lives in [values.yaml](./values.yaml), which is commented in
 place. This file covers only what changes between versions and what you have to do about
 it.
+
+## Argo CD order for canary rollouts
+
+When canary is enabled, the chart applies the stable and canary Services in sync wave
+`"1"`, then the Gateway API chart applies its `HTTPRoute` in wave `"2"`. The Rollout is
+in wave `"3"`, allowing its Gateway API traffic-routing plugin to update an existing
+route, and an HPA, VPA, or KEDA `ScaledObject` targeting that Rollout is in wave `"4"`.
+The referenced Deployment remains in the default wave `"0"`.
+
+This breaks the resource cycle as one direction: Deployment/Services → HTTPRoute →
+Rollout → autoscaler. If a canary HTTPRoute overrides its default sync-wave, keep it
+below the Rollout's wave or override the Rollout and autoscaler waves together.
 
 ## Upgrading to 0.11.1
 
@@ -32,8 +45,8 @@ Helm reports this at install time as a `chart requires kubeVersion` error.
 
 ### Pods now stay in the traffic path before shutting down
 
-`preStopSleepSeconds` renders a `preStop` sleep on the control and canary application
-containers. It exists because a Pod keeps receiving requests after termination begins:
+`preStopSleepSeconds` renders a `preStop` sleep on the application container. It exists
+because a Pod keeps receiving requests after termination begins:
 removal from a Google load balancer lags the Pod being killed, measured at around twelve
 seconds in staging. `terminationGracePeriodSeconds` cannot do this on its own, since it
 caps how long shutdown may take rather than holding the Pod open.
@@ -69,24 +82,13 @@ Set `minReadySeconds: 0` to opt out.
 
 `autoscaling.minReplicas` is now unset rather than `1`, which lets the chart tell a
 deliberate value from an inherited one. With canary enabled it computes 2, because canary
-puts a second Deployment in the traffic path and a tier at one Pod has no headroom while
-that Pod is replaced. Without canary it stays 1, so single-Pod services are unaffected.
+puts a second ReplicaSet in the traffic path during a rollout and a tier at one Pod has no
+headroom while that Pod is replaced. Without canary it stays 1, so single-Pod services are
+unaffected.
 
 Setting `autoscaling.minReplicas` explicitly always wins, including setting it back to
 `1`. The default is capped at `maxReplicas`, so a deliberately pinned single-replica
 service still renders a valid HPA.
-
-The reverse proxy keeps a floor of 2 of its own, since it is the tier fronted by the NEG
-and one replica means one endpoint. Override it with
-`canary.reverseProxy.autoscaling.minReplicas`.
-
-### The reverse proxy can be tuned separately
-
-The proxy inherits `minReadySeconds`, `terminationGracePeriodSeconds` and
-`preStopSleepSeconds` from the top level. Each has a `canary.reverseProxy.*` counterpart
-for when the proxy needs different timing from the application it fronts, which is common:
-the proxy is the tier the load balancer actually detaches from, so it often wants the
-longer drain.
 
 ### The Cloud SQL proxy now tracks the grace period
 

@@ -1,0 +1,48 @@
+# Splits traffic for `example-service.trydave.com` across the stable and
+# canary Services the `common` chart always creates whenever canary is
+# enabled (see charts/common/templates/service-stable.yaml and
+# service-canary.yaml). Every backendRef here expands into that same
+# "<name>-stable"/"<name>-canary" pair by name convention alone -- there is
+# no need to hand-type either Service name, and no per-backendRef setting to
+# turn on. Canary is controlled entirely by `global.canary.enabled`, set once
+# at the umbrella-chart level (Helm's built-in `global` values, shared
+# automatically with every subchart in the release, including `common` --
+# see charts/common/templates/_helpers.tpl `common.canaryEnabled`). With
+# `global.canary.enabled` unset or false, this same backendRef renders as a
+# single plain entry instead.
+#
+# The initial weights (all traffic to stable, none to canary) are just a
+# starting point -- once the Rollout controller's Gateway API traffic router
+# plugin takes over, it mutates the two expanded backendRefs' `weight` fields
+# in place as the rollout progresses through its canary steps. The `common`
+# chart wires this up automatically: by default it points the Rollout's
+# argoproj-labs/gatewayAPI plugin at an HTTPRoute named after the app, so this
+# route's `name` need only follow the same app-name convention as everything
+# else here (see charts/common/values.yaml `canary.trafficRouting`) -- no
+# matching config to hand-maintain on the Rollout side.
+enabled: true
+routes:
+  items:
+    - name: example-service
+      spec:
+        hostnames:
+          - example-service.trydave.com
+        parentRefs:
+          - name: default
+        rules:
+          - backendRefs:
+              - name: example-service
+                port: 80
+healthCheckPolicies:
+  items:
+    - name: example-service
+      spec:
+        default:
+          config:
+            httpHealthCheck:
+              port: 8080
+              requestPath: /healthz
+        targetRef:
+          # The health check targets the stable Service; the canary Service
+          # shares the same underlying Pods while the rollout is in progress.
+          name: example-service-stable

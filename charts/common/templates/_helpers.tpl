@@ -8,20 +8,6 @@ Expand the name of the chart.
 {{- end }}
 
 {{/*
-Canary common name
-*/}}
-{{- define "common.canaryName" -}}
-{{- printf "%s-canary" (include "common.name" .) }}
-{{- end }}
-
-{{/*
-Control common name
-*/}}
-{{- define "common.controlName" -}}
-{{- printf "%s-control" (include "common.name" .) }}
-{{- end }}
-
-{{/*
 Create chart name and version as used by the chart label.
 */}}
 {{- define "common.chart" -}}
@@ -60,24 +46,104 @@ Selector labels
 {{- end }}
 
 {{/*
-Reverse proxy selector labels (used if canary is enabled)
+Whether canary is enabled. Driven entirely by `global.canary.enabled` -- the
+umbrella chart's single toggle that also drives the `gatewayapi` chart's
+stable+canary backendRef expansion (see
+charts/gatewayapi/templates/httproute.yaml). There is no chart-local override.
+Emits "true" when enabled, "" otherwise -- safe to use directly as an `if` condition.
 */}}
-{{- define "common.reverseProxySelectorLabels" -}}
-{{ include "common.selectorLabelsBuilder" (list . .Release.Name "-rproxy") }}
+{{- define "common.canaryEnabled" -}}
+{{- if (dig "canary" "enabled" false (default dict .Values.global)) }}true{{ end -}}
 {{- end }}
 
 {{/*
-Canary selector labels
+Whether canaryService/stableService should be set on the Rollout
+(rollout.yaml) and the stable/canary Services should exist at all
+(service-stable.yaml, service-canary.yaml). Without this, those Services and
+Rollout fields would be orphaned: Argo Rollouts only reads/manages them for
+traffic-routing-based canary, and falls back to scaling ReplicaSet sizes
+directly (no Service involved at all) once trafficRouting isn't active.
+
+This does NOT gate whether the Rollout's trafficRouting block itself renders
+-- an explicit canary.trafficRouting always renders as-is regardless of this
+helper (see rollout.yaml), since the caller may point it at Services outside
+this chart's control entirely. This helper only decides whether *this
+chart's own* canary/stable Service pair should exist to back it.
+
+Resolution order:
+  1. Not canary-enabled at all (common.canaryEnabled) -> never active.
+  2. service.enabled is false -> never active, unconditionally, even with an
+     explicit canary.trafficRouting set. Without service.enabled there is no
+     Service infrastructure of any kind from this chart (not even the plain
+     default Service), so canaryService/stableService would always name
+     Services that don't exist -- the same class of bug as the Rollout
+     unconditionally setting them regardless of service.enabled (see the
+     history of this file/rollout.yaml).
+  3. An explicit non-bool canary.trafficRouting (a real provider config) is
+     active from here on, regardless of cloudArmor below -- the caller made
+     an explicit choice.
+  4. An explicit `canary.trafficRouting: false` is always inactive.
+  5. Left at the zero-config default ({}), active only when cloudArmor is
+     not enabled. cloudArmor.enabled signals a public-facing deployment, and
+     Gateway API isn't set up to handle public-facing traffic yet --
+     defaulting into a trafficRouting plugin this environment's Argo
+     Rollouts can't actually use doesn't just make the Rollout unhealthy, it
+     silently blocks the *entire* sync for this service (every later
+     sync-wave resource -- Services, Ingress, Rollout, HPA, VPA -- never
+     gets applied, because sync-wave validation fails upfront on the
+     Rollout's unrecognized trafficRouting.plugins field). TODO: Revisit this once
+     Gateway API supports public-facing deployments -- until then this falls
+     back to basic weighted-replica canary, which needs no service mesh,
+     ingress controller, or HTTPRoute at all.
+
+Note: canary.analysis (background metric analysis) is unused today, but some
+setups scope analysis queries to canary-only pods via canaryService even
+without full traffic routing. If that combination is ever introduced here,
+this condition needs revisiting so canaryService still gets created for
+analysis to target -- as written, no active trafficRouting means no
+canaryService either.
+
+Emits "true" when active, "" otherwise -- safe to use directly as an `if` condition.
 */}}
-{{- define "common.canarySelectorLabels" -}}
-{{ include "common.selectorLabelsBuilder" (list . .Release.Name "-canary") }}
+{{- define "common.canaryTrafficRoutingEnabled" -}}
+{{- if not (include "common.canaryEnabled" .) -}}
+{{- else if not .Values.service.enabled -}}
+{{- else if .Values.canary.trafficRouting -}}
+true
+{{- else if kindIs "bool" .Values.canary.trafficRouting -}}
+{{- else if not (and .Values.cloudArmor .Values.cloudArmor.enabled) -}}
+true
+{{- end -}}
 {{- end }}
 
 {{/*
-Control selector labels
+Workload API version. Rollout (Argo Rollouts) when canary is enabled, otherwise Deployment.
 */}}
-{{- define "common.controlSelectorLabels" -}}
-{{ include "common.selectorLabelsBuilder" (list . .Release.Name "-control") }}
+{{- define "common.workloadApiVersion" -}}
+{{- if (include "common.canaryEnabled" .) }}argoproj.io/v1alpha1{{- else }}apps/v1{{- end }}
+{{- end }}
+
+{{/*
+Workload kind. Rollout (Argo Rollouts) when canary is enabled, otherwise Deployment.
+*/}}
+{{- define "common.workloadKind" -}}
+{{- if (include "common.canaryEnabled" .) }}Rollout{{- else }}Deployment{{- end }}
+{{- end }}
+
+{{/*
+Canary/stable Service names Argo Rollouts manages the pod selector on when
+canary.enabled (see rollout.yaml, service-canary.yaml, service-stable.yaml).
+Always "<common.name>-canary"/"<common.name>-stable" -- not configurable, so
+anything that needs to reference this app's canary pair by name (e.g. a
+gatewayapi HTTPRoute's `canary: true` backendRef shorthand) can always derive
+it from the app name alone.
+*/}}
+{{- define "common.canaryServiceName" -}}
+{{- printf "%s-canary" (include "common.name" .) -}}
+{{- end }}
+
+{{- define "common.stableServiceName" -}}
+{{- printf "%s-stable" (include "common.name" .) -}}
 {{- end }}
 
 {{/*
@@ -179,13 +245,6 @@ Once all apps are using cloud sql proxy v2 this can be simplified.
 {{- end -}}
 
 {{/*
-Reverse Proxy common name
-*/}}
-{{- define "common.reverseProxyName" -}}
-{{- printf "%s-rproxy" (include "common.name" .) }}
-{{- end }}
-
-{{/*
 Fail rather than let a Pod be SIGKILLed part-way through its preStop sleep.
 Expects a dict of "sleep", "grace" and "tier".
 */}}
@@ -213,7 +272,7 @@ Expects a dict of "ctx" and "max".
 {{- /* Not default: it treats 0 as empty, which would ignore an explicit 0. */ -}}
 {{- if not (kindIs "invalid" .ctx.Values.autoscaling.minReplicas) -}}
 {{- .ctx.Values.autoscaling.minReplicas | int -}}
-{{- else if .ctx.Values.canary.enabled -}}
+{{- else if (include "common.canaryEnabled" .ctx) -}}
 {{- min 2 (.max | int) -}}
 {{- else -}}
 1

@@ -1,0 +1,39 @@
+suite: PodDisruptionBudget
+templates:
+  - pdb.yaml
+values:
+  - ./fixtures/minimal-values.yaml
+set:
+  podDisruptionBudget:
+    enabled: true
+  additionalLabels:
+    team: platform
+    env: staging
+tests:
+  - it: defaults minAvailable to 15% when neither minAvailable nor maxUnavailable is set
+    asserts:
+      - isKind:
+          of: PodDisruptionBudget
+      - equal:
+          path: spec.minAvailable
+          value: "15%"
+
+  - it: selects pods by name/instance plus additionalLabels
+    # pdb.yaml's selector is currently built from the full common.labels
+    # helper (matches deployment.yaml/service.yaml's own labels, not just
+    # their selectorLabels), which also pulls in helm.sh/chart -- a value
+    # that changes on every chart version bump. spec.selector is immutable
+    # on a PodDisruptionBudget, so that field intentionally isn't pinned to
+    # an exact value here: asserting it would make this test (correctly)
+    # fail on every version bump, which isn't what this test is for. This
+    # only checks the stable, meaningful part of the selector.
+    asserts:
+      - isSubset:
+          path: spec.selector.matchLabels
+          content:
+            app.kubernetes.io/name: test-app
+            app.kubernetes.io/instance: RELEASE-NAME
+            team: platform
+            env: staging
+      - exists:
+          path: spec.selector.matchLabels["helm.sh/chart"]
