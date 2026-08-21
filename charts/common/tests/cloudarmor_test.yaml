@@ -1,0 +1,138 @@
+suite: Cloud Armor resources (Ingress, BackendConfig, FrontendConfig, Certificate, Service)
+templates:
+  - ingress-cloudarmor.yaml
+  - backendconfig.yaml
+  - frontendconfig.yaml
+  - certificate-cloudarmor.yaml
+  - service-cloudarmor.yaml
+values:
+  - ./fixtures/minimal-values.yaml
+set:
+  deploymentContainer:
+    port: 8080
+  cloudArmor:
+    enabled: true
+    annotations:
+      argocd.argoproj.io/sync-wave: "2"
+    paths:
+      - backend:
+          service:
+            name: test-app-ca
+            port:
+              number: 80
+            targetPort: 8080
+        path: /api
+        pathType: ImplementationSpecific
+    certificate:
+      host: test-app.example.com
+    frontendConfig:
+      sslPolicy: min-tls-12
+      redirectToHttps:
+        enabled: true
+        responseCodeName: PERMANENT_REDIRECT
+    backendConfig:
+      securityPolicy:
+        name: example-security-policy
+      healthCheck:
+        requestPath: /health/liveness
+        type: HTTP
+    staticIpName: test-app-static-ip
+tests:
+  - it: renders the Ingress with the configured path, backend and static IP
+    asserts:
+      - template: ingress-cloudarmor.yaml
+        isKind:
+          of: Ingress
+      - template: ingress-cloudarmor.yaml
+        equal:
+          path: metadata.annotations
+          value:
+            argocd.argoproj.io/sync-wave: "2"
+            kubernetes.io/ingress.global-static-ip-name: test-app-static-ip
+            networking.gke.io/v1beta1.FrontendConfig: test-app
+      - template: ingress-cloudarmor.yaml
+        equal:
+          path: spec.rules[0].http.paths[0]
+          value:
+            backend:
+              service:
+                name: test-app-ca
+                port:
+                  number: 80
+            path: /api
+            pathType: ImplementationSpecific
+      - template: ingress-cloudarmor.yaml
+        equal:
+          path: spec.tls[0].secretName
+          value: test-app-example-com-ca-tls
+
+  - it: renders the BackendConfig with the given security policy and health check
+    asserts:
+      - template: backendconfig.yaml
+        isKind:
+          of: BackendConfig
+      - template: backendconfig.yaml
+        equal:
+          path: spec
+          value:
+            securityPolicy:
+              name: example-security-policy
+            healthCheck:
+              requestPath: /health/liveness
+              type: HTTP
+
+  - it: renders the FrontendConfig with the given SSL policy and redirect
+    asserts:
+      - template: frontendconfig.yaml
+        isKind:
+          of: FrontendConfig
+      - template: frontendconfig.yaml
+        equal:
+          path: spec
+          value:
+            sslPolicy: min-tls-12
+            redirectToHttps:
+              enabled: true
+              responseCodeName: PERMANENT_REDIRECT
+
+  - it: renders the Certificate for the configured host
+    asserts:
+      - template: certificate-cloudarmor.yaml
+        isKind:
+          of: Certificate
+      - template: certificate-cloudarmor.yaml
+        equal:
+          path: spec.commonName
+          value: test-app.example.com
+      - template: certificate-cloudarmor.yaml
+        equal:
+          path: spec.secretName
+          value: test-app-example-com-ca-tls
+
+  - it: renders the -ca Service pointing at the container port, defaulting to NodePort
+    asserts:
+      - template: service-cloudarmor.yaml
+        isKind:
+          of: Service
+      - template: service-cloudarmor.yaml
+        equal:
+          path: metadata.name
+          value: test-app-ca
+      - template: service-cloudarmor.yaml
+        equal:
+          path: spec.type
+          value: NodePort
+      - template: service-cloudarmor.yaml
+        equal:
+          path: spec.ports[0]
+          value:
+            port: 80
+            targetPort: 8080
+            protocol: TCP
+            name: http
+      - template: service-cloudarmor.yaml
+        equal:
+          path: spec.selector
+          value:
+            app.kubernetes.io/name: test-app
+            app.kubernetes.io/instance: RELEASE-NAME
