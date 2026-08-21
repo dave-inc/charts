@@ -1,4 +1,11 @@
-{{- if and .Values.service.enabled (include "common.canaryEnabled" .) -}}
+{{- /*
+Gated on common.canaryTrafficRoutingEnabled, not just canary being on: this
+Service only exists to be a traffic-routing target (see its doc comment in
+_helpers.tpl), so it would be an orphaned object whenever traffic routing
+isn't actually active -- e.g. a public-facing (cloudArmor.enabled) deployment
+today, since Gateway API isn't set up to handle public-facing traffic yet.
+*/}}
+{{- if and .Values.service.enabled (include "common.canaryTrafficRoutingEnabled" .) -}}
 apiVersion: v1
 kind: Service
 metadata:

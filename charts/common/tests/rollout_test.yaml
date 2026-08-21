@@ -1,36 +1,61 @@
 suite: Rollout canary service/trafficRouting wiring
 templates:
   - rollout.yaml
+  - service-stable.yaml
+  - service-canary.yaml
 values:
   - ./fixtures/minimal-values.yaml
 set:
   global.canary.enabled: true
 tests:
-  - it: wires canaryService/stableService when service.enabled is true
+  - it: wires canaryService/stableService and creates the stable/canary Services when service.enabled is true
     set:
       service.enabled: true
     asserts:
-      - isKind:
+      - template: rollout.yaml
+        isKind:
           of: Rollout
-      - equal:
+      - template: rollout.yaml
+        equal:
           path: spec.strategy.canary.canaryService
           value: test-app-canary
-      - equal:
+      - template: rollout.yaml
+        equal:
           path: spec.strategy.canary.stableService
           value: test-app-stable
+      - template: service-stable.yaml
+        isKind:
+          of: Service
+      - template: service-canary.yaml
+        isKind:
+          of: Service
 
-  - it: omits canaryService/stableService and any trafficRouting block when service.enabled is false, with default trafficRouting
+  - it: omits canaryService/stableService, any trafficRouting block, and the stable/canary Services when service.enabled is false, with default trafficRouting
     set:
       service.enabled: false
     asserts:
-      - notExists:
+      - template: rollout.yaml
+        notExists:
           path: spec.strategy.canary.canaryService
-      - notExists:
+      - template: rollout.yaml
+        notExists:
           path: spec.strategy.canary.stableService
-      - notExists:
+      - template: rollout.yaml
+        notExists:
           path: spec.strategy.canary.trafficRouting
+      - template: service-stable.yaml
+        hasDocuments:
+          count: 0
+      - template: service-canary.yaml
+        hasDocuments:
+          count: 0
 
-  - it: honors an explicit canary.trafficRouting override even when service.enabled is false
+  - it: honors an explicit canary.trafficRouting override, but still omits canaryService/stableService and the stable/canary Services, when service.enabled is false
+    # service.enabled is an unconditional gate: without it, this chart has no
+    # Service infrastructure at all (not even the plain default Service), so
+    # canaryService/stableService would always name Services that don't
+    # exist -- regardless of an explicit trafficRouting override. See
+    # common.canaryTrafficRoutingEnabled in _helpers.tpl.
     set:
       service.enabled: false
       canary.trafficRouting:
@@ -39,14 +64,116 @@ tests:
             httpRoute: custom-route
             namespace: custom-ns
     asserts:
-      - notExists:
+      - template: rollout.yaml
+        notExists:
           path: spec.strategy.canary.canaryService
-      - notExists:
+      - template: rollout.yaml
+        notExists:
           path: spec.strategy.canary.stableService
-      - equal:
+      - template: rollout.yaml
+        equal:
           path: spec.strategy.canary.trafficRouting
           value:
             plugins:
               argoproj-labs/gatewayAPI:
                 httpRoute: custom-route
                 namespace: custom-ns
+      - template: service-stable.yaml
+        hasDocuments:
+          count: 0
+      - template: service-canary.yaml
+        hasDocuments:
+          count: 0
+
+  - it: disables the zero-config gatewayAPI default -- omitting canaryService/stableService, trafficRouting, and the stable/canary Services -- when cloudArmor.enabled is true
+    # cloudArmor.enabled signals a public-facing deployment, and Gateway API
+    # isn't set up to handle public-facing traffic yet -- see
+    # common.canaryTrafficRoutingEnabled in _helpers.tpl for the incident
+    # this guards against (an unrecognized trafficRouting.plugins field
+    # silently blocking the entire sync for a service, not just the Rollout).
+    set:
+      service.enabled: true
+      cloudArmor:
+        enabled: true
+        paths:
+          - backend:
+              service:
+                name: test-app-ca
+                port:
+                  number: 80
+                targetPort: 8080
+            path: /
+            pathType: ImplementationSpecific
+        certificate:
+          host: test-app.example.com
+        backendConfig:
+          securityPolicy:
+            name: example-policy
+          healthCheck:
+            requestPath: /health
+            type: HTTP
+    asserts:
+      - template: rollout.yaml
+        notExists:
+          path: spec.strategy.canary.canaryService
+      - template: rollout.yaml
+        notExists:
+          path: spec.strategy.canary.stableService
+      - template: rollout.yaml
+        notExists:
+          path: spec.strategy.canary.trafficRouting
+      - template: service-stable.yaml
+        hasDocuments:
+          count: 0
+      - template: service-canary.yaml
+        hasDocuments:
+          count: 0
+
+  - it: still honors an explicit canary.trafficRouting override, wiring canaryService/stableService and creating the stable/canary Services, even when cloudArmor.enabled is true
+    set:
+      service.enabled: true
+      cloudArmor:
+        enabled: true
+        paths:
+          - backend:
+              service:
+                name: test-app-ca
+                port:
+                  number: 80
+                targetPort: 8080
+            path: /
+            pathType: ImplementationSpecific
+        certificate:
+          host: test-app.example.com
+        backendConfig:
+          securityPolicy:
+            name: example-policy
+          healthCheck:
+            requestPath: /health
+            type: HTTP
+      canary.trafficRouting:
+        plugins:
+          custom:
+            foo: bar
+    asserts:
+      - template: rollout.yaml
+        equal:
+          path: spec.strategy.canary.canaryService
+          value: test-app-canary
+      - template: rollout.yaml
+        equal:
+          path: spec.strategy.canary.stableService
+          value: test-app-stable
+      - template: rollout.yaml
+        equal:
+          path: spec.strategy.canary.trafficRouting
+          value:
+            plugins:
+              custom:
+                foo: bar
+      - template: service-stable.yaml
+        isKind:
+          of: Service
+      - template: service-canary.yaml
+        isKind:
+          of: Service
