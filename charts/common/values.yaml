@@ -461,36 +461,60 @@ kedaScaling:
   enabled: false
   minReplicas: ~
   maxReplicas: ~
+  pollingInterval: 60   # seconds; GCP Managed Prometheus has its own ingestion lag on top of this
+  fallback:
+    enabled: false      # required (true) for banking/risk/ACH workloads — see keda-migration-guide.md 5.4
+    failureThreshold: 3
+    replicas: ~          # defaults to minReplicas/kedaScaling.minReplicas above
   triggers: []
 # Example — Pub/Sub trigger (replaces type: External HPA metric):
 #
+# Note: the `gcp-pubsub` scaler was deprecated in KEDA 2.16 (Sept 2025) due to its reliance on
+# MQL. Use the `prometheus` scaler against GCP Managed Prometheus instead - GCP exposes both
+# Pub/Sub and Cloud Tasks metrics natively via Prometheus with no extra deployment needed. See
+# keda-migration-guide.md Section 3 for the full mapping rules and Section 3.2/3.2b for Cloud
+# Tasks workloads.
+#
 # kedaScaling:
 #   enabled: true
+#   pollingInterval: 60
+#   fallback:
+#     enabled: true
+#     failureThreshold: 3
+#     replicas: 2
 #   triggers:
-#     - type: gcp-pubsub
+#     - type: prometheus
 #       authenticationRef:
 #         name: keda-gcp-auth
 #         kind: ClusterTriggerAuthentication
 #       metadata:
-#         subscriptionName: "projects/my-project/subscriptions/my-sub"
-#         value: "5"
-#         activationValue: "0"
-#   scaleDown:
-#     stabilizationWindowSeconds: 300
-#     policies:
-#     - type: Percent
-#       value: 100
-#       periodSeconds: 15
-#   scaleUp:
-#     stabilizationWindowSeconds: 0
-#     policies:
-#     - type: Percent
-#       value: 100
-#       periodSeconds: 15
-#     - type: Pods
-#       value: 4
-#       periodSeconds: 15
-#     selectPolicy: Max
+#         serverAddress: https://monitoring.googleapis.com/v1/projects/my-project/location/global/prometheus
+#         metricName: pubsub_subscription_num_undelivered_messages
+#         query: 'pubsub_googleapis_com:subscription_num_undelivered_messages{subscription_id="my-sub"}'
+#         threshold: "5"
+#
+# Real HPA scale-up/scale-down tuning (equivalent of the old `scaleDown`/`scaleUp` stanzas) is not
+# a kedaScaling field - it goes under the existing `hpaBehavior.behavior` key above, using the
+# standard HPA v2 `behavior` schema, and applies to both the legacy HPA and KEDA-managed HPA paths:
+#
+# hpaBehavior:
+#   enabled: true
+#   behavior:
+#     scaleDown:
+#       stabilizationWindowSeconds: 300
+#       policies:
+#       - type: Percent
+#         value: 100
+#         periodSeconds: 15
+#     scaleUp:
+#       stabilizationWindowSeconds: 0
+#       policies:
+#       - type: Percent
+#         value: 100
+#         periodSeconds: 15
+#       - type: Pods
+#         value: 4
+#       selectPolicy: Max
 
 # Type Resource
 #

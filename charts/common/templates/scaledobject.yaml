@@ -28,6 +28,16 @@ spec:
     name: {{ include "common.name" . }}
   minReplicaCount: {{ $minReplicas }}
   maxReplicaCount: {{ $maxReplicas }}
+  pollingInterval: {{ .Values.kedaScaling.pollingInterval | default 60 }}
+  {{- if .Values.kedaScaling.fallback.enabled }}
+  {{- $fallbackReplicas := $minReplicas }}
+  {{- if not (kindIs "invalid" .Values.kedaScaling.fallback.replicas) }}
+  {{- $fallbackReplicas = .Values.kedaScaling.fallback.replicas }}
+  {{- end }}
+  fallback:
+    failureThreshold: {{ .Values.kedaScaling.fallback.failureThreshold | default 3 }}
+    replicas: {{ $fallbackReplicas }}
+  {{- end }}
   {{- if .Values.hpaBehavior.enabled }}
   advanced:
     horizontalPodAutoscalerConfig:
