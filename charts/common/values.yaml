@@ -463,7 +463,7 @@ kedaScaling:
   maxReplicas: ~
   pollingInterval: 60   # seconds; GCP Managed Prometheus has its own ingestion lag on top of this
   fallback:
-    enabled: false      # required (true) for banking/risk/ACH workloads — see keda-migration-guide.md 5.4
+    enabled: false
     failureThreshold: 3
     replicas: ~          # defaults to minReplicas/kedaScaling.minReplicas above
   triggers: []
