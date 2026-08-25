@@ -34,10 +34,14 @@ spec:
   {{- if .Values.kedaScaling.fallback.enabled }}
   {{- $fallbackReplicas := $minReplicas }}
   {{- if not (kindIs "invalid" .Values.kedaScaling.fallback.replicas) }}
-  {{- $fallbackReplicas = .Values.kedaScaling.fallback.replicas }}
+  {{- $fallbackReplicas = (.Values.kedaScaling.fallback.replicas | int) }}
+  {{- end }}
+  {{- $failureThreshold := 3 }}
+  {{- if not (kindIs "invalid" .Values.kedaScaling.fallback.failureThreshold) }}
+  {{- $failureThreshold = (.Values.kedaScaling.fallback.failureThreshold | int) }}
   {{- end }}
   fallback:
-    failureThreshold: {{ .Values.kedaScaling.fallback.failureThreshold | default 3 }}
+    failureThreshold: {{ $failureThreshold }}
     replicas: {{ $fallbackReplicas }}
   {{- end }}
   {{- if .Values.hpaBehavior.enabled }}
