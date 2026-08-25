@@ -461,7 +461,7 @@ kedaScaling:
   enabled: false
   minReplicas: ~
   maxReplicas: ~
-  pollingInterval: 60   # seconds; GCP Managed Prometheus has its own ingestion lag on top of this
+  pollingInterval: ~   # seconds; when unset, the ScaledObject omits this field and KEDA uses its own default (30s). GCP Managed Prometheus has its own ingestion lag on top of whatever value is set.
   fallback:
     enabled: false
     failureThreshold: 3
@@ -514,6 +514,7 @@ kedaScaling:
 #         periodSeconds: 15
 #       - type: Pods
 #         value: 4
+#         periodSeconds: 15
 #       selectPolicy: Max
 
 # Type Resource

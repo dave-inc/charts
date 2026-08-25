@@ -28,7 +28,9 @@ spec:
     name: {{ include "common.name" . }}
   minReplicaCount: {{ $minReplicas }}
   maxReplicaCount: {{ $maxReplicas }}
-  pollingInterval: {{ .Values.kedaScaling.pollingInterval | default 60 }}
+  {{- if not (kindIs "invalid" .Values.kedaScaling.pollingInterval) }}
+  pollingInterval: {{ .Values.kedaScaling.pollingInterval }}
+  {{- end }}
   {{- if .Values.kedaScaling.fallback.enabled }}
   {{- $fallbackReplicas := $minReplicas }}
   {{- if not (kindIs "invalid" .Values.kedaScaling.fallback.replicas) }}
