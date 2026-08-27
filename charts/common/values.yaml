@@ -278,8 +278,8 @@ canary:
     # minAvailable and maxUnavailable unset to inherit the top-level budget.
     # If either budget field is set, the other is not inherited: minAvailable
     # and maxUnavailable are mutually exclusive, so a partial override cannot
-    # be merged with the parent. Set a field to 0 to disallow all voluntary
-    # disruption of this tier.
+    # be merged with the parent. Use maxUnavailable: 0 to disallow all voluntary disruption;
+    # use minAvailable: "100%" for the same effect.
     #
     # podDisruptionBudget:
     #   enabled: true
@@ -293,8 +293,8 @@ canary:
     # minAvailable and maxUnavailable unset to inherit the top-level budget.
     # If either budget field is set, the other is not inherited: minAvailable
     # and maxUnavailable are mutually exclusive, so a partial override cannot
-    # be merged with the parent. Set a field to 0 to disallow all voluntary
-    # disruption of this tier.
+    # be merged with the parent. Use maxUnavailable: 0 to disallow all voluntary disruption;
+    # use minAvailable: "100%" for the same effect.
     #
     # podDisruptionBudget:
     #   enabled: true

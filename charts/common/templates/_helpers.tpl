@@ -316,8 +316,8 @@ Renders a PodDisruptionBudget. Takes a dict with:
                     falling back to the top-level podDisruptionBudget values when unset
 
 A tier override key counts as "unset" only when nil, not when falsy, so an explicit 0
-(disallow all voluntary disruption) is honored instead of silently falling back to the
-15% default the way a truthiness check would.
+(e.g. maxUnavailable: 0, which disallows all voluntary disruption) is honored instead of
+silently falling back to the 15% default the way a truthiness check would.
 
 The override is all-or-nothing: if it sets either field, it is used as-is instead of
 inheriting the field it left unset from the top-level config. minAvailable and
