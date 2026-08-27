@@ -385,6 +385,17 @@ entries:
     version: 0.11.1-keda-beta.20
   - apiVersion: v2
     appVersion: 1.17.0
+    created: "2026-08-27T00:33:07.985679973Z"
+    description: Standard Service Template
+    digest: f7d823ad2742d41ad2ddc6c39cfba84ec705634edf3975246abb455447ea4719
+    kubeVersion: '>=1.30.0-0'
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.11.1-beta.20/common-0.11.1-beta.20.tgz
+    version: 0.11.1-beta.20
+  - apiVersion: v2
+    appVersion: 1.17.0
     created: "2026-08-13T16:25:00.097950325Z"
     description: Standard Service Template
     digest: bec4e43f1caf634690cd001fd0a04f499947af0d3f4f076e5ec884f4aaf8db5e
@@ -3225,4 +3236,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2026-08-25T21:07:24.160803284Z"
+generated: "2026-08-27T00:33:07.98772804Z"
