@@ -272,8 +272,35 @@ canary:
     annotations:
       canary: {}
       control: {}
+
+  # Overrides the top-level podDisruptionBudget for the canary tier only.
+  # Leave enabled unset to inherit the top-level enabled value. Leave both
+  # minAvailable and maxUnavailable unset to inherit the top-level budget.
+  # If either budget field is set, the other is not inherited: minAvailable
+  # and maxUnavailable are mutually exclusive, so a partial override cannot
+  # be merged with the parent. Use maxUnavailable: 0 to disallow all voluntary disruption;
+  # use minAvailable: "100%" for the same effect.
+  #
+  # podDisruptionBudget:
+  #   enabled: true
+  #   minAvailable:
+  #   maxUnavailable:
+
   # Implementation specific configurations for canary deployment
   reverseProxy:
+    # Overrides the top-level podDisruptionBudget for the reverse proxy only.
+    # Leave enabled unset to inherit the top-level enabled value. Leave both
+    # minAvailable and maxUnavailable unset to inherit the top-level budget.
+    # If either budget field is set, the other is not inherited: minAvailable
+    # and maxUnavailable are mutually exclusive, so a partial override cannot
+    # be merged with the parent. Use maxUnavailable: 0 to disallow all voluntary disruption;
+    # use minAvailable: "100%" for the same effect.
+    #
+    # podDisruptionBudget:
+    #   enabled: true
+    #   minAvailable:
+    #   maxUnavailable:
+
     # Overrides the effective minReadySeconds for the reverse proxy only, where
     # effective means serviceGracefulRollout when it applies and the top level
     # otherwise. The rproxy is the tier fronted by the NEG, so it often warrants a
