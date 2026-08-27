@@ -186,6 +186,26 @@ Reverse Proxy common name
 {{- end }}
 
 {{/*
+Effective graceful-rollout field value.
+
+Prefers serviceGracefulRollout.<field> over the top-level .Values.<field>, but
+only for a networked service that has opted in: both .Values.service.enabled and
+.Values.serviceGracefulRollout.enabled must be true. Otherwise the top-level
+value is used, so non-networked workloads (pubsub consumers, task handlers) are unaffected.
+
+Expects a dict of "ctx" (the root context) and "field" (one of minReadySeconds,
+preStopSleepSeconds, terminationGracePeriodSeconds).
+*/}}
+{{- define "common.gracefulRolloutValue" -}}
+{{- $ctx := .ctx -}}
+{{- if and $ctx.Values.service.enabled $ctx.Values.serviceGracefulRollout.enabled -}}
+{{- index $ctx.Values.serviceGracefulRollout .field -}}
+{{- else -}}
+{{- index $ctx.Values .field -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Fail rather than let a Pod be SIGKILLed part-way through its preStop sleep.
 Expects a dict of "sleep", "grace" and "tier".
 */}}
@@ -236,15 +256,17 @@ sleep with another command, which the sleep action cannot express. Requires the
 kubeVersion floor in Chart.yaml.
 */}}
 {{- define "common.appLifecycle" -}}
+{{- $preStopSleep := include "common.gracefulRolloutValue" (dict "ctx" . "field" "preStopSleepSeconds") }}
+{{- $grace := include "common.gracefulRolloutValue" (dict "ctx" . "field" "terminationGracePeriodSeconds") }}
 {{- if .Values.deploymentContainer.lifecycle }}
 lifecycle:
   {{- toYaml .Values.deploymentContainer.lifecycle | nindent 2 }}
-{{- else if gt (.Values.preStopSleepSeconds | default 0 | int) 0 }}
-{{- include "common.validateDrainBudget" (dict "sleep" .Values.preStopSleepSeconds "grace" .Values.terminationGracePeriodSeconds "tier" "application container") }}
+{{- else if gt ($preStopSleep | default 0 | int) 0 }}
+{{- include "common.validateDrainBudget" (dict "sleep" $preStopSleep "grace" $grace "tier" "application container") }}
 lifecycle:
   preStop:
     sleep:
-      seconds: {{ .Values.preStopSleepSeconds | int }}
+      seconds: {{ $preStopSleep | int }}
 {{- end }}
 {{- end }}
 
@@ -274,7 +296,8 @@ lifecycle:
 {{- if .Values.cloudsqlProxy.lifecycle }}
   {{- toYaml .Values.cloudsqlProxy.lifecycle | nindent 2 }}
 {{- else }}
-{{- $sleep := max (sub (.Values.terminationGracePeriodSeconds | int) 1) 0 | int }}
+{{- $grace := include "common.gracefulRolloutValue" (dict "ctx" . "field" "terminationGracePeriodSeconds") }}
+{{- $sleep := max (sub ($grace | int) 1) 0 | int }}
   preStop:
     exec:
       command:

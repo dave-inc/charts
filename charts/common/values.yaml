@@ -101,34 +101,39 @@ deploymentContainer:
 # and the SIGTERM handling after it. It is a ceiling, not a delay, and on its own it
 # does not keep a Pod in the traffic path. preStopSleepSeconds below does that.
 #
-# 60 leaves the process around 40s to finish in-flight work once the default 20s preStop
-# sleep is done. Must exceed preStopSleepSeconds or the Pod is SIGKILLed mid-drain.
+# 31 is the long-standing default, kept here for workloads that are not in a traffic path,
+# such as pubsub consumers and task handlers. With no drain to fund, the whole budget goes
+# to the process finishing its in-flight work after SIGTERM. Must exceed the effective
+# preStopSleepSeconds or the Pod is SIGKILLed mid-drain.
 #
-# Applies to the control and canary Deployments. The reverse proxy inherits this value
-# unless canary.reverseProxy.terminationGracePeriodSeconds is set.
-terminationGracePeriodSeconds: 60
+# This is the fallback value. A release with a Service takes
+# serviceGracefulRollout.terminationGracePeriodSeconds instead, and that is where the
+# reasoning for a longer budget lives.
+#
+# Applies to the control and canary Deployments. The reverse proxy inherits the effective
+# value unless canary.reverseProxy.terminationGracePeriodSeconds is set.
+terminationGracePeriodSeconds: 31
 
 # Seconds a Pod keeps serving after termination begins, before its process is asked to
 # shut down. Nothing else does this: terminationGracePeriodSeconds only caps the total
 # shutdown, and the container otherwise exits as soon as it receives SIGTERM.
 #
-# Size it to cover both halves of a backend leaving a Google load balancer:
+# 0 is the right default here, because this value is normally only reached by a workload
+# with no Service. Nothing is routing to it, so there are no in-flight requests to hold
+# open and no endpoint waiting to be withdrawn: a sleep would do nothing but make every
+# shutdown slower. A release with a Service takes serviceGracefulRollout.preStopSleepSeconds
+# instead, unless it has turned that block off, and that is where the sizing against load
+# balancer endpoint removal lives.
 #
-#   preStopSleepSeconds >= drainingTimeoutSec + endpoint removal latency
-#
-# Removal is not instant. It lagged the Pod being killed by ~12s in staging, and new
-# requests keep arriving until it lands, so 20 is that measurement with margin. Once
-# removed, the load balancer also holds existing connections for drainingTimeoutSec,
-# but that is 0 on our backend services today, so the removal latency is the only term
-# that binds. If connection draining is ever enabled, on a GCPBackendPolicy for Gateway
-# or a BackendConfig for Ingress, this has to grow to cover it as well, and
-# terminationGracePeriodSeconds has to stay above this.
+# Raising this one is for the unusual case of a workload that is reached some other way
+# and still needs a window. It must stay below terminationGracePeriodSeconds, or the
+# render fails rather than let the Pod be SIGKILLed part-way through draining.
 #
 # Rendered as a preStop sleep on the control and canary application containers, unless
 # deploymentContainer.lifecycle is set, which takes precedence and is then responsible
 # for its own drain. The reverse proxy sleeps for the same duration before quitting
-# nginx, unless canary.reverseProxy.preStopSleepSeconds is set. Set 0 to opt out.
-preStopSleepSeconds: 20
+# nginx, unless canary.reverseProxy.preStopSleepSeconds is set.
+preStopSleepSeconds: 0
 
 image:
   repository: nginx
@@ -180,6 +185,74 @@ service:
   # The name of the service is optional, If not set, a name is generated using Release.Name
   # name: ""
 
+# Graceful-rollout timing for a release that is actually in a traffic path. These three
+# fields shadow their top-level counterparts, so a service can be timed against the load
+# balancer in front of it without moving the defaults that everything else uses.
+#
+# It applies only when both service.enabled and serviceGracefulRollout.enabled are true,
+# and both default true. So a service gets the values below, while a workload with no
+# Service, such as a pubsub consumer or a task handler, falls back to the top level and
+# is left on the plain defaults. Resolved by common.gracefulRolloutValue in
+# templates/_helpers.tpl.
+#
+# Precedence, most specific first:
+#
+#   1. canary.reverseProxy.*    the per-tier override, reverse proxy only
+#   2. serviceGracefulRollout.* this block, when it applies
+#   3. top-level .Values.*      the default for everything else
+#
+# The block feeds the control and canary Deployments, the reverse proxy's base timing and
+# the Cloud SQL proxy's derived wait, so all of them move together. Set enabled: false to
+# put a service back on the top-level defaults.
+serviceGracefulRollout:
+  enabled: true
+
+  # Seconds a new Pod must stay Ready before it counts as Available and the rollout
+  # retires an old Pod. The top-level minReadySeconds covers what the field does and why
+  # even a workload with no endpoints might want it; this is the separate reason a
+  # service in a traffic path wants a minute of it.
+  #
+  # It covers the gap between a Pod being Ready and the data plane knowing about it. That
+  # gap is worst behind container-native load balancing, where GKE marks the
+  # load-balancer-neg-ready gate True before the NEG is attached to a health-checked
+  # backend service, and Google recommends 60 or higher there. A ClusterIP-only service
+  # has the same gap in miniature, since an EndpointSlice update still has to reach every
+  # node and clients still hold pooled connections and cached DNS. Retire an old Pod
+  # inside that gap and the traffic it was serving has nowhere ready to land.
+  #
+  # The cost is near constant rather than proportional to size: with the default 25%
+  # surge and unavailable, a rollout moves in roughly four waves whatever the replica
+  # count, so this adds about four minutes, felt most in an emergency rollback. Must stay
+  # below progressDeadlineSeconds (600 by default) or the rollout is marked failed, which
+  # leaves room for those four waves unless the container is also slow to start.
+  minReadySeconds: 60
+
+  # Seconds a Pod keeps serving after termination begins, before its process is asked to
+  # shut down. Sized to cover both halves of a backend leaving a Google load balancer:
+  #
+  #   preStopSleepSeconds >= drainingTimeoutSec + endpoint removal latency
+  #
+  # Removal is not instant. It lagged the Pod being killed by ~12s in staging, and new
+  # requests keep arriving until it lands, so 20 is that measurement with margin. Once
+  # removed, the load balancer also holds existing connections for drainingTimeoutSec,
+  # but that is 0 on our backend services today, so the removal latency is the only term
+  # that binds. If connection draining is ever enabled, on a GCPBackendPolicy for Gateway
+  # or a BackendConfig for Ingress, this has to grow to cover it as well, and
+  # terminationGracePeriodSeconds below has to stay above this.
+  preStopSleepSeconds: 20
+
+  # The whole budget for shutdown, spanning the drain above and the SIGTERM handling
+  # after it. 60 leaves the process around 40s to finish in-flight work once the 20s
+  # preStop sleep is done.
+  #
+  # Must exceed preStopSleepSeconds. The render fails rather than let a Pod be SIGKILLed
+  # part-way through draining, see common.validateDrainBudget in templates/_helpers.tpl.
+  #
+  # The Cloud SQL proxy sidecar derives its own preStop wait from this, as grace - 1, so
+  # 59 here. The application reaches its database through the proxy and may keep working
+  # until the last moment, so the proxy has to outlive the whole of this budget.
+  terminationGracePeriodSeconds: 60
+
 canary:
   enabled: false
   weight: 0
@@ -201,15 +274,17 @@ canary:
       control: {}
   # Implementation specific configurations for canary deployment
   reverseProxy:
-    # Overrides the top-level minReadySeconds for the reverse proxy only. The
-    # rproxy is the tier fronted by the NEG, so it often warrants a longer delay
-    # than the application Deployments. Leave unset to inherit; setting 0 here
-    # explicitly opts the rproxy out of a non-zero global value.
+    # Overrides the effective minReadySeconds for the reverse proxy only, where
+    # effective means serviceGracefulRollout when it applies and the top level
+    # otherwise. The rproxy is the tier fronted by the NEG, so it often warrants a
+    # longer delay than the application Deployments. Leave unset to inherit;
+    # setting 0 here explicitly opts the rproxy out of a non-zero inherited value.
     # minReadySeconds:
-    # Overrides the top-level terminationGracePeriodSeconds for the reverse proxy
-    # only. Being the tier fronted by the NEG, it is the one that keeps serving
-    # while its endpoint is detached, so it may warrant longer than the
-    # application Deployments. Leave unset to inherit.
+    # Overrides the effective terminationGracePeriodSeconds for the reverse proxy
+    # only, serviceGracefulRollout when it applies and the top level otherwise.
+    # Being the tier fronted by the NEG, it is the one that keeps serving while its
+    # endpoint is detached, so it may warrant longer than the application
+    # Deployments. Leave unset to inherit.
     #
     # Unlike minReadySeconds above, this field is always rendered, so 0 is not an
     # opt out: it sets a grace period of literally 0 seconds, which SIGKILLs the
@@ -217,7 +292,8 @@ canary:
     # Kubernetes default of 30. Reaching 0 also means setting preStopSleepSeconds
     # to 0, since a preStop sleep may not outlast the grace period.
     # terminationGracePeriodSeconds:
-    # Overrides the top-level preStopSleepSeconds for the reverse proxy only. The
+    # Overrides the effective preStopSleepSeconds for the reverse proxy only,
+    # serviceGracefulRollout when it applies and the top level otherwise. The
     # rproxy sleeps this long before quitting nginx, so it stays in the traffic
     # path until the load balancer has detached its endpoint. Leave unset to
     # inherit; setting 0 here quits nginx immediately with no drain window.
@@ -415,31 +491,23 @@ strategy:
 
 # Seconds a new Pod must stay Ready before it counts as Available and the rollout
 # retires an old Pod. Unlike maxUnavailable, this delay does not trust the readiness
-# signal. Two separate things want it, and only the first is about load balancers.
+# signal.
 #
-# It covers the gap between a Pod being Ready and the data plane knowing about it. That
-# gap is worst behind container-native load balancing, where GKE marks the
-# load-balancer-neg-ready gate True before the NEG is attached to a health-checked
-# backend service, and Google recommends 60 or higher there. A ClusterIP-only service
-# has the same gap in miniature, since an EndpointSlice update still has to reach every
-# node and clients still hold pooled connections and cached DNS.
+# What it buys a workload with no endpoints is time for a new revision to fail. Without
+# it a Pod counts as Available the instant readiness flips, so a container that passes
+# its probe and then dies half a minute later, on an OOM, a lazily initialized dependency
+# or an exhausted connection pool, is rolled across every replica before anything
+# notices. That holds for pubsub consumers and task handlers just as much as for anything
+# serving traffic, which is why the field is worth considering even here even though
+# serviceGracefulRollout.minReadySeconds is the right option most of the time.
 #
-# It also gives a new revision time to fail. Without it a Pod counts as Available the
-# instant readiness flips, so a container that passes its probe and then dies half a
-# minute later, on an OOM, a lazily initialized dependency or an exhausted connection
-# pool, is rolled across every replica before anything notices. That reason holds for
-# workloads with no endpoints at all, such as pubsub consumers and task handlers, which
-# is why this is defaulted for everything rather than only behind a NEG.
+# This is the fallback value. A release with a Service takes
+# serviceGracefulRollout.minReadySeconds instead, which defaults to 60 and carries the
+# separate, load-balancer-shaped reason for the delay.
 #
-# The cost is near constant rather than proportional to size: with the surge and
-# unavailable above, a rollout moves in roughly four waves whatever the replica count,
-# so this adds about four minutes, felt most in an emergency rollback. Must stay below
-# progressDeadlineSeconds (600 by default) or the rollout is marked failed, which leaves
-# room for those four waves unless the container is also slow to start.
-#
-# Applies to the control and canary Deployments. The reverse proxy inherits this
-# value unless canary.reverseProxy.minReadySeconds is set. Set 0 to opt out.
-minReadySeconds: 60
+# Applies to the control and canary Deployments. The reverse proxy inherits the effective
+# value unless canary.reverseProxy.minReadySeconds is set.
+minReadySeconds: 0
 
 autoscaling:
   enabled: false
