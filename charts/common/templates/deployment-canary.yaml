@@ -38,8 +38,9 @@ spec:
       {{- include "common.canarySelectorLabels" . | nindent 6 }}
   strategy:
     {{- toYaml .Values.strategy | nindent 6 }}
-  {{- if gt (.Values.minReadySeconds | default 0 | int) 0 }}
-  minReadySeconds: {{ .Values.minReadySeconds }}
+  {{- $minReadySeconds := include "common.gracefulRolloutValue" (dict "ctx" . "field" "minReadySeconds") }}
+  {{- if gt ($minReadySeconds | default 0 | int) 0 }}
+  minReadySeconds: {{ $minReadySeconds }}
   {{- end }}
   template:
     metadata:
@@ -67,7 +68,7 @@ spec:
       serviceAccountName: {{ include "common.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ include "common.gracefulRolloutValue" (dict "ctx" . "field" "terminationGracePeriodSeconds") }}
       {{- if or (.Values.topologySpreadConstraints.zone.enabled) (.Values.topologySpreadConstraints.node.enabled) }}
       topologySpreadConstraints:
         {{- if .Values.topologySpreadConstraints.zone.enabled }}

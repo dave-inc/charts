@@ -4,16 +4,21 @@
 intentional `kedaScaling.minReplicas: 0` (scale-to-zero) with autoscaling.minReplicas. Use
 `kindIs "invalid"` instead, which is only true for an unset/nil value, so 0 is respected.
 */}}
+{{- /* Resolve maxReplicas first: common.minReplicas' canary default (min 2 max) needs the
+final, possibly-kedaScaling-overridden max as its ceiling. Passing the pre-override
+autoscaling.maxReplicas here would let a lower kedaScaling.maxReplicas end up below the
+computed min - e.g. autoscaling.maxReplicas: 20 with canary enabled defaults min to 2, but
+a kedaScaling.maxReplicas: 1 override would then render minReplicaCount: 2 > maxReplicaCount: 1. */}}
+{{- $maxReplicas := (.Values.autoscaling.maxReplicas | int) }}
+{{- if not (kindIs "invalid" .Values.kedaScaling.maxReplicas) }}
+{{- $maxReplicas = (.Values.kedaScaling.maxReplicas | int) }}
+{{- end }}
 {{- /* include returns a string, while the kedaScaling branch below assigns an int. Cast
 so $minReplicas has one type either way, and a numeric comparison added against it later
 does not silently compare strings. */}}
-{{- $minReplicas := include "common.minReplicas" (dict "ctx" . "max" .Values.autoscaling.maxReplicas) | int }}
+{{- $minReplicas := include "common.minReplicas" (dict "ctx" . "max" $maxReplicas) | int }}
 {{- if not (kindIs "invalid" .Values.kedaScaling.minReplicas) }}
-{{- $minReplicas = .Values.kedaScaling.minReplicas }}
-{{- end }}
-{{- $maxReplicas := .Values.autoscaling.maxReplicas }}
-{{- if not (kindIs "invalid" .Values.kedaScaling.maxReplicas) }}
-{{- $maxReplicas = .Values.kedaScaling.maxReplicas }}
+{{- $minReplicas = (.Values.kedaScaling.minReplicas | int) }}
 {{- end }}
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
@@ -28,6 +33,22 @@ spec:
     name: {{ include "common.name" . }}
   minReplicaCount: {{ $minReplicas }}
   maxReplicaCount: {{ $maxReplicas }}
+  {{- if not (kindIs "invalid" .Values.kedaScaling.pollingInterval) }}
+  pollingInterval: {{ .Values.kedaScaling.pollingInterval | int }}
+  {{- end }}
+  {{- if .Values.kedaScaling.fallback.enabled }}
+  {{- $fallbackReplicas := $minReplicas }}
+  {{- if not (kindIs "invalid" .Values.kedaScaling.fallback.replicas) }}
+  {{- $fallbackReplicas = (.Values.kedaScaling.fallback.replicas | int) }}
+  {{- end }}
+  {{- $failureThreshold := 3 }}
+  {{- if not (kindIs "invalid" .Values.kedaScaling.fallback.failureThreshold) }}
+  {{- $failureThreshold = (.Values.kedaScaling.fallback.failureThreshold | int) }}
+  {{- end }}
+  fallback:
+    failureThreshold: {{ $failureThreshold }}
+    replicas: {{ $fallbackReplicas }}
+  {{- end }}
   {{- if .Values.hpaBehavior.enabled }}
   advanced:
     horizontalPodAutoscalerConfig:
