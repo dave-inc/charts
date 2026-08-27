@@ -354,5 +354,9 @@ spec:
 {{- end }}
   selector:
     matchLabels:
+{{- if and (eq .selectorTemplate "common.selectorLabels") .root.Values.podSelectorLabelsOverride }}
+      {{- .root.Values.podSelectorLabelsOverride | toYaml | nindent 6 }}
+{{- else }}
       {{- include .selectorTemplate .root | nindent 6 }}
+{{- end }}
 {{- end }}
