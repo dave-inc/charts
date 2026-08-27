@@ -283,3 +283,53 @@ lifecycle:
         - {{ if gt $sleep 0 }}/bin/sleep {{ $sleep }} && {{ end }}rm -f /cloudsql/{{ include "common.instanceConnectionName" . }}
 {{- end }}
 {{- end }}
+
+{{/*
+Renders a PodDisruptionBudget. Takes a dict with:
+  root:            the top-level context (".")
+  name:            the PDB's metadata.name
+  selectorTemplate: name of the template to include for spec.selector.matchLabels
+  override:        optional dict with minAvailable/maxUnavailable for this tier,
+                    falling back to the top-level podDisruptionBudget values when unset
+
+A tier override key counts as "unset" only when nil, not when falsy, so an explicit 0
+(disallow all voluntary disruption) is honored instead of silently falling back to the
+15% default the way a truthiness check would.
+
+The override is all-or-nothing: if it sets either field, it is used as-is instead of
+inheriting the field it left unset from the top-level config. minAvailable and
+maxUnavailable are mutually exclusive on a PDB, so merging field-by-field could combine
+one field from the override with the other field from the top-level config and render
+both at once, which Kubernetes rejects.
+*/}}
+{{- define "common.pdb" -}}
+{{- $override := .override | default dict -}}
+{{- $minAvailable := $override.minAvailable -}}
+{{- $maxUnavailable := $override.maxUnavailable -}}
+{{- if and (eq $minAvailable nil) (eq $maxUnavailable nil) -}}
+{{- $minAvailable = .root.Values.podDisruptionBudget.minAvailable -}}
+{{- $maxUnavailable = .root.Values.podDisruptionBudget.maxUnavailable -}}
+{{- end -}}
+{{- if and (ne $minAvailable nil) (ne $maxUnavailable nil) -}}
+{{- fail (printf "%s: minAvailable and maxUnavailable are mutually exclusive on a PodDisruptionBudget, set only one" .name) -}}
+{{- end -}}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .name }}
+  labels:
+    {{- include "common.labels" .root | nindent 4 }}
+spec:
+{{- if and (eq $minAvailable nil) (eq $maxUnavailable nil) }}
+  minAvailable: "15%"
+{{- end }}
+{{- if ne $minAvailable nil }}
+  minAvailable: {{ $minAvailable }}
+{{- end }}
+{{- if ne $maxUnavailable nil }}
+  maxUnavailable: {{ $maxUnavailable }}
+{{- end }}
+  selector:
+    matchLabels:
+      {{- include .selectorTemplate .root | nindent 6 }}
+{{- end }}

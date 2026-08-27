@@ -1,21 +1,5 @@
-{{- if and .Values.podDisruptionBudget.enabled .Values.canary.enabled }}
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: {{ include "common.reverseProxyName" . }}
-  labels:
-    {{- include "common.labels" . | nindent 4 }}
-spec:
-{{- if and (not .Values.podDisruptionBudget.minAvailable) (not .Values.podDisruptionBudget.maxUnavailable) }}
-  minAvailable: "15%"
-{{- end}}
-{{- if .Values.podDisruptionBudget.minAvailable }}
-  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
-{{- end }}
-{{- if .Values.podDisruptionBudget.maxUnavailable }}
-  maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable }}
-{{- end }}
-  selector:
-    matchLabels:
-      {{- include "common.reverseProxySelectorLabels" . | nindent 6 }}
+{{- $pdbEnabled := (.Values.canary.reverseProxy.podDisruptionBudget | default dict).enabled -}}
+{{- if eq $pdbEnabled nil -}}{{- $pdbEnabled = .Values.podDisruptionBudget.enabled -}}{{- end -}}
+{{- if and $pdbEnabled .Values.canary.enabled }}
+{{- include "common.pdb" (dict "root" . "name" (include "common.reverseProxyName" .) "selectorTemplate" "common.reverseProxySelectorLabels" "override" .Values.canary.reverseProxy.podDisruptionBudget) }}
 {{- end }}
