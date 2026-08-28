@@ -1,0 +1,56 @@
+{{- if and .Values.kedaScaling.enabled .Values.canary.enabled }}
+{{- /* Mirrors hpa-canary.yaml's min/max resolution and its comment: canary.autoscaling.maxReplicas
+overrides the root autoscaling.maxReplicas ceiling that common.minReplicas' canary default is
+capped against, so the default cannot exceed maxReplicas. An explicit min above max is left as
+written either way, to be surfaced by the API server rather than masked. */}}
+{{- $canaryAuto := .Values.canary.autoscaling | default dict }}
+{{- $max := (.Values.autoscaling.maxReplicas | int) }}
+{{- if not (kindIs "invalid" $canaryAuto.maxReplicas) }}
+{{- $max = ($canaryAuto.maxReplicas | int) }}
+{{- end }}
+{{- $min := include "common.minReplicas" (dict "ctx" . "max" $max) | int }}
+{{- /* Not coalesce: an explicit override wins outright, including 1 - matches hpa-canary.yaml. */}}
+{{- if not (kindIs "invalid" $canaryAuto.minReplicas) }}
+{{- $min = ($canaryAuto.minReplicas | int) }}
+{{- end }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "common.canaryName" . }}
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "common.canaryName" . }}
+  minReplicaCount: {{ $min }}
+  maxReplicaCount: {{ $max }}
+  {{- if not (kindIs "invalid" .Values.kedaScaling.pollingInterval) }}
+  pollingInterval: {{ .Values.kedaScaling.pollingInterval | int }}
+  {{- end }}
+  {{- if .Values.kedaScaling.fallback.enabled }}
+  {{- $fallbackReplicas := $min }}
+  {{- if not (kindIs "invalid" .Values.kedaScaling.fallback.replicas) }}
+  {{- $fallbackReplicas = (.Values.kedaScaling.fallback.replicas | int) }}
+  {{- end }}
+  {{- $failureThreshold := 3 }}
+  {{- if not (kindIs "invalid" .Values.kedaScaling.fallback.failureThreshold) }}
+  {{- $failureThreshold = (.Values.kedaScaling.fallback.failureThreshold | int) }}
+  {{- end }}
+  fallback:
+    failureThreshold: {{ $failureThreshold }}
+    replicas: {{ $fallbackReplicas }}
+  {{- end }}
+  {{- if .Values.hpaBehavior.enabled }}
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        {{- toYaml .Values.hpaBehavior.behavior | nindent 8 }}
+  {{- end }}
+  {{- /* Same trigger source as the main ScaledObject - matches hpa-canary.yaml, which reuses
+  .Values.autoscaling.metrics verbatim rather than supporting a canary-specific metrics override
+  ("Does not support overriding any other values", per this chart's own canary.autoscaling docs). */}}
+  triggers:
+    {{- toYaml .Values.kedaScaling.triggers | nindent 4 }}
+{{- end }}
