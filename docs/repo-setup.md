@@ -1,0 +1,230 @@
+# Repository setup for the release pipeline
+
+The release pipeline is inert until two repository settings change on
+`dave-inc/charts`. One fails loudly. One fails silently, and that is the one to
+care about most.
+
+Apply both **before** merging the PR that adds the pipeline, not after. "Inert"
+overstates it: with step 2 missing, every push to master runs the release workflow
+and fails at the point it tries to open a pull request, so the default branch shows
+red rather than nothing. With step 1 missing, the first release is computed from
+individual branch commits rather than reviewed PR titles.
+
+Both are repository-level and need the **Admin** role on the repo. Neither needs
+org admin, and neither touches the existing org rulesets. Installing the DevX app,
+described in step 2, is the only part that may need someone outside the repo.
+
+The reasoning behind each setting is in
+[release-pipeline.md](release-pipeline.md#repository-settings-this-depends-on).
+This page is the checklist.
+
+## 1. Squash merging only
+
+Current state is the GitHub default: all three merge methods enabled, squash title
+`COMMIT_OR_PR_TITLE`, squash message `COMMIT_MESSAGES`.
+
+```bash
+gh api -X PATCH repos/dave-inc/charts \
+  -F allow_squash_merge=true \
+  -F allow_merge_commit=false \
+  -F allow_rebase_merge=false \
+  -F allow_auto_merge=true \
+  -f squash_merge_commit_title=PR_TITLE \
+  -f squash_merge_commit_message=BLANK
+```
+
+In the UI this is Settings, General, Pull Requests.
+
+`allow_auto_merge` is the one item here that is a convenience rather than a
+requirement. The workflow queues the release PR to merge itself once its checks
+and approval land, so nobody has to return to the PR to press the button. Without
+it, the release PR is merged by hand and nothing else changes. See
+[Auto-merging the release PR](release-pipeline.md#auto-merging-the-release-pr).
+
+Verify:
+
+```bash
+gh api repos/dave-inc/charts \
+  --jq '{allow_squash_merge, allow_merge_commit, allow_rebase_merge,
+         squash_merge_commit_title, squash_merge_commit_message}'
+```
+
+This is the setting whose failure mode is silent. Under merge commits,
+release-please parses every individual branch commit, so an abandoned `feat: wip`
+cuts a minor release. Under `COMMIT_MESSAGES`, a stray `BREAKING CHANGE:` footer in
+any branch commit cuts a major.
+
+The org ruleset `Copilot-PR-Review` lists `allowed_merge_methods` as `merge`,
+`squash` and `rebase`. That does not conflict with this change and does not need an
+org admin. The effective set is the intersection of the ruleset and the repository
+setting, so restricting the repository to squash is sufficient.
+
+## 2. Let release-please open its pull request
+
+Without this, release-please fails outright on its first run with
+`GitHub Actions is not permitted to create or approve pull requests`. Either option
+below fixes it. The app is the better one.
+
+### Option A, install the DevX app
+
+The workflows already try to mint a token from the app the org uses elsewhere,
+falling back to `GITHUB_TOKEN` if it is unavailable:
+
+```yaml
+- name: Mint an app token
+  id: app-token
+  continue-on-error: true
+  uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
+  with:
+    app-id: ${{ secrets.DEVX_GH_APP_ID }}
+    private-key: ${{ secrets.DEVX_GH_APP_S_KEY }}
+    owner: ${{ github.repository_owner }}
+```
+
+This calls the public action directly rather than
+`dave-inc/common-workflows/.github/actions/create-github-app-token`, which wraps
+the same action at the same version. The wrapper lives in a private repo, and an
+action that cannot be resolved fails the job during *Set up job*, before
+`continue-on-error` applies. Calling the action directly keeps the fallback real.
+
+Two grants are needed, both of existing things rather than anything new:
+
+- Install the DevX app on `dave-inc/charts` with `contents: write` and
+  `pull requests: write`.
+- Make `DEVX_GH_APP_ID` and `DEVX_GH_APP_S_KEY` visible to the repo, which is how
+  `dave-inc/sre` already consumes them.
+
+The token is minted at job start and revoked when the job ends, so nothing
+long-lived is stored on the repo, and it is not tied to a person who may leave.
+`dave-inc/buckshot`, `dave-inc/core-backend` and `dave-inc/sre` already use this
+action.
+
+The app also fixes a second, quieter problem. GitHub does not start workflow runs
+from anything done with `GITHUB_TOKEN`, so when `schemas.yml` commits a rebuilt
+schema, no check re-runs against the new commit.
+
+### Option B, enable the repository setting
+
+In the UI, Settings, Actions, General, Workflow permissions, the checkbox reading
+*Allow GitHub Actions to create and approve pull requests*.
+
+By API, read the current value first, because the PUT replaces both fields and
+`default_workflow_permissions` should be preserved rather than guessed:
+
+```bash
+gh api repos/dave-inc/charts/actions/permissions/workflow
+
+gh api -X PUT repos/dave-inc/charts/actions/permissions/workflow \
+  -F can_approve_pull_request_reviews=true \
+  -f default_workflow_permissions=<value read above>
+```
+
+The API field name `can_approve_pull_request_reviews` is misleading. It gates
+creating pull requests, not only approving them.
+
+## Required status checks, deliberately not added
+
+An earlier version of this page had a fourth step making `lint` and
+`lint-pr-title` required on the default branch. It has been dropped, and the
+reasoning is worth keeping because the idea is an easy one to have again.
+
+Both checks are redundant by the time the release PR exists. Every commit in it was
+already linted on its own PR, and the release PR's title is generated by
+release-please, always `chore: release master`, so `lint-pr-title` would only ever
+be checking a machine's output against a machine's rule.
+
+Making them required actively breaks releases. The release PR is opened by a bot,
+GitHub does not start workflow runs for it, so it reports zero checks and sits at
+`mergeStateStatus: BLOCKED` forever. A ruleset created without bypass actors cannot
+be overridden by anyone, including a repository admin:
+
+```
+GraphQL: Repository rule violations found
+2 of 2 required status checks are expected.
+```
+
+The only escape is to disable the ruleset, merge, and re-enable it, once per
+release, by hand, by an admin. That was confirmed by testing, not reasoned about.
+
+`SOC-CI` and `Codeowners Enforcement` are unaffected and still gate the release PR.
+They are dispatched by an app reacting to webhooks rather than by a workflow in
+this repo, and webhook delivery is not subject to the `GITHUB_TOKEN` suppression.
+`dave-inc/sre#10854`, authored by `app/github-actions`, carries both.
+
+So the release PR is still reviewed, still compliance-checked, and still merged by
+a human deciding to release. That human gate is the intended control.
+
+`lint` and `lint-pr-title` continue to run on every PR and report failures. They
+are advisory rather than blocking. The cost is that a contributor can merge a PR
+whose title is not a conventional commit, in which case release-please attributes
+no release to it and that change silently never ships. It shows as a red check
+before merge. Worth revisiting once the app in step 2 is installed, since that
+removes the reason not to require them.
+
+## 3. Dry run before merging
+
+Not a setting, but do it in the same sitting. This computes the first release PR
+without writing anything, and is the only chance to see what the bootstrap will
+propose while it is still cheap to change.
+
+```bash
+npx release-please release-pr --token="$(gh auth token)" \
+  --repo-url=dave-inc/charts \
+  --config-file=release-please-config.json \
+  --manifest-file=.release-please-manifest.json --dry-run --debug
+```
+
+Two things to confirm in the output.
+
+Every package reports a `release for path: ..., sha: ...` line. A package with no
+resolved release has lost its anchor and will rebuild from its entire history. See
+[Release tags must point at a commit that touches the chart](release-pipeline.md#release-tags-must-point-at-a-commit-that-touches-the-chart).
+
+`Considering: 0 commits` appears for every chart you expect not to move. Anything
+else means it is about to release something.
+
+This matters more for the first run than any later one, because every commit now on
+master arrived by merge commit, so the bootstrap is computed from history that
+predates the squash-only rule.
+
+Last run against `dave-inc/charts` at the time of writing: all eight anchors
+resolved, three charts reported zero commits, and the proposal was
+`cloudsql-proxy 0.2.0`, `common 0.12.0`, `job 0.3.0`, `kyverno-policies 0.1.2` and
+`workflow 0.2.0`.
+
+## What was already verified
+
+Step 1 and the required-checks behaviour were applied to a fork of this repo and
+exercised end to end before being written down here.
+
+- The step 1 command returned exactly the intended state.
+- A full release ran through: a chart change opened a release PR, merging it
+  created the tag and GitHub Release with the changelog as its body, and the
+  publish job attached the packaged chart and updated `index.yaml`.
+- With step 2 unset, release-please failed with the error quoted above.
+- With required checks enabled and no app token, the release PR was unmergeable
+  even with `--admin`, which is why that step was dropped.
+
+## Rollback
+
+Each step reverts independently.
+
+```bash
+# 1
+gh api -X PATCH repos/dave-inc/charts \
+  -F allow_merge_commit=true -F allow_rebase_merge=true \
+  -f squash_merge_commit_title=COMMIT_OR_PR_TITLE \
+  -f squash_merge_commit_message=COMMIT_MESSAGES
+
+# 2, option A: uninstall the app from the repo
+# 2, option B:
+gh api -X PUT repos/dave-inc/charts/actions/permissions/workflow \
+  -F can_approve_pull_request_reviews=false \
+  -f default_workflow_permissions=<original value>
+```
+
+Reverting step 1 leaves the pipeline running in a degraded state rather than
+stopping it, which is the argument for reverting step 2 instead if the pipeline
+needs to be switched off in a hurry. Removing the ability to open the release PR
+stops it cleanly and changes nothing about how charts already published are
+consumed.

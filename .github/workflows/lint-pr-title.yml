@@ -1,0 +1,38 @@
+name: Lint PR Title
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+
+permissions:
+  pull-requests: read
+
+jobs:
+  # With squash merging the PR title becomes the only commit message on master,
+  # and that message is what release-please parses to decide the version bump.
+  #
+  # Advisory, not a required status check. Making it required would block the
+  # release PR permanently, because a bot opens it and GitHub starts no workflow
+  # runs for it, so it would report no checks at all. See docs/repo-setup.md.
+  #
+  # Treat a failure here as real even though nothing enforces it. release-please
+  # reads a non-conventional subject as "no release", so a bad title does not fail
+  # loudly, it silently publishes nothing and that change never ships.
+  lint-pr-title:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Scopes are deliberately unrestricted. release-please attributes commits
+          # to charts by file path, not by scope, so a scope enum here would be
+          # decoration that needs updating every time a chart is added or removed.
+          requireScope: false
+          subjectPattern: ^(?![A-Z]).+$
+          subjectPatternError: |
+            The subject "{subject}" should start with a lowercase character.

@@ -1,4 +1,4 @@
-name: Release Charts
+name: Release
 
 on:
   push:
@@ -6,27 +6,242 @@ on:
       - master
   workflow_dispatch: {}
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+# Keep in step with the same variable in lint.yml. Packaging a chart with a
+# different Helm than the one that linted it is how a chart passes CI and then
+# fails to install.
+env:
+  HELM_VERSION: v4.2.4
+
 jobs:
-  release:
+  # Opens/updates a PR that bumps `version` in each changed chart's Chart.yaml and
+  # writes its CHANGELOG.md. Charts are attributed by file path, so a commit only
+  # affects the charts it actually touches.
+  #
+  # When that PR is merged, this same job creates the git tag and the GitHub
+  # Release, with the per-release changelog as the release body. The publish job
+  # below then attaches the packaged chart and updates the repo index.
+  #
+  # Opening the PR fails with "GitHub Actions is not permitted to create or
+  # approve pull requests" unless either the repo enables that setting or this
+  # runs as something other than GITHUB_TOKEN. See docs/repo-setup.md.
+  release-please:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      releases_created: ${{ steps.release.outputs.releases_created }}
+      paths_released: ${{ steps.release.outputs.paths_released }}
     steps:
+      # Minted per run and revoked when the job ends, so no long-lived credential
+      # is stored on the repo. `continue-on-error` falls back to GITHUB_TOKEN
+      # below when the app is not installed or its secrets are absent.
+      #
+      # This calls the same action, at the same version, that
+      # dave-inc/common-workflows wraps. Using the wrapper directly would make
+      # this job fail at "Set up job" anywhere that private repo cannot be
+      # resolved, and action resolution happens before continue-on-error applies.
+      #
+      # `owner` is deliberately unset. Setting it without also setting
+      # `repositories` scopes the token to every repo in the installation rather
+      # than to this one. Left out, both default to the current repository.
+      - name: Mint an app token
+        id: app-token
+        continue-on-error: true
+        uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
+        with:
+          app-id: ${{ secrets.DEVX_GH_APP_ID }}
+          private-key: ${{ secrets.DEVX_GH_APP_S_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        id: release
+        with:
+          token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      # Queues the release PR to merge itself once its checks pass and it has the
+      # approval master's branch protection requires. This does not skip that
+      # approval, it removes the second trip where whoever approved has to come back
+      # later and press merge.
+      #
+      # Re-arming an already-armed PR is a no-op, so running this on every push is
+      # harmless. Failure is not fatal: without `allow_auto_merge` on the repo this
+      # step is the only thing that breaks, and the release PR is still merged by
+      # hand exactly as before. See docs/repo-setup.md.
+      - name: Queue the release PR to merge itself
+        if: steps.release.outputs.prs_created == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+          PR: ${{ fromJSON(steps.release.outputs.pr || '{"number":0}').number }}
+        run: |
+          set -uo pipefail
+          if gh pr merge "$PR" --auto --squash --repo "$GITHUB_REPOSITORY"; then
+            echo "release PR #$PR will merge once its checks and approval land"
+          else
+            echo "::warning::Could not arm auto-merge on #$PR. Is allow_auto_merge enabled? See docs/repo-setup.md."
+          fi
+
+  # Packages the charts release-please just released, attaches each package to the
+  # release release-please created, and regenerates index.yaml on gh-pages.
+  #
+  # chart-releaser is deliberately driven by hand here rather than through its
+  # action's default path, because that path calls `cr upload`, which creates the
+  # GitHub Release itself and would overwrite release-please's changelog body with
+  # the chart description.
+  #
+  # The two obvious ways to stop it doing that both break publishing:
+  #
+  #   skip_upload    cr.sh returns early from update_index() whenever this is set,
+  #                  so index.yaml is never pushed and nothing is installable.
+  #   skip_existing  implemented as a bare `continue` that runs before the asset
+  #                  upload, so the release keeps release-please's notes but never
+  #                  gets its .tgz. `cr index` builds entries by reading a
+  #                  release's assets, so the chart is then silently absent from
+  #                  index.yaml. The release page looks correct and the chart
+  #                  cannot be installed.
+  publish:
+    needs: release-please
+    if: needs.release-please.outputs.releases_created == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      CR_INSTALL_DIR: ${{ github.workspace }}/.cr-bin
+    steps:
+      # Twingate only connects when the key is configured. Forks do not have the
+      # secret, and without this guard the whole workflow fails there before doing
+      # any work.
+      - name: Check Twingate configuration
+        id: twingate
+        env:
+          TWINGATE_SERVICE_KEY: ${{ secrets.TWINGATE_SERVICE_KEY }}
+        run: |
+          if [ -n "$TWINGATE_SERVICE_KEY" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "TWINGATE_SERVICE_KEY not set, skipping Twingate"
+          fi
+
       - name: Connect to Twingate
+        if: steps.twingate.outputs.enabled == 'true'
         uses: twingate/github-action@a8e6c2471f32650531a4683f45e485a2e97e048c # v1.5
         with:
-          service-key: ${{ secrets.TWINGATE_SERVICE_KEY}}
+          service-key: ${{ secrets.TWINGATE_SERVICE_KEY }}
+
+      # Full history so the gh-pages ref is present locally. `cr index` builds a
+      # worktree from it to commit index.yaml.
       - name: Checkout
-        uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
 
       - name: Configure Git
         run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Run chart-releaser
-        uses: helm/chart-releaser-action@a3454e46a6f5ac4811069a381e646961dda2e1bf # v1.4.0
+      - name: Set up Helm
+        uses: azure/setup-helm@fe7b79cd5ee1e45176fcad797de68ecaf3ca4814 # v4.2.0
         with:
-          charts_repo_url: https://dave-inc.github.io/charts
+          version: ${{ env.HELM_VERSION }}
+
+      # The action appends install_dir to $GITHUB_PATH itself, so cr is available
+      # to every later step without any help here.
+      - name: Install chart-releaser
+        uses: helm/chart-releaser-action@cae68fefc6b5f367a0275617c9f83181ba54714f # v1.7.0
+        with:
+          install_only: true
+          install_dir: ${{ env.CR_INSTALL_DIR }}
+
+      # cr package has no dependency-update flag, and helm package fails outright
+      # on an unvendored dependency. Only dave-npd has one today, but running this
+      # everywhere costs nothing and stops that from being a trap later.
+      - name: Package released charts
         env:
-          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          PATHS_RELEASED: ${{ needs.release-please.outputs.paths_released }}
+        run: |
+          set -euo pipefail
+          mkdir -p .cr-release-packages
+
+          mapfile -t dirs < <(jq -r '.[]' <<<"$PATHS_RELEASED")
+          for dir in "${dirs[@]}"; do
+            echo "::group::package $dir"
+            helm dependency update "$dir"
+            cr package "$dir" --package-path .cr-release-packages
+            echo "::endgroup::"
+          done
+
+      # helm names a package <name>-<version>.tgz and release-please tags
+      # <component>-<version> with include-v-in-tag disabled. Both take that string
+      # from Chart.yaml's `name`, not from the directory, so they agree by
+      # construction and the lint check on name-matches-directory is not what holds
+      # this together.
+      - name: Attach packages to their releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          for pkg in .cr-release-packages/*.tgz; do
+            tag=$(basename "$pkg" .tgz)
+            echo "uploading $pkg to release $tag"
+            # --clobber so a re-run repairs a partial upload instead of failing.
+            gh release upload "$tag" "$pkg" --clobber
+          done
+
+      # Reads each release's assets and adds an index entry pointing at the asset
+      # download URL, so it has to run after the upload above.
+      - name: Update the charts index
+        env:
+          CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # cr writes the merged index to .cr-index/index.yaml and does not create
+          # the directory itself, so without this it exits on a missing path.
+          mkdir -p .cr-index
+          cr index \
+            --owner "${{ github.repository_owner }}" \
+            --git-repo "${{ github.event.repository.name }}" \
+            --package-path .cr-release-packages \
+            --index-path .cr-index/index.yaml \
+            --push
+
+      # The one failure in this pipeline that is otherwise silent. `cr index` only
+      # considers packages from the current run and only adds an entry when one is
+      # absent, so it never backfills. If this job dies between creating a release
+      # and updating the index, the release page looks complete and the chart is not
+      # installable, and no later run repairs it: the next push releases nothing, so
+      # `releases_created` is false and this job never runs again.
+      #
+      # Re-running this job fixes it, because `--clobber` above makes the upload
+      # idempotent. That only helps if someone knows, hence failing loudly here.
+      - name: Verify every released chart is in the index
+        run: |
+          set -euo pipefail
+          missing=0
+          for pkg in .cr-release-packages/*.tgz; do
+            # Read these from the packaged chart rather than by splitting the
+            # filename, which cannot tell the hyphen in `kyverno-policies` from the
+            # one in a version like `0.1.2-beta.4`.
+            name=$(helm show chart "$pkg" | yq -r '.name')
+            version=$(helm show chart "$pkg" | yq -r '.version')
+            if ! yq -e ".entries.\"$name\"[] | select(.version == \"$version\")" \
+                 .cr-index/index.yaml >/dev/null 2>&1; then
+              echo "::error::$name $version is missing from index.yaml and is not installable"
+              missing=1
+            else
+              echo "ok $name $version"
+            fi
+          done
+
+          if [ "$missing" -ne 0 ]; then
+            echo "::error::Re-run this job to repair the index. See docs/release-pipeline.md."
+            exit 1
+          fi

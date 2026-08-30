@@ -1,0 +1,10 @@
+{
+  "charts/cloudsql-proxy": "0.1.0",
+  "charts/common": "0.11.0",
+  "charts/dave-npd": "0.3.0",
+  "charts/gateway-bundle": "2.2.0",
+  "charts/gatewayapi": "2.10.0",
+  "charts/job": "0.2.1",
+  "charts/kyverno-policies": "0.1.1",
+  "charts/workflow": "0.1.0"
+}
