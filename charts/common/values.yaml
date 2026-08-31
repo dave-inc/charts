@@ -101,32 +101,37 @@ deploymentContainer:
 # and the SIGTERM handling after it. It is a ceiling, not a delay, and on its own it
 # does not keep a Pod in the traffic path. preStopSleepSeconds below does that.
 #
-# 60 leaves the process around 40s to finish in-flight work once the default 20s preStop
-# sleep is done. Must exceed preStopSleepSeconds or the Pod is SIGKILLed mid-drain.
+# 31 is the long-standing default, kept here for workloads that are not in a traffic path,
+# such as pubsub consumers and task handlers. With no drain to fund, the whole budget goes
+# to the process finishing its in-flight work after SIGTERM. Must exceed the effective
+# preStopSleepSeconds or the Pod is SIGKILLed mid-drain.
+#
+# This is the fallback value. A release with a Service takes
+# serviceGracefulRollout.terminationGracePeriodSeconds instead, and that is where the
+# reasoning for a longer budget lives.
 #
 # Applies to the Deployment, whether or not canary is enabled.
-terminationGracePeriodSeconds: 60
+terminationGracePeriodSeconds: 31
 
 # Seconds a Pod keeps serving after termination begins, before its process is asked to
 # shut down. Nothing else does this: terminationGracePeriodSeconds only caps the total
 # shutdown, and the container otherwise exits as soon as it receives SIGTERM.
 #
-# Size it to cover both halves of a backend leaving a Google load balancer:
+# 0 is the right default here, because this value is normally only reached by a workload
+# with no Service. Nothing is routing to it, so there are no in-flight requests to hold
+# open and no endpoint waiting to be withdrawn: a sleep would do nothing but make every
+# shutdown slower. A release with a Service takes serviceGracefulRollout.preStopSleepSeconds
+# instead, unless it has turned that block off, and that is where the sizing against load
+# balancer endpoint removal lives.
 #
-#   preStopSleepSeconds >= drainingTimeoutSec + endpoint removal latency
-#
-# Removal is not instant. It lagged the Pod being killed by ~12s in staging, and new
-# requests keep arriving until it lands, so 20 is that measurement with margin. Once
-# removed, the load balancer also holds existing connections for drainingTimeoutSec,
-# but that is 0 on our backend services today, so the removal latency is the only term
-# that binds. If connection draining is ever enabled, on a GCPBackendPolicy for Gateway
-# or a BackendConfig for Ingress, this has to grow to cover it as well, and
-# terminationGracePeriodSeconds has to stay above this.
+# Raising this one is for the unusual case of a workload that is reached some other way
+# and still needs a window. It must stay below terminationGracePeriodSeconds, or the
+# render fails rather than let the Pod be SIGKILLed part-way through draining.
 #
 # Rendered as a preStop sleep on the application container, unless
 # deploymentContainer.lifecycle is set, which takes precedence and is then responsible
 # for its own drain. Set 0 to opt out.
-preStopSleepSeconds: 20
+preStopSleepSeconds: 0
 
 image:
   repository: nginx
@@ -177,6 +182,72 @@ service:
   port: 80
   # The name of the service is optional, If not set, a name is generated using Release.Name
   # name: ""
+
+# Graceful-rollout timing for a release that is actually in a traffic path. These three
+# fields shadow their top-level counterparts, so a service can be timed against the load
+# balancer in front of it without moving the defaults that everything else uses.
+#
+# It applies only when both service.enabled and serviceGracefulRollout.enabled are true,
+# and both default true. So a service gets the values below, while a workload with no
+# Service, such as a pubsub consumer or a task handler, falls back to the top level and
+# is left on the plain defaults. Resolved by common.gracefulRolloutValue in
+# templates/_helpers.tpl.
+#
+# Precedence, most specific first:
+#
+#   1. serviceGracefulRollout.* this block, when it applies
+#   2. top-level .Values.*      the default for everything else
+#
+# The block feeds the Deployment and the Cloud SQL proxy's derived wait, so both move
+# together. Set enabled: false to put a service back on the top-level defaults.
+serviceGracefulRollout:
+  enabled: true
+
+  # Seconds a new Pod must stay Ready before it counts as Available and the rollout
+  # retires an old Pod. The top-level minReadySeconds covers what the field does and why
+  # even a workload with no endpoints might want it; this is the separate reason a
+  # service in a traffic path wants a minute of it.
+  #
+  # It covers the gap between a Pod being Ready and the data plane knowing about it. That
+  # gap is worst behind container-native load balancing, where GKE marks the
+  # load-balancer-neg-ready gate True before the NEG is attached to a health-checked
+  # backend service, and Google recommends 60 or higher there. A ClusterIP-only service
+  # has the same gap in miniature, since an EndpointSlice update still has to reach every
+  # node and clients still hold pooled connections and cached DNS. Retire an old Pod
+  # inside that gap and the traffic it was serving has nowhere ready to land.
+  #
+  # The cost is near constant rather than proportional to size: with the default 25%
+  # surge and unavailable, a rollout moves in roughly four waves whatever the replica
+  # count, so this adds about four minutes, felt most in an emergency rollback. Must stay
+  # below progressDeadlineSeconds (600 by default) or the rollout is marked failed, which
+  # leaves room for those four waves unless the container is also slow to start.
+  minReadySeconds: 60
+
+  # Seconds a Pod keeps serving after termination begins, before its process is asked to
+  # shut down. Sized to cover both halves of a backend leaving a Google load balancer:
+  #
+  #   preStopSleepSeconds >= drainingTimeoutSec + endpoint removal latency
+  #
+  # Removal is not instant. It lagged the Pod being killed by ~12s in staging, and new
+  # requests keep arriving until it lands, so 20 is that measurement with margin. Once
+  # removed, the load balancer also holds existing connections for drainingTimeoutSec,
+  # but that is 0 on our backend services today, so the removal latency is the only term
+  # that binds. If connection draining is ever enabled, on a GCPBackendPolicy for Gateway
+  # or a BackendConfig for Ingress, this has to grow to cover it as well, and
+  # terminationGracePeriodSeconds below has to stay above this.
+  preStopSleepSeconds: 20
+
+  # The whole budget for shutdown, spanning the drain above and the SIGTERM handling
+  # after it. 60 leaves the process around 40s to finish in-flight work once the 20s
+  # preStop sleep is done.
+  #
+  # Must exceed preStopSleepSeconds. The render fails rather than let a Pod be SIGKILLed
+  # part-way through draining, see common.validateDrainBudget in templates/_helpers.tpl.
+  #
+  # The Cloud SQL proxy sidecar derives its own preStop wait from this, as grace - 1, so
+  # 59 here. The application reaches its database through the proxy and may keep working
+  # until the last moment, so the proxy has to outlive the whole of this budget.
+  terminationGracePeriodSeconds: 60
 
 # Argo Rollouts canary deployment. Requires the Argo Rollouts controller
 # (https://argo-rollouts.readthedocs.io) installed in the target cluster.
@@ -349,21 +420,19 @@ strategy:
 
 # Seconds a new Pod must stay Ready before it counts as Available and the rollout
 # retires an old Pod. Unlike maxUnavailable, this delay does not trust the readiness
-# signal. Two separate things want it, and only the first is about load balancers.
+# signal.
 #
-# It covers the gap between a Pod being Ready and the data plane knowing about it. That
-# gap is worst behind container-native load balancing, where GKE marks the
-# load-balancer-neg-ready gate True before the NEG is attached to a health-checked
-# backend service, and Google recommends 60 or higher there. A ClusterIP-only service
-# has the same gap in miniature, since an EndpointSlice update still has to reach every
-# node and clients still hold pooled connections and cached DNS.
+# What it buys a workload with no endpoints is time for a new revision to fail. Without
+# it a Pod counts as Available the instant readiness flips, so a container that passes
+# its probe and then dies half a minute later, on an OOM, a lazily initialized dependency
+# or an exhausted connection pool, is rolled across every replica before anything
+# notices. That holds for pubsub consumers and task handlers just as much as for anything
+# serving traffic, which is why the field is worth considering even here even though
+# serviceGracefulRollout.minReadySeconds is the right option most of the time.
 #
-# It also gives a new revision time to fail. Without it a Pod counts as Available the
-# instant readiness flips, so a container that passes its probe and then dies half a
-# minute later, on an OOM, a lazily initialized dependency or an exhausted connection
-# pool, is rolled across every replica before anything notices. That reason holds for
-# workloads with no endpoints at all, such as pubsub consumers and task handlers, which
-# is why this is defaulted for everything rather than only behind a NEG.
+# This is the fallback value. A release with a Service takes
+# serviceGracefulRollout.minReadySeconds instead, which defaults to 60 and carries the
+# separate, load-balancer-shaped reason for the delay.
 #
 # The cost is near constant rather than proportional to size: with the surge and
 # unavailable above, a rollout moves in roughly four waves whatever the replica count,
@@ -372,7 +441,7 @@ strategy:
 # room for those four waves unless the container is also slow to start.
 #
 # Applies to the Deployment, whether or not canary is enabled. Set 0 to opt out.
-minReadySeconds: 60
+minReadySeconds: 0
 
 autoscaling:
   enabled: false
@@ -392,36 +461,61 @@ kedaScaling:
   enabled: false
   minReplicas: ~
   maxReplicas: ~
+  pollingInterval: ~   # seconds; when unset, the ScaledObject omits this field and KEDA uses its own default (30s). GCP Managed Prometheus has its own ingestion lag on top of whatever value is set.
+  fallback:
+    enabled: false
+    failureThreshold: 3
+    replicas: ~          # defaults to minReplicas/kedaScaling.minReplicas above
   triggers: []
 # Example — Pub/Sub trigger (replaces type: External HPA metric):
 #
+# Note: the `gcp-pubsub` scaler was deprecated in KEDA 2.16 (Sept 2025) due to its reliance on
+# MQL. Use the `prometheus` scaler against GCP Managed Prometheus instead - GCP exposes both
+# Pub/Sub and Cloud Tasks metrics natively via Prometheus with no extra deployment needed. See
+# keda-migration-guide.md Section 3 for the full mapping rules and Section 3.2/3.2b for Cloud
+# Tasks workloads.
+#
 # kedaScaling:
 #   enabled: true
+#   pollingInterval: 60
+#   fallback:
+#     enabled: true
+#     failureThreshold: 3
+#     replicas: 2
 #   triggers:
-#     - type: gcp-pubsub
+#     - type: prometheus
 #       authenticationRef:
 #         name: keda-gcp-auth
 #         kind: ClusterTriggerAuthentication
 #       metadata:
-#         subscriptionName: "projects/my-project/subscriptions/my-sub"
-#         value: "5"
-#         activationValue: "0"
-#   scaleDown:
-#     stabilizationWindowSeconds: 300
-#     policies:
-#     - type: Percent
-#       value: 100
-#       periodSeconds: 15
-#   scaleUp:
-#     stabilizationWindowSeconds: 0
-#     policies:
-#     - type: Percent
-#       value: 100
-#       periodSeconds: 15
-#     - type: Pods
-#       value: 4
-#       periodSeconds: 15
-#     selectPolicy: Max
+#         serverAddress: https://monitoring.googleapis.com/v1/projects/my-project/location/global/prometheus
+#         metricName: pubsub_subscription_num_undelivered_messages
+#         query: 'pubsub_googleapis_com:subscription_num_undelivered_messages{subscription_id="my-sub"}'
+#         threshold: "5"
+#
+# Real HPA scale-up/scale-down tuning (equivalent of the old `scaleDown`/`scaleUp` stanzas) is not
+# a kedaScaling field - it goes under the existing `hpaBehavior.behavior` key above, using the
+# standard HPA v2 `behavior` schema, and applies to both the legacy HPA and KEDA-managed HPA paths:
+#
+# hpaBehavior:
+#   enabled: true
+#   behavior:
+#     scaleDown:
+#       stabilizationWindowSeconds: 300
+#       policies:
+#       - type: Percent
+#         value: 100
+#         periodSeconds: 15
+#     scaleUp:
+#       stabilizationWindowSeconds: 0
+#       policies:
+#       - type: Percent
+#         value: 100
+#         periodSeconds: 15
+#       - type: Pods
+#         value: 4
+#         periodSeconds: 15
+#       selectPolicy: Max
 
 # Type Resource
 #

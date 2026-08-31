@@ -245,6 +245,26 @@ Once all apps are using cloud sql proxy v2 this can be simplified.
 {{- end -}}
 
 {{/*
+Effective graceful-rollout field value.
+
+Prefers serviceGracefulRollout.<field> over the top-level .Values.<field>, but
+only for a networked service that has opted in: both .Values.service.enabled and
+.Values.serviceGracefulRollout.enabled must be true. Otherwise the top-level
+value is used, so non-networked workloads (pubsub consumers, task handlers) are unaffected.
+
+Expects a dict of "ctx" (the root context) and "field" (one of minReadySeconds,
+preStopSleepSeconds, terminationGracePeriodSeconds).
+*/}}
+{{- define "common.gracefulRolloutValue" -}}
+{{- $ctx := .ctx -}}
+{{- if and $ctx.Values.service.enabled $ctx.Values.serviceGracefulRollout.enabled -}}
+{{- index $ctx.Values.serviceGracefulRollout .field -}}
+{{- else -}}
+{{- index $ctx.Values .field -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Fail rather than let a Pod be SIGKILLed part-way through its preStop sleep.
 Expects a dict of "sleep", "grace" and "tier".
 */}}
@@ -295,15 +315,17 @@ sleep with another command, which the sleep action cannot express. Requires the
 kubeVersion floor in Chart.yaml.
 */}}
 {{- define "common.appLifecycle" -}}
+{{- $preStopSleep := include "common.gracefulRolloutValue" (dict "ctx" . "field" "preStopSleepSeconds") }}
+{{- $grace := include "common.gracefulRolloutValue" (dict "ctx" . "field" "terminationGracePeriodSeconds") }}
 {{- if .Values.deploymentContainer.lifecycle }}
 lifecycle:
   {{- toYaml .Values.deploymentContainer.lifecycle | nindent 2 }}
-{{- else if gt (.Values.preStopSleepSeconds | default 0 | int) 0 }}
-{{- include "common.validateDrainBudget" (dict "sleep" .Values.preStopSleepSeconds "grace" .Values.terminationGracePeriodSeconds "tier" "application container") }}
+{{- else if gt ($preStopSleep | default 0 | int) 0 }}
+{{- include "common.validateDrainBudget" (dict "sleep" $preStopSleep "grace" $grace "tier" "application container") }}
 lifecycle:
   preStop:
     sleep:
-      seconds: {{ .Values.preStopSleepSeconds | int }}
+      seconds: {{ $preStopSleep | int }}
 {{- end }}
 {{- end }}
 
@@ -333,12 +355,67 @@ lifecycle:
 {{- if .Values.cloudsqlProxy.lifecycle }}
   {{- toYaml .Values.cloudsqlProxy.lifecycle | nindent 2 }}
 {{- else }}
-{{- $sleep := max (sub (.Values.terminationGracePeriodSeconds | int) 1) 0 | int }}
+{{- $grace := include "common.gracefulRolloutValue" (dict "ctx" . "field" "terminationGracePeriodSeconds") }}
+{{- $sleep := max (sub ($grace | int) 1) 0 | int }}
   preStop:
     exec:
       command:
         - /bin/sh
         - -c
         - {{ if gt $sleep 0 }}/bin/sleep {{ $sleep }} && {{ end }}rm -f /cloudsql/{{ include "common.instanceConnectionName" . }}
+{{- end }}
+{{- end }}
+
+{{/*
+Renders a PodDisruptionBudget. Takes a dict with:
+  root:            the top-level context (".")
+  name:            the PDB's metadata.name
+  selectorTemplate: name of the template to include for spec.selector.matchLabels
+  override:        optional dict with minAvailable/maxUnavailable for this tier,
+                    falling back to the top-level podDisruptionBudget values when unset
+
+A tier override key counts as "unset" only when nil, not when falsy, so an explicit 0
+(e.g. maxUnavailable: 0, which disallows all voluntary disruption) is honored instead of
+silently falling back to the 15% default the way a truthiness check would.
+
+The override is all-or-nothing: if it sets either field, it is used as-is instead of
+inheriting the field it left unset from the top-level config. minAvailable and
+maxUnavailable are mutually exclusive on a PDB, so merging field-by-field could combine
+one field from the override with the other field from the top-level config and render
+both at once, which Kubernetes rejects.
+*/}}
+{{- define "common.pdb" -}}
+{{- $override := .override | default dict -}}
+{{- $minAvailable := $override.minAvailable -}}
+{{- $maxUnavailable := $override.maxUnavailable -}}
+{{- if and (eq $minAvailable nil) (eq $maxUnavailable nil) -}}
+{{- $minAvailable = .root.Values.podDisruptionBudget.minAvailable -}}
+{{- $maxUnavailable = .root.Values.podDisruptionBudget.maxUnavailable -}}
+{{- end -}}
+{{- if and (ne $minAvailable nil) (ne $maxUnavailable nil) -}}
+{{- fail (printf "%s: minAvailable and maxUnavailable are mutually exclusive on a PodDisruptionBudget, set only one" .name) -}}
+{{- end -}}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .name }}
+  labels:
+    {{- include "common.labels" .root | nindent 4 }}
+spec:
+{{- if and (eq $minAvailable nil) (eq $maxUnavailable nil) }}
+  minAvailable: "15%"
+{{- end }}
+{{- if ne $minAvailable nil }}
+  minAvailable: {{ $minAvailable }}
+{{- end }}
+{{- if ne $maxUnavailable nil }}
+  maxUnavailable: {{ $maxUnavailable }}
+{{- end }}
+  selector:
+    matchLabels:
+{{- if .root.Values.podSelectorLabelsOverride }}
+      {{- .root.Values.podSelectorLabelsOverride | toYaml | nindent 6 }}
+{{- else }}
+      {{- include "common.labels" .root | nindent 6 }}
 {{- end }}
 {{- end }}
