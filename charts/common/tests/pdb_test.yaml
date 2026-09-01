@@ -18,22 +18,17 @@ tests:
           path: spec.minAvailable
           value: "15%"
 
-  - it: selects pods by name/instance plus additionalLabels
-    # pdb.yaml's selector is currently built from the full common.labels
-    # helper (matches deployment.yaml/service.yaml's own labels, not just
-    # their selectorLabels), which also pulls in helm.sh/chart -- a value
-    # that changes on every chart version bump. spec.selector is immutable
-    # on a PodDisruptionBudget, so that field intentionally isn't pinned to
-    # an exact value here: asserting it would make this test (correctly)
-    # fail on every version bump, which isn't what this test is for. This
-    # only checks the stable, meaningful part of the selector.
+  - it: selects pods by name/instance only, matching deployment.yaml's own pod template labels
+    # The selector must match deployment.yaml's pod template labels exactly
+    # (see common.selectorLabels), not the fuller common.labels set -- that
+    # set includes helm.sh/chart/app.kubernetes.io/version/managed-by, none
+    # of which are ever applied to the pod template, so a selector built from
+    # it would never match any pod.
     asserts:
-      - isSubset:
+      - equal:
           path: spec.selector.matchLabels
-          content:
+          value:
             app.kubernetes.io/name: test-app
             app.kubernetes.io/instance: RELEASE-NAME
-            team: platform
-            env: staging
-      - exists:
+      - notExists:
           path: spec.selector.matchLabels["helm.sh/chart"]

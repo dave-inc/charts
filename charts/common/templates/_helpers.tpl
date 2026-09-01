@@ -416,6 +416,6 @@ spec:
 {{- if .root.Values.podSelectorLabelsOverride }}
       {{- .root.Values.podSelectorLabelsOverride | toYaml | nindent 6 }}
 {{- else }}
-      {{- include "common.labels" .root | nindent 6 }}
+      {{- include "common.selectorLabels" .root | nindent 6 }}
 {{- end }}
 {{- end }}
