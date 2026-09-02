@@ -20,6 +20,21 @@ required:
   - gateways
 
 $defs:
+  # Closed allow-list of GKE-managed GatewayClasses. Anything outside this
+  # list renders a Gateway that GKE will never program.
+  gatewayClassName:
+    type: string
+    enum:
+      - gke-l7-global-external-managed
+      - gke-l7-global-external-managed-mc
+      - gke-l7-regional-external-managed
+      - gke-l7-regional-external-managed-mc
+      - gke-l7-cross-regional-internal-managed-mc
+      - gke-l7-rilb
+      - gke-l7-rilb-mc
+      - gke-l7-gxlb
+      - gke-l7-gxlb-mc
+
   parentDomain:
     type: string
     pattern: "^(trydave\\.com|daveapi\\.com|daveapi\\.io)$"
@@ -39,7 +54,7 @@ $defs:
         type: object
         properties:
           gatewayClassName:
-            type: string
+            $ref: "#/$defs/gatewayClassName"
           listener:
             type: object
             properties:
@@ -131,7 +146,7 @@ $defs:
         type: object
         properties:
           gatewayClassName:
-            type: string
+            $ref: "#/$defs/gatewayClassName"
           addresses:
             type: array
             minItems: 1
