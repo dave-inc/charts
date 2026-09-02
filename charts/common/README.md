@@ -7,7 +7,7 @@ Configuration reference lives in [values.yaml](./values.yaml), which is commente
 place. This file covers only what changes between versions and what you have to do about
 it.
 
-## Upgrading to 0.11.1
+## Upgrading to 0.12.0
 
 This release changes shutdown and rollout timing for services, so a Pod that previously
 terminated in about thirty seconds now takes up to a minute, and rollouts are deliberately
