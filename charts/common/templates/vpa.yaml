@@ -3,12 +3,17 @@ apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
   name: {{ include "common.name" . }}
+  {{- if (include "common.canaryEnabled" .) }}
+  annotations:
+    # With canary enabled this target is a Rollout, applied in wave 3.
+    argocd.argoproj.io/sync-wave: "4"
+  {{- end }}
   labels:
     {{- include "common.labels" . | nindent 4 }}
 spec:
   targetRef:
-    apiVersion: "apps/v1"
-    kind: Deployment
+    apiVersion: {{ include "common.workloadApiVersion" . }}
+    kind: {{ include "common.workloadKind" . }}
     name: {{ include "common.name" . }}
   updatePolicy:
     # Purposely harcoded to "Off"

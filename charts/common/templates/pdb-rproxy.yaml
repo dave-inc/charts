@@ -1,6 +1,0 @@
-{{- $reverseProxy := .Values.canary.reverseProxy | default dict -}}
-{{- $pdbEnabled := ($reverseProxy.podDisruptionBudget | default dict).enabled -}}
-{{- if eq $pdbEnabled nil -}}{{- $pdbEnabled = .Values.podDisruptionBudget.enabled -}}{{- end -}}
-{{- if and .Values.canary.enabled $pdbEnabled }}
-{{- include "common.pdb" (dict "root" . "name" (include "common.reverseProxyName" .) "selectorTemplate" "common.reverseProxySelectorLabels" "override" $reverseProxy.podDisruptionBudget) }}
-{{- end }}
