@@ -30,6 +30,10 @@ and backend policies.
 - [section-name](./section-name.yaml): An example that pins the route to a
   specific Gateway listener via `parentRefs[].sectionName`, alongside an HTTP
   health check policy and a GCPBackendPolicy.
+- [canary](./canary.yaml): An example with two `backendRefs` (stable and
+  canary) for use with the `common` chart's `canary.enabled` feature and Argo
+  Rollouts' Gateway API traffic router plugin, which mutates the two
+  backendRefs' `weight` fields as the rollout progresses.
 
 You can mix and match these configurations to create more complex routing
 rules and policies as needed. Each example is self-contained and can be

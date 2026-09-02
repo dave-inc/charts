@@ -1,13 +1,26 @@
 # common
 
-The shared application chart. It renders the Deployment, Service, HPA and, when canary
-is enabled, the canary and reverse proxy tiers that sit alongside them.
+The shared application chart. It renders the Deployment, Service and HPA, and, when
+canary is enabled, a Rollout (Argo Rollouts) that references the Deployment via
+`workloadRef` instead of duplicating it.
 
 Configuration reference lives in [values.yaml](./values.yaml), which is commented in
 place. This file covers only what changes between versions and what you have to do about
 it.
 
-## Upgrading to 0.12.0
+## Argo CD order for canary rollouts
+
+When canary is enabled, the chart applies the stable and canary Services in sync wave
+`"1"`, then the Gateway API chart applies its `HTTPRoute` in wave `"2"`. The Rollout is
+in wave `"3"`, allowing its Gateway API traffic-routing plugin to update an existing
+route, and an HPA, VPA, or KEDA `ScaledObject` targeting that Rollout is in wave `"4"`.
+The referenced Deployment remains in the default wave `"0"`.
+
+This breaks the resource cycle as one direction: Deployment/Services → HTTPRoute →
+Rollout → autoscaler. If a canary HTTPRoute overrides its default sync-wave, keep it
+below the Rollout's wave or override the Rollout and autoscaler waves together.
+
+## Upgrading to 0.13.0
 
 This release changes shutdown and rollout timing for services, so a Pod that previously
 terminated in about thirty seconds now takes up to a minute, and rollouts are deliberately
@@ -56,22 +69,20 @@ balancer in front of it without slowing down everything else.
 
 The precedence, most specific first, is:
 
-1. `canary.reverseProxy.*` — the per-tier override for the proxy only
-2. `serviceGracefulRollout.*` — when `service.enabled` and its own `enabled` are true
-3. top-level `.Values.*` — the default for everything else
+1. `serviceGracefulRollout.*` — when `service.enabled` and its own `enabled` are true
+2. top-level `.Values.*` — the default for everything else
 
-The block feeds the control and canary Deployments, the reverse proxy's base timing, and the
-Cloud SQL proxy's derived wait, so all of them move together. Override a single field to keep
-the rest, or set `serviceGracefulRollout.enabled: false` to put a service back on the
-top-level defaults entirely.
+The block feeds the Deployment and the Cloud SQL proxy's derived wait, so both move together.
+Override a single field to keep the rest, or set `serviceGracefulRollout.enabled: false` to put
+a service back on the top-level defaults entirely.
 
 ### Services now stay in the traffic path before shutting down
 
-`serviceGracefulRollout.preStopSleepSeconds` renders a `preStop` sleep on the control and
-canary application containers. It exists because a Pod keeps receiving requests after
-termination begins: removal from a Google load balancer lags the Pod being killed, measured at
-around twelve seconds in staging. `terminationGracePeriodSeconds` cannot do this on its own,
-since it caps how long shutdown may take rather than holding the Pod open.
+`serviceGracefulRollout.preStopSleepSeconds` renders a `preStop` sleep on the application
+container. It exists because a Pod keeps receiving requests after termination begins: removal
+from a Google load balancer lags the Pod being killed, measured at around twelve seconds in
+staging. `terminationGracePeriodSeconds` cannot do this on its own, since it caps how long
+shutdown may take rather than holding the Pod open.
 
 The two values are related and validated together. A `preStop` sleep that is greater than or
 equal to the grace period fails the render rather than letting a Pod be SIGKILLed part-way
@@ -110,25 +121,13 @@ default.
 
 `autoscaling.minReplicas` is now unset rather than `1`, which lets the chart tell a
 deliberate value from an inherited one. With canary enabled it computes 2, because canary
-puts a second Deployment in the traffic path and a tier at one Pod has no headroom while
-that Pod is replaced. Without canary it stays 1, so single-Pod services are unaffected.
+puts a second ReplicaSet in the traffic path during a rollout and a tier at one Pod has no
+headroom while that Pod is replaced. Without canary it stays 1, so single-Pod services are
+unaffected.
 
 Setting `autoscaling.minReplicas` explicitly always wins, including setting it back to
 `1`. The default is capped at `maxReplicas`, so a deliberately pinned single-replica
 service still renders a valid HPA.
-
-The reverse proxy keeps a floor of 2 of its own, since it is the tier fronted by the NEG
-and one replica means one endpoint. Override it with
-`canary.reverseProxy.autoscaling.minReplicas`.
-
-### The reverse proxy can be tuned separately
-
-The proxy inherits `minReadySeconds`, `terminationGracePeriodSeconds` and
-`preStopSleepSeconds` from the effective value described above —
-`serviceGracefulRollout` when it applies, otherwise the top level. Each also has
-a `canary.reverseProxy.*` counterpart that wins outright, for when the proxy needs
-different timing from the application it fronts, which is common: the proxy is the tier the
-load balancer actually detaches from, so it often wants the longer drain.
 
 ### The Cloud SQL proxy now tracks the grace period
 
