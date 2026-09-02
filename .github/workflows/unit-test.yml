@@ -19,6 +19,5 @@ jobs:
       - name: Install helm-unittest
         run: helm plugin install https://github.com/helm-unittest/helm-unittest --version v1.1.2 --verify=false # resolves to 33c48cac798e465deda9a66c8e6c07c0973cf53d
 
-      - name: Run Helm Unit Tests on 'common' chart
-        working-directory: charts/common
-        run: helm unittest .
+      - name: Run Helm Unit Tests
+        run: make test
