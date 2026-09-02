@@ -2286,6 +2286,17 @@ entries:
   gateway-bundle:
   - apiVersion: v2
     appVersion: 0.1.0
+    created: "2026-09-02T16:57:36.746140934Z"
+    description: 'Bundles together many Gateway resources into a single chart to be
+      deployed as one unit. '
+    digest: cf3c7b6bf0d3b8133c99a3e2a1de702121d18395287807a66061187509351271
+    name: gateway-bundle
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/gateway-bundle-2.3.0/gateway-bundle-2.3.0.tgz
+    version: 2.3.0
+  - apiVersion: v2
+    appVersion: 0.1.0
     created: "2026-07-30T22:29:05.663186111Z"
     description: 'Bundles together many Gateway resources into a single chart to be
       deployed as one unit. '
@@ -3314,4 +3325,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2026-09-01T22:02:40.791803807Z"
+generated: "2026-09-02T16:57:36.748897479Z"
