@@ -1,0 +1,22 @@
+suite: existingConfigMapName layered alongside the chart's own env ConfigMap
+templates:
+  - deployment.yaml
+values:
+  - ./fixtures/minimal-values.yaml
+set:
+  existingConfigMapName: legacy-app-config
+  env:
+    LOG_LEVEL: info
+tests:
+  - it: references both the existingConfigMapName and the chart's own generated env ConfigMap
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: legacy-app-config
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: test-app

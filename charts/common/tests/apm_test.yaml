@@ -1,0 +1,25 @@
+suite: Datadog APM env vars (apm.enabled)
+templates:
+  - deployment.yaml
+values:
+  - ./fixtures/minimal-values.yaml
+set:
+  apm:
+    enabled: true
+    datadogEnvironment: staging
+tests:
+  - it: sets DD_ENV from apm.datadogEnvironment
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DD_ENV
+            value: staging
+
+  - it: defaults DD_SERVICE_NAME to common.name
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DD_SERVICE_NAME
+            value: test-app
