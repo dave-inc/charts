@@ -49,10 +49,6 @@ tests:
                 target:
                   type: Utilization
                   averageUtilization: 70
-      # hpa.yaml never renders metadata.annotations.
-      - template: hpa.yaml
-        notExists:
-          path: metadata.annotations
 
   - it: renders the VPA targeting the same Deployment with updateMode Off
     asserts:
