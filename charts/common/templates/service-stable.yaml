@@ -9,7 +9,7 @@ today, since Gateway API isn't set up to handle public-facing traffic yet.
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "common.canaryServiceName" . }}
+  name: {{ include "common.stableServiceName" . }}
   annotations:
     # The Gateway API HTTPRoute is applied in wave 2. Its backendRefs need both
     # Rollouts-managed Services to exist before that reconciliation begins.
