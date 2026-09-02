@@ -50,22 +50,25 @@ The `Helm Unit Tests` GitHub Actions workflow (`.github/workflows/unit-test.yml`
 
 ### Adding a new test
 
-Tests live under `charts/$chart_name/tests/`, one suite file per template, named `<template-basename>_test.yaml` (e.g. `charts/common/tests/rollout_test.yaml` tests `templates/rollout.yaml`). A suite can have multiple `it:` cases, each setting different values and asserting on the result:
+Tests live under `charts/$chart_name/tests/`, one suite file per template, named `<template-basename>_test.yaml` (e.g. `charts/common/tests/pdb_test.yaml` tests `templates/pdb.yaml`). A suite can have multiple `it:` cases, each setting different values and asserting on the result:
 
 ```yaml
-suite: Rollout canary service/trafficRouting wiring
+suite: PodDisruptionBudget
 templates:
-  - rollout.yaml
+  - pdb.yaml
 values:
   - ./fixtures/minimal-values.yaml
+set:
+  podDisruptionBudget:
+    enabled: true
 tests:
-  - it: wires canaryService/stableService when service.enabled is true
-    set:
-      service.enabled: true
+  - it: defaults minAvailable to 15% when neither minAvailable nor maxUnavailable is set
     asserts:
+      - isKind:
+          of: PodDisruptionBudget
       - equal:
-          path: spec.strategy.canary.canaryService
-          value: test-app-canary
+          path: spec.minAvailable
+          value: "15%"
 ```
 
 If a template needs values that are `required` elsewhere in the chart (e.g. `common.name`) just to render at all, add them to the shared `charts/$chart_name/tests/fixtures/minimal-values.yaml` and load it via `values:` rather than repeating `set:` boilerplate in every suite.
