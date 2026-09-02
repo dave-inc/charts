@@ -110,6 +110,10 @@ gcpBackendPolicies:
         timeoutSec: 60
         logging:
           enabled: true
+      # NOTE: there is deliberately no chart-wide `securityPolicy` default.
+      # Cloud Armor is per-item only (see the example below). Because GKE reads
+      # an explicit empty string as "detach the attached policy", an item could
+      # not opt out of a chart-wide default without also detaching its policy.
       targetRef:
         group: ""
         kind: Service
@@ -118,6 +122,25 @@ gcpBackendPolicies:
 #
 #   - name: example-service
 #     spec:
+#       targetRef:
+#         name: example-service
+
+## Cloud Armor example. `securityPolicy` names a pre-existing Cloud Armor
+## security policy in GCP; the chart does not create it. Its scope must match
+## the GatewayClass: a global policy for gke-l7-global-external-managed, a
+## regional policy in the cluster's region for gke-l7-regional-external-managed
+## or gke-l7-rilb.
+##
+## Three states, and they are NOT interchangeable:
+##   - key omitted           -> leaves whatever policy is attached untouched
+##   - securityPolicy: name  -> attaches that policy
+##   - securityPolicy: ""    -> DETACHES the attached policy
+## So remove the line to stop managing the policy; do not blank it out.
+#
+#   - name: example-service
+#     spec:
+#       default:
+#         securityPolicy: example-service-ca
 #       targetRef:
 #         name: example-service
 
@@ -134,6 +157,8 @@ gcpBackendPolicies:
 #    spec:
 #      default:
 #        timeoutSec: 60
+#        # Pre-existing Cloud Armor policy name. Set to "" to detach.
+#        securityPolicy: example-service-ca
 #      targetRef:
 #        group: ""
 #        kind: Service
