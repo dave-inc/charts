@@ -1,0 +1,34 @@
+suite: PodDisruptionBudget
+templates:
+  - pdb.yaml
+values:
+  - ./fixtures/minimal-values.yaml
+set:
+  podDisruptionBudget:
+    enabled: true
+  additionalLabels:
+    team: platform
+    env: staging
+tests:
+  - it: defaults minAvailable to 15% when neither minAvailable nor maxUnavailable is set
+    asserts:
+      - isKind:
+          of: PodDisruptionBudget
+      - equal:
+          path: spec.minAvailable
+          value: "15%"
+
+  - it: selects pods by name/instance only, matching deployment.yaml's own pod template labels
+    # The selector must match deployment.yaml's pod template labels exactly
+    # (see common.selectorLabels), not the fuller common.labels set -- that
+    # set includes helm.sh/chart/app.kubernetes.io/version/managed-by, none
+    # of which are ever applied to the pod template, so a selector built from
+    # it would never match any pod.
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels
+          value:
+            app.kubernetes.io/name: test-app
+            app.kubernetes.io/instance: RELEASE-NAME
+      - notExists:
+          path: spec.selector.matchLabels["helm.sh/chart"]

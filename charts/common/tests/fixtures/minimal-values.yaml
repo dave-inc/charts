@@ -1,0 +1,6 @@
+# common.name (_helpers.tpl) wraps .Values.name in `required`, which aborts
+# rendering immediately if it's unset -- even though it's also wrapped in
+# `default .Release.Name`, Go templates evaluate that argument first. Every
+# suite under tests/ must load this via `values:` or rollout.yaml (and any
+# other template calling common.name) fails to render at all.
+name: test-app

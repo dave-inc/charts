@@ -23,6 +23,55 @@ dependencies:
 4. Run `helm dependency update`. This will copy over the chart into this repo. Make you you don't commit it.
 5. Run `helm template .`. This will render out the Kubernetes manifest objects with the variables replaced to the `stdout`. The output should be a valid yaml file that could be directly applied in a GKE cluster. If there are errors the templating engine will write it to the `stderr`
 
+## Unit testing
+
+We use [helm-unittest](https://github.com/helm-unittest/helm-unittest), a `helm` plugin that renders a chart's templates for a given set of values and asserts on the rendered output (e.g. a field's value, whether a key exists). No cluster is needed — it's checking what `helm template` would produce, not whether a live cluster accepts it.
+
+Install the plugin once locally:
+
+```sh
+helm plugin install https://github.com/helm-unittest/helm-unittest --version v1.1.2
+```
+
+Run every chart's tests from the repo root:
+
+```sh
+make test
+```
+
+This finds every chart with a `tests/` directory (e.g. `charts/common/tests`) and runs `helm unittest` against it, so it picks up new charts automatically as they gain coverage. To run a single chart's tests directly:
+
+```sh
+cd charts/common
+helm unittest .
+```
+
+The `Helm Unit Tests` GitHub Actions workflow (`.github/workflows/unit-test.yml`) runs the same thing on every PR.
+
+### Adding a new test
+
+Tests live under `charts/$chart_name/tests/`, one suite file per template, named `<template-basename>_test.yaml` (e.g. `charts/common/tests/rollout_test.yaml` tests `templates/rollout.yaml`). A suite can have multiple `it:` cases, each setting different values and asserting on the result:
+
+```yaml
+suite: Rollout canary service/trafficRouting wiring
+templates:
+  - rollout.yaml
+values:
+  - ./fixtures/minimal-values.yaml
+tests:
+  - it: wires canaryService/stableService when service.enabled is true
+    set:
+      service.enabled: true
+    asserts:
+      - equal:
+          path: spec.strategy.canary.canaryService
+          value: test-app-canary
+```
+
+If a template needs values that are `required` elsewhere in the chart (e.g. `common.name`) just to render at all, add them to the shared `charts/$chart_name/tests/fixtures/minimal-values.yaml` and load it via `values:` rather than repeating `set:` boilerplate in every suite.
+
+Good candidates for a new test are anything that's easy to get subtly wrong without `helm lint`/`helm template` catching it — a `.enabled` toggle that's gated in some templates but not others, a label selector, a name derived from a helper. See the [helm-unittest docs](https://github.com/helm-unittest/helm-unittest/blob/master/DOCUMENT.md) for the full list of available assertions.
+
 ## Validations through JSON schema
 
 > [!WARNING]
