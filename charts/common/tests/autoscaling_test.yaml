@@ -49,9 +49,7 @@ tests:
                 target:
                   type: Utilization
                   averageUtilization: 70
-      # No canary here, so there's no separate Rollout sync-wave to coordinate
-      # with -- see the "annotations" block in hpa.yaml, which only renders
-      # when canary is enabled.
+      # hpa.yaml never renders metadata.annotations.
       - template: hpa.yaml
         notExists:
           path: metadata.annotations
