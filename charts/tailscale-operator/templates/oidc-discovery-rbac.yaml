@@ -1,0 +1,20 @@
+{{- $oidc := .Values.oidcDiscovery | default dict }}
+{{- if eq (toString (index $oidc "enabled")) "true" }}
+---
+# Makes this cluster's OIDC discovery/JWKS endpoints publicly readable so
+# Tailscale can validate the operator's ServiceAccount token against this
+# cluster's issuer, for workload identity federation.
+# https://tailscale.com/docs/kubernetes-operator/manage-and-configure/workload-identity-federation
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ printf "%s-%s-oidc-discovery" (include "tailscale-operator.fullname" .) .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:service-account-issuer-discovery
+subjects:
+  - kind: Group
+    name: system:unauthenticated
+    apiGroup: rbac.authorization.k8s.io
+{{- end }}
