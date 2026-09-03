@@ -1,0 +1,14 @@
+{{- range $name, $pc := .Values.proxyClasses }}
+{{- if $pc.podDisruptionBudget }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ $name }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ $name }}
+  {{- toYaml $pc.podDisruptionBudget | nindent 2 }}
+{{- end }}
+{{- end }}

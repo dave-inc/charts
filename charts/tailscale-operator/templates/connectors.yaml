@@ -1,0 +1,39 @@
+{{- range .Values.connectors }}
+{{- if not .tags }}
+{{- fail (printf "connectors[%s]: tags is required" .name) }}
+{{- end }}
+{{- if and .appConnector (or .exitNode .subnetRouter) }}
+{{- fail (printf "connectors[%s]: appConnector is mutually exclusive with exitNode and subnetRouter" .name) }}
+{{- end }}
+---
+# Applied after the operator/CRDs (default sync-wave) so the Connector CRD
+# already exists when this is applied.
+apiVersion: tailscale.com/v1alpha1
+kind: Connector
+metadata:
+  name: {{ .name }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  {{- if gt (int (.replicas | default 1)) 1 }}
+  replicas: {{ .replicas }}
+  hostnamePrefix: {{ .hostnamePrefix | default .name }}
+  {{- else }}
+  hostname: {{ .hostname | default .name }}
+  {{- end }}
+  tags:
+    {{- toYaml .tags | nindent 4 }}
+  {{- if .proxyClass }}
+  proxyClass: {{ .proxyClass }}
+  {{- end }}
+  {{- if .appConnector }}
+  appConnector:
+    {{- toYaml .appConnector | nindent 4 }}
+  {{- else }}
+  exitNode: {{ .exitNode | default false }}
+  {{- if .subnetRouter }}
+  subnetRouter:
+    {{- toYaml .subnetRouter | nindent 4 }}
+  {{- end }}
+  {{- end }}
+{{- end }}
