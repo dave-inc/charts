@@ -5,11 +5,14 @@ operator](https://pkgs.tailscale.com/helmcharts) (`1.102.3`), pulled in as a
 real versioned dependency rather than forked. It exists to layer on the
 pieces upstream doesn't provide, without patching Tailscale's own templates:
 
-- **Kyverno compliance.** Upstream's operator Deployment has no
-  `metadata.labels` hook, so there's no way to stamp Kyverno-required labels
-  (or `kyverno-probes-policy: skip`) onto it from `values.yaml` alone. This
-  wrapper Kustomize-patches those labels onto the rendered Deployment after
-  the subchart renders it.
+- **Kyverno compliance.** `values.yaml` sets `operatorConfig.podLabels`
+  (`application`, `env`, `team`, `email`, `slack_channel`) so the operator's
+  pods carry the labels our Kyverno policies require. Upstream's operator
+  Deployment has no `metadata.labels` hook, so there's no way to stamp
+  Kyverno-required labels (or `kyverno-probes-policy: skip`) onto it from
+  `values.yaml` alone; the downstream consumer (e.g. the Argo CD
+  `Application`) is required to Kustomize-patch those onto the rendered
+  Deployment, since this chart doesn't do it for you.
 - **Workload identity federation.** `templates/oidc-discovery-rbac.yaml`
   optionally publishes this cluster's OIDC discovery/JWKS endpoints so
   Tailscale can validate the operator's ServiceAccount token, so clusters can
