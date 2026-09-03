@@ -62,7 +62,7 @@ overrides.
 | Key | Default | Description |
 | --- | --- | --- |
 | `oidcDiscovery.enabled` | `false` | Publishes this cluster's OIDC discovery/JWKS endpoints to unauthenticated callers so the operator can authenticate via workload identity federation instead of an OAuth client secret. Set to `true` only for consumers using WIF. |
-| `proxyClasses` | `{}` | Map of `tailscale.com/v1alpha1` ProxyClass name -> config. Each key gets its own `app` pod label, so PDBs and topology spread never mix connector types together. |
+| `proxyClasses` | `{}` | Map of `tailscale.com/v1alpha1` ProxyClass name -> config. Each key gets its own `proxy-class` pod label, so PDBs and topology spread never mix connector types together. |
 | `proxyClasses.<name>.topologySpreadConstraints` | unset | Spreads that ProxyClass's replicas across zones/nodes. `labelSelector` is filled in automatically from the ProxyClass name. |
 | `proxyClasses.<name>.podDisruptionBudget` | unset | Creates a PDB scoped to that ProxyClass's pods (e.g. `minAvailable: 1`). Omit to leave that ProxyClass without a PDB. |
 | `proxyClasses.<name>.resources` | unset | Resource requests/limits for the `tailscale` proxy container itself (not the operator). |
@@ -88,7 +88,8 @@ for the full set.
   `replicas` value greater than 1 renders `hostnamePrefix` instead of
   `hostname` (HA Connectors require a prefix, not a fixed hostname).
 - `proxyClasses` is a map, one `ProxyClass` per key. Each key gets its own
-  `app` pod label, so `topologySpreadConstraints` and the sibling PDB's
+  `proxy-class` pod label (not `app`, which the operator manages itself and
+  sets to the parent's UID), so `topologySpreadConstraints` and the sibling PDB's
   selector only ever target that ProxyClass's own pods.
 - `oidcDiscovery.enabled` toggles the `ClusterRoleBinding` in
   `oidc-discovery-rbac.yaml`. Its name is scoped to the release

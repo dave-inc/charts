@@ -12,7 +12,7 @@ tests:
         hasDocuments:
           count: 0
 
-  - it: gives each proxyClass its own name and app label, with no PDB by default
+  - it: gives each proxyClass its own name and proxy-class label, with no PDB by default
     set:
       proxyClasses:
         gha-runners-1-exit-node: {}
@@ -26,7 +26,7 @@ tests:
       - template: proxyclasses.yaml
         documentIndex: 0
         equal:
-          path: spec.statefulSet.pod.labels.app
+          path: spec.statefulSet.pod.labels.proxy-class
           value: gha-runners-1-exit-node
       - template: proxyclasses.yaml
         documentIndex: 1
@@ -36,7 +36,7 @@ tests:
       - template: proxyclasses.yaml
         documentIndex: 1
         equal:
-          path: spec.statefulSet.pod.labels.app
+          path: spec.statefulSet.pod.labels.proxy-class
           value: gha-runners-2-exit-node
       - template: proxyclass-pdb.yaml
         hasDocuments:
@@ -75,12 +75,12 @@ tests:
       - template: proxyclass-pdb.yaml
         documentIndex: 0
         equal:
-          path: spec.selector.matchLabels.app
+          path: spec.selector.matchLabels.proxy-class
           value: gha-runners-1-exit-node
       - template: proxyclass-pdb.yaml
         documentIndex: 1
         equal:
-          path: spec.selector.matchLabels.app
+          path: spec.selector.matchLabels.proxy-class
           value: gha-runners-2-exit-node
 
   - it: only applies topologySpreadConstraints to the proxyClass that sets them
@@ -100,7 +100,7 @@ tests:
           value:
             - labelSelector:
                 matchLabels:
-                  app: gha-runners-1-exit-node
+                  proxy-class: gha-runners-1-exit-node
               maxSkew: 1
               topologyKey: topology.kubernetes.io/zone
               whenUnsatisfiable: DoNotSchedule

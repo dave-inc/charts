@@ -128,20 +128,15 @@ tests:
           path: spec.proxyClass
           value: gha-runners-1-exit-node
 
-  - it: defaults exitNode to false and omits appConnector/subnetRouter when neither is set
+  - it: fails when none of exitNode, subnetRouter, or appConnector is set
     set:
       connectors:
         - name: plain-connector
           tags:
             - "tag:ci-plain"
     asserts:
-      - equal:
-          path: spec.exitNode
-          value: false
-      - notExists:
-          path: spec.appConnector
-      - notExists:
-          path: spec.subnetRouter
+      - failedTemplate:
+          errorMessage: "connectors[plain-connector]: must set one of exitNode, subnetRouter, or appConnector"
 
   - it: renders subnetRouter when set, alongside exitNode
     set:

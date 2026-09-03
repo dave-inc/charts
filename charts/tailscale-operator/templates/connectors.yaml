@@ -8,6 +8,9 @@
 {{- if and .appConnector (or .exitNode .subnetRouter) }}
 {{- fail (printf "connectors[%s]: appConnector is mutually exclusive with exitNode and subnetRouter" .name) }}
 {{- end }}
+{{- if not (or .appConnector .exitNode .subnetRouter) }}
+{{- fail (printf "connectors[%s]: must set one of exitNode, subnetRouter, or appConnector" .name) }}
+{{- end }}
 ---
 # Applied after the operator/CRDs (default sync-wave) so the Connector CRD
 # already exists when this is applied.

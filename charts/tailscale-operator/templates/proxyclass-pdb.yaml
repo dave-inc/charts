@@ -8,7 +8,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: {{ $name }}
+      proxy-class: {{ $name }}
   {{- toYaml $pc.podDisruptionBudget | nindent 2 }}
 {{- end }}
 {{- end }}
