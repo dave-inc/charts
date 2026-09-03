@@ -1,4 +1,5 @@
-{{- if .Values.oidcDiscovery.enabled }}
+{{- $oidc := .Values.oidcDiscovery | default dict }}
+{{- if eq (toString (index $oidc "enabled")) "true" }}
 ---
 # Makes this cluster's OIDC discovery/JWKS endpoints publicly readable so
 # Tailscale can validate the operator's ServiceAccount token against this

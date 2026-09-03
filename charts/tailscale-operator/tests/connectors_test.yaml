@@ -179,6 +179,8 @@ tests:
 
   - it: renders the configured proxyClass
     set:
+      proxyClasses:
+        gha-runners-1-exit-node: {}
       connectors:
         - name: gha-runners-1-exit-node
           proxyClass: gha-runners-1-exit-node
@@ -190,6 +192,32 @@ tests:
           path: spec.proxyClass
           value: gha-runners-1-exit-node
 
+  - it: fails when proxyClass is not a key in proxyClasses
+    set:
+      connectors:
+        - name: gha-runners-1-exit-node
+          proxyClass: missing-class
+          tags:
+            - "tag:ci-exit"
+          exitNode: true
+    asserts:
+      - failedTemplate:
+          errorMessage: 'connectors[gha-runners-1-exit-node]: proxyClass "missing-class" does not match a key in proxyClasses'
+
+  - it: fails when proxyClass names a sibling key that does not exist
+    set:
+      proxyClasses:
+        other-class: {}
+      connectors:
+        - name: gha-runners-1-exit-node
+          proxyClass: gha-runners-1-exit-node
+          tags:
+            - "tag:ci-exit"
+          exitNode: true
+    asserts:
+      - failedTemplate:
+          errorMessage: 'connectors[gha-runners-1-exit-node]: proxyClass "gha-runners-1-exit-node" does not match a key in proxyClasses'
+
   - it: fails when none of exitNode, subnetRouter, or appConnector is set
     set:
       connectors:
@@ -199,6 +227,28 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: "connectors[plain-connector]: must set one of exitNode, subnetRouter, or appConnector"
+
+  - it: fails when exitNode is false without subnetRouter or appConnector
+    set:
+      connectors:
+        - name: nope
+          tags:
+            - "tag:ci-x"
+          exitNode: false
+    asserts:
+      - failedTemplate:
+          errorMessage: "connectors[nope]: must set one of exitNode, subnetRouter, or appConnector"
+
+  - it: fails when exitNode is the string false without subnetRouter or appConnector
+    set:
+      connectors:
+        - name: nope
+          tags:
+            - "tag:ci-x"
+          exitNode: "false"
+    asserts:
+      - failedTemplate:
+          errorMessage: "connectors[nope]: must set one of exitNode, subnetRouter, or appConnector"
 
   - it: renders subnetRouter when set, without requiring exitNode
     set:
@@ -216,6 +266,29 @@ tests:
             - 10.0.0.0/8
       - notExists:
           path: spec.appConnector
+
+  - it: fails when subnetRouter is empty
+    set:
+      connectors:
+        - name: subnet
+          tags:
+            - "tag:ci-subnet"
+          subnetRouter: {}
+    asserts:
+      - failedTemplate:
+          errorMessage: "connectors[subnet]: subnetRouter.advertiseRoutes is required"
+
+  - it: fails when subnetRouter.advertiseRoutes is empty
+    set:
+      connectors:
+        - name: subnet
+          tags:
+            - "tag:ci-subnet"
+          subnetRouter:
+            advertiseRoutes: []
+    asserts:
+      - failedTemplate:
+          errorMessage: "connectors[subnet]: subnetRouter.advertiseRoutes is required"
 
   - it: renders appConnector and omits exitNode/subnetRouter when appConnector is set
     set:

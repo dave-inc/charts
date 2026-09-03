@@ -7,6 +7,36 @@ tests:
       - hasDocuments:
           count: 0
 
+  - it: renders nothing when enabled is the string false
+    set:
+      oidcDiscovery:
+        enabled: "false"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders nothing when oidcDiscovery is an empty map
+    set:
+      oidcDiscovery: {}
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders nothing when oidcDiscovery is null
+    set:
+      oidcDiscovery: null
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: publishes OIDC discovery when enabled is the string true
+    set:
+      oidcDiscovery:
+        enabled: "true"
+    asserts:
+      - isKind:
+          of: ClusterRoleBinding
+
   - it: publishes OIDC discovery to unauthenticated callers when enabled
     release:
       name: my-cluster

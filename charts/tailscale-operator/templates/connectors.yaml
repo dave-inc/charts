@@ -5,10 +5,10 @@
 {{- if not .tags }}
 {{- fail (printf "connectors[%s]: tags is required" .name) }}
 {{- end }}
-{{- if and (hasKey . "appConnector") (or .exitNode (hasKey . "subnetRouter")) }}
+{{- if and (hasKey . "appConnector") (or (eq (toString .exitNode) "true") (hasKey . "subnetRouter")) }}
 {{- fail (printf "connectors[%s]: appConnector is mutually exclusive with exitNode and subnetRouter" .name) }}
 {{- end }}
-{{- if not (or (hasKey . "appConnector") .exitNode (hasKey . "subnetRouter")) }}
+{{- if not (or (hasKey . "appConnector") (eq (toString .exitNode) "true") (hasKey . "subnetRouter")) }}
 {{- fail (printf "connectors[%s]: must set one of exitNode, subnetRouter, or appConnector" .name) }}
 {{- end }}
 {{- if and (hasKey . "replicas") (le (int .replicas) 0) }}
@@ -22,6 +22,12 @@
 {{- end }}
 {{- if and (hasKey . "hostnamePrefix") (le (int (.replicas | default 1)) 1) }}
 {{- fail (printf "connectors[%s]: hostnamePrefix cannot be set when replicas is 1 or unset; use hostname instead" .name) }}
+{{- end }}
+{{- if hasKey . "subnetRouter" }}
+{{- $sr := .subnetRouter | default dict }}
+{{- if not $sr.advertiseRoutes }}
+{{- fail (printf "connectors[%s]: subnetRouter.advertiseRoutes is required" .name) }}
+{{- end }}
 {{- end }}
 ---
 # Applied after the operator/CRDs (default sync-wave) so the Connector CRD
@@ -55,6 +61,9 @@ spec:
   tags:
     {{- toYaml .tags | nindent 4 }}
   {{- if .proxyClass }}
+  {{- if not (hasKey ($.Values.proxyClasses | default dict) .proxyClass) }}
+  {{- fail (printf "connectors[%s]: proxyClass %q does not match a key in proxyClasses" .name .proxyClass) }}
+  {{- end }}
   proxyClass: {{ .proxyClass }}
   {{- end }}
   {{- if hasKey . "appConnector" }}

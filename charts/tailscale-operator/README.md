@@ -71,9 +71,9 @@ overrides.
 | `connectors[].tags` | — (required) | Tailscale ACL tags applied to the node. |
 | `connectors[].replicas` | `1` | `> 1` renders `hostnamePrefix` (HA, required for multiple replicas) instead of a fixed `hostname`. |
 | `connectors[].hostname` / `hostnamePrefix` | defaults to `.name` | Override the auto-derived hostname. Use `hostname` for `replicas: 1`, `hostnamePrefix` for HA. |
-| `connectors[].proxyClass` | unset | References a key under `proxyClasses` to apply that spread/PDB/resources config to this Connector. |
+| `connectors[].proxyClass` | unset | References a key under `proxyClasses` to apply that spread/PDB/resources config to this Connector. Must match a `proxyClasses` key when set. |
 | `connectors[].exitNode` | `false` | Advertises the Connector as an exit node. Mutually exclusive with `appConnector`. |
-| `connectors[].subnetRouter` | unset | `advertiseRoutes` for subnet routing. Mutually exclusive with `appConnector`. |
+| `connectors[].subnetRouter` | unset | `advertiseRoutes` for subnet routing (required, non-empty). Mutually exclusive with `appConnector`. |
 | `connectors[].appConnector` | unset | App connector config (e.g. `routes`). Mutually exclusive with `exitNode`/`subnetRouter`. |
 
 The `tailscale-operator.*` keys (operator image, `operatorConfig`, `ingressClass`,
