@@ -14,6 +14,16 @@
 ---
 # Applied after the operator/CRDs (default sync-wave) so the Connector CRD
 # already exists when this is applied.
+#
+# Connector is cluster-scoped (github.com/tailscale/tailscale
+# cmd/k8s-operator/deploy/crds/tailscale.com_connectors.yaml), and its name
+# below is the raw connectors[].name, not prefixed by release or namespace.
+# That's intentional: this chart is deployed as exactly one release per
+# cluster (see README.md#usage), so there's no other release's Connectors
+# to collide with. Prefixing would also require threading the prefix
+# through connectors[].proxyClass -> proxyClasses map keys without
+# affecting the tailnet hostname/hostnamePrefix default (which also reuses
+# .name), for a risk this deployment model doesn't have.
 apiVersion: tailscale.com/v1alpha1
 kind: Connector
 metadata:

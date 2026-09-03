@@ -92,10 +92,12 @@ for the full set.
   sets to the parent's UID), so `topologySpreadConstraints` and the sibling PDB's
   selector only ever target that ProxyClass's own pods.
 - `oidcDiscovery.enabled` toggles the `ClusterRoleBinding` in
-  `oidc-discovery-rbac.yaml`. Its name is scoped to the release
-  (`{{ .Release.Name }}-tailscale-operator-oidc-discovery`) so installing
-  this chart into more than one cluster/namespace doesn't collide on a
-  single hardcoded binding name.
+  `oidc-discovery-rbac.yaml`. `ClusterRoleBinding` is cluster-scoped, and
+  Helm doesn't enforce release-name uniqueness across namespaces, so its
+  name includes both the release name and namespace
+  (`{{ .Release.Name }}-tailscale-operator-{{ .Release.Namespace }}-oidc-discovery`)
+  to avoid colliding with another install of this chart in the same
+  cluster.
 
 Run `helm unittest charts/tailscale-operator` to exercise this branching
 logic (see `tests/`).

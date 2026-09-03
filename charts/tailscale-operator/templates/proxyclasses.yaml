@@ -2,6 +2,14 @@
 ---
 # Applied after the operator/CRDs (default sync-wave) so the ProxyClass CRD
 # already exists when this is applied.
+#
+# ProxyClass is cluster-scoped (github.com/tailscale/tailscale
+# cmd/k8s-operator/deploy/crds/tailscale.com_proxyclasses.yaml), and its
+# name below is the raw proxyClasses map key, not prefixed by release or
+# namespace -- same rationale as Connector above: one release per cluster,
+# and connectors[].proxyClass must match this key exactly, so scoping it
+# would mean rewriting that reference too for no risk this deployment
+# model actually has.
 apiVersion: tailscale.com/v1alpha1
 kind: ProxyClass
 metadata:

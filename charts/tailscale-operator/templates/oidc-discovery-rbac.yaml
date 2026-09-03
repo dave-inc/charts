@@ -7,7 +7,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ include "tailscale-operator.fullname" . }}-oidc-discovery
+  name: {{ printf "%s-%s-oidc-discovery" (include "tailscale-operator.fullname" .) .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole

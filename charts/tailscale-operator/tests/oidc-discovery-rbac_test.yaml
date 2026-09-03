@@ -29,24 +29,38 @@ tests:
               name: system:unauthenticated
               apiGroup: rbac.authorization.k8s.io
 
-  - it: scopes the binding name to the release so multiple installs don't collide
+  - it: scopes the binding name to the release and namespace so multiple installs don't collide
     release:
       name: my-cluster
+      namespace: tailscale
     set:
       oidcDiscovery:
         enabled: true
     asserts:
       - equal:
           path: metadata.name
-          value: my-cluster-tailscale-operator-oidc-discovery
+          value: my-cluster-tailscale-operator-tailscale-oidc-discovery
 
   - it: gives a second release a distinct binding name
     release:
       name: other-cluster
+      namespace: tailscale
     set:
       oidcDiscovery:
         enabled: true
     asserts:
       - equal:
           path: metadata.name
-          value: other-cluster-tailscale-operator-oidc-discovery
+          value: other-cluster-tailscale-operator-tailscale-oidc-discovery
+
+  - it: gives the same release name in a different namespace a distinct binding name
+    release:
+      name: my-cluster
+      namespace: other-namespace
+    set:
+      oidcDiscovery:
+        enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-cluster-tailscale-operator-other-namespace-oidc-discovery
