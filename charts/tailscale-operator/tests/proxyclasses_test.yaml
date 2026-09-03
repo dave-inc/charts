@@ -1,0 +1,139 @@
+suite: ProxyClass and its sibling PDB
+templates:
+  - proxyclasses.yaml
+  - proxyclass-pdb.yaml
+tests:
+  - it: renders nothing when no proxyClasses are configured (the default)
+    asserts:
+      - template: proxyclasses.yaml
+        hasDocuments:
+          count: 0
+      - template: proxyclass-pdb.yaml
+        hasDocuments:
+          count: 0
+
+  - it: gives each proxyClass its own name and app label, with no PDB by default
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node: {}
+        gha-runners-2-exit-node: {}
+    asserts:
+      - template: proxyclasses.yaml
+        documentIndex: 0
+        equal:
+          path: metadata.name
+          value: gha-runners-1-exit-node
+      - template: proxyclasses.yaml
+        documentIndex: 0
+        equal:
+          path: spec.statefulSet.pod.labels.app
+          value: gha-runners-1-exit-node
+      - template: proxyclasses.yaml
+        documentIndex: 1
+        equal:
+          path: metadata.name
+          value: gha-runners-2-exit-node
+      - template: proxyclasses.yaml
+        documentIndex: 1
+        equal:
+          path: spec.statefulSet.pod.labels.app
+          value: gha-runners-2-exit-node
+      - template: proxyclass-pdb.yaml
+        hasDocuments:
+          count: 0
+
+  - it: only creates a PDB for a proxyClass that requests one, leaving its sibling undisrupted
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          podDisruptionBudget:
+            minAvailable: 1
+        gha-runners-2-exit-node: {}
+    asserts:
+      - template: proxyclass-pdb.yaml
+        hasDocuments:
+          count: 1
+      - template: proxyclass-pdb.yaml
+        equal:
+          path: metadata.name
+          value: gha-runners-1-exit-node
+      - template: proxyclass-pdb.yaml
+        equal:
+          path: spec.minAvailable
+          value: 1
+
+  - it: scopes each PDB's selector to its own proxyClass label, not a sibling's
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          podDisruptionBudget:
+            minAvailable: 1
+        gha-runners-2-exit-node:
+          podDisruptionBudget:
+            minAvailable: 2
+    asserts:
+      - template: proxyclass-pdb.yaml
+        documentIndex: 0
+        equal:
+          path: spec.selector.matchLabels.app
+          value: gha-runners-1-exit-node
+      - template: proxyclass-pdb.yaml
+        documentIndex: 1
+        equal:
+          path: spec.selector.matchLabels.app
+          value: gha-runners-2-exit-node
+
+  - it: only applies topologySpreadConstraints to the proxyClass that sets them
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          topologySpreadConstraints:
+            - maxSkew: 1
+              topologyKey: topology.kubernetes.io/zone
+              whenUnsatisfiable: DoNotSchedule
+        gha-runners-2-exit-node: {}
+    asserts:
+      - template: proxyclasses.yaml
+        documentIndex: 0
+        equal:
+          path: spec.statefulSet.pod.topologySpreadConstraints
+          value:
+            - labelSelector:
+                matchLabels:
+                  app: gha-runners-1-exit-node
+              maxSkew: 1
+              topologyKey: topology.kubernetes.io/zone
+              whenUnsatisfiable: DoNotSchedule
+      - template: proxyclasses.yaml
+        documentIndex: 1
+        notExists:
+          path: spec.statefulSet.pod.topologySpreadConstraints
+
+  - it: only applies resources to the proxyClass that sets them
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 1000m
+              memory: 128Mi
+        gha-runners-2-exit-node: {}
+    asserts:
+      - template: proxyclasses.yaml
+        documentIndex: 0
+        equal:
+          path: spec.statefulSet.pod.tailscaleContainer.resources
+          value:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 1000m
+              memory: 128Mi
+      - template: proxyclasses.yaml
+        documentIndex: 1
+        notExists:
+          path: spec.statefulSet.pod.tailscaleContainer

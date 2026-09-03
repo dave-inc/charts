@@ -1,7 +1,9 @@
 apiVersion: v2
 name: tailscale-operator
 description: Generic wrapper for the Tailscale Kubernetes operator, reusable across clusters.
+type: application
 version: 0.1.0
+appVersion: "1.102.3"
 dependencies:
   - name: tailscale-operator
     version: "1.102.3"

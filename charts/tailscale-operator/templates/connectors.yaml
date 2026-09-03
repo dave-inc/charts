@@ -1,4 +1,7 @@
 {{- range .Values.connectors }}
+{{- if not .name }}
+{{- fail "connectors[]: name is required" }}
+{{- end }}
 {{- if not .tags }}
 {{- fail (printf "connectors[%s]: tags is required" .name) }}
 {{- end }}

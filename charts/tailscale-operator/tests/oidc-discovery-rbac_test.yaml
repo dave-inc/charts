@@ -1,0 +1,52 @@
+suite: OIDC discovery ClusterRoleBinding
+templates:
+  - oidc-discovery-rbac.yaml
+tests:
+  - it: renders nothing when oidcDiscovery is disabled (the default)
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: publishes OIDC discovery to unauthenticated callers when enabled
+    release:
+      name: my-cluster
+    set:
+      oidcDiscovery:
+        enabled: true
+    asserts:
+      - isKind:
+          of: ClusterRoleBinding
+      - equal:
+          path: roleRef
+          value:
+            apiGroup: rbac.authorization.k8s.io
+            kind: ClusterRole
+            name: system:service-account-issuer-discovery
+      - equal:
+          path: subjects
+          value:
+            - kind: Group
+              name: system:unauthenticated
+              apiGroup: rbac.authorization.k8s.io
+
+  - it: scopes the binding name to the release so multiple installs don't collide
+    release:
+      name: my-cluster
+    set:
+      oidcDiscovery:
+        enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-cluster-tailscale-operator-oidc-discovery
+
+  - it: gives a second release a distinct binding name
+    release:
+      name: other-cluster
+    set:
+      oidcDiscovery:
+        enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: other-cluster-tailscale-operator-oidc-discovery

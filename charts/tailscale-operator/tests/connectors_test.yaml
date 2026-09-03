@@ -1,0 +1,201 @@
+suite: Connector
+templates:
+  - connectors.yaml
+tests:
+  - it: fails when tags is missing
+    set:
+      connectors:
+        - name: gha-runners-1-exit-node
+          exitNode: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "connectors[gha-runners-1-exit-node]: tags is required"
+
+  - it: fails when name is missing
+    set:
+      connectors:
+        - tags:
+            - "tag:ci-exit"
+          exitNode: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "connectors[]: name is required"
+
+  - it: fails when appConnector is combined with exitNode
+    set:
+      connectors:
+        - name: app-conn
+          tags:
+            - "tag:ci-app"
+          exitNode: true
+          appConnector:
+            routes:
+              - 10.0.0.0/8
+    asserts:
+      - failedTemplate:
+          errorMessage: "connectors[app-conn]: appConnector is mutually exclusive with exitNode and subnetRouter"
+
+  - it: fails when appConnector is combined with subnetRouter
+    set:
+      connectors:
+        - name: app-conn
+          tags:
+            - "tag:ci-app"
+          subnetRouter:
+            advertiseRoutes:
+              - 10.0.0.0/8
+          appConnector:
+            routes:
+              - 10.0.0.0/8
+    asserts:
+      - failedTemplate:
+          errorMessage: "connectors[app-conn]: appConnector is mutually exclusive with exitNode and subnetRouter"
+
+  - it: single replica renders hostname, defaulting to name, and omits hostnamePrefix/replicas
+    set:
+      connectors:
+        - name: gha-runners-1-exit-node
+          tags:
+            - "tag:ci-exit"
+          exitNode: true
+    asserts:
+      - isKind:
+          of: Connector
+      - equal:
+          path: metadata.name
+          value: gha-runners-1-exit-node
+      - equal:
+          path: spec.hostname
+          value: gha-runners-1-exit-node
+      - notExists:
+          path: spec.hostnamePrefix
+      - notExists:
+          path: spec.replicas
+
+  - it: replicas greater than one renders hostnamePrefix and replicas, defaulting hostnamePrefix to name
+    set:
+      connectors:
+        - name: gha-runners-1-exit-node
+          replicas: 2
+          tags:
+            - "tag:ci-exit"
+          exitNode: true
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 2
+      - equal:
+          path: spec.hostnamePrefix
+          value: gha-runners-1-exit-node
+      - notExists:
+          path: spec.hostname
+
+  - it: honors an explicit hostnamePrefix override
+    set:
+      connectors:
+        - name: gha-runners-1-exit-node
+          replicas: 2
+          hostnamePrefix: custom-prefix
+          tags:
+            - "tag:ci-exit"
+          exitNode: true
+    asserts:
+      - equal:
+          path: spec.hostnamePrefix
+          value: custom-prefix
+
+  - it: renders proxyClass only when set
+    set:
+      connectors:
+        - name: gha-runners-1-exit-node
+          tags:
+            - "tag:ci-exit"
+          exitNode: true
+    asserts:
+      - notExists:
+          path: spec.proxyClass
+
+  - it: renders the configured proxyClass
+    set:
+      connectors:
+        - name: gha-runners-1-exit-node
+          proxyClass: gha-runners-1-exit-node
+          tags:
+            - "tag:ci-exit"
+          exitNode: true
+    asserts:
+      - equal:
+          path: spec.proxyClass
+          value: gha-runners-1-exit-node
+
+  - it: defaults exitNode to false and omits appConnector/subnetRouter when neither is set
+    set:
+      connectors:
+        - name: plain-connector
+          tags:
+            - "tag:ci-plain"
+    asserts:
+      - equal:
+          path: spec.exitNode
+          value: false
+      - notExists:
+          path: spec.appConnector
+      - notExists:
+          path: spec.subnetRouter
+
+  - it: renders subnetRouter when set, alongside exitNode
+    set:
+      connectors:
+        - name: subnet-connector
+          tags:
+            - "tag:ci-subnet"
+          subnetRouter:
+            advertiseRoutes:
+              - 10.0.0.0/8
+    asserts:
+      - equal:
+          path: spec.subnetRouter.advertiseRoutes
+          value:
+            - 10.0.0.0/8
+      - notExists:
+          path: spec.appConnector
+
+  - it: renders appConnector and omits exitNode/subnetRouter when appConnector is set
+    set:
+      connectors:
+        - name: app-connector
+          tags:
+            - "tag:ci-app"
+          appConnector:
+            routes:
+              - 10.0.0.0/8
+    asserts:
+      - equal:
+          path: spec.appConnector.routes
+          value:
+            - 10.0.0.0/8
+      - notExists:
+          path: spec.exitNode
+      - notExists:
+          path: spec.subnetRouter
+
+  - it: renders one Connector document per entry
+    set:
+      connectors:
+        - name: first-connector
+          tags:
+            - "tag:ci-first"
+          exitNode: true
+        - name: second-connector
+          tags:
+            - "tag:ci-second"
+          exitNode: true
+    asserts:
+      - documentIndex: 0
+        equal:
+          path: metadata.name
+          value: first-connector
+      - documentIndex: 1
+        equal:
+          path: metadata.name
+          value: second-connector
