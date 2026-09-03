@@ -67,7 +67,7 @@ overrides.
 | `proxyClasses.<name>.podDisruptionBudget` | unset | Creates a PDB scoped to that ProxyClass's pods (e.g. `minAvailable: 1`). Omit to leave that ProxyClass without a PDB. |
 | `proxyClasses.<name>.resources` | unset | Resource requests/limits for the `tailscale` proxy container itself (not the operator). |
 | `connectors` | `[]` | List of `tailscale.com/v1alpha1` Connector CRs to create. |
-| `connectors[].name` | — (required) | Used as `metadata.name`, and as the default `hostname`/`hostnamePrefix`. |
+| `connectors[].name` | — (required) | Used as `metadata.name`, and as the default `connectors[].hostname`/`connectors[].hostnamePrefix`. |
 | `connectors[].tags` | — (required) | Tailscale ACL tags applied to the node. |
 | `connectors[].replicas` | `1` | `> 1` renders `hostnamePrefix` (HA, required for multiple replicas) instead of a fixed `hostname`. |
 | `connectors[].hostname` / `hostnamePrefix` | defaults to `.name` | Override the auto-derived hostname. Use `hostname` for `replicas: 1`, `hostnamePrefix` for HA. |
