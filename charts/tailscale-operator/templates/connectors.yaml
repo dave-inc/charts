@@ -20,6 +20,9 @@
 {{- if and (hasKey . "hostname") (gt (int (.replicas | default 1)) 1) }}
 {{- fail (printf "connectors[%s]: hostname cannot be set when replicas is greater than 1; use hostnamePrefix instead" .name) }}
 {{- end }}
+{{- if and (hasKey . "hostnamePrefix") (le (int (.replicas | default 1)) 1) }}
+{{- fail (printf "connectors[%s]: hostnamePrefix cannot be set when replicas is 1 or unset; use hostname instead" .name) }}
+{{- end }}
 ---
 # Applied after the operator/CRDs (default sync-wave) so the Connector CRD
 # already exists when this is applied.

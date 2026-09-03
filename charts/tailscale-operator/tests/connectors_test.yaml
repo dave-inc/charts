@@ -154,6 +154,18 @@ tests:
       - failedTemplate:
           errorMessage: "connectors[gha-runners-1-exit-node]: hostname cannot be set when replicas is greater than 1; use hostnamePrefix instead"
 
+  - it: fails when hostnamePrefix is set without replicas greater than 1
+    set:
+      connectors:
+        - name: gha-runners-1-exit-node
+          hostnamePrefix: custom-prefix
+          tags:
+            - "tag:ci-exit"
+          exitNode: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "connectors[gha-runners-1-exit-node]: hostnamePrefix cannot be set when replicas is 1 or unset; use hostname instead"
+
   - it: renders proxyClass only when set
     set:
       connectors:

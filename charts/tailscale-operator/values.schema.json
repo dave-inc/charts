@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "proxyClasses": {
+      "type": "object",
+      "additionalProperties": { "type": "object" }
+    },
+    "connectors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "appConnector": { "type": "object" },
+          "subnetRouter": { "type": "object" }
+        }
+      }
+    }
+  }
+}
