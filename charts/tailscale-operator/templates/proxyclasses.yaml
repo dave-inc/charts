@@ -16,6 +16,9 @@ spec:
       {{- if $pc.topologySpreadConstraints }}
       topologySpreadConstraints:
         {{- range $pc.topologySpreadConstraints }}
+        {{- if .labelSelector }}
+        {{- fail (printf "proxyClasses[%s].topologySpreadConstraints: labelSelector is set automatically and must not be overridden" $name) }}
+        {{- end }}
         - labelSelector:
             matchLabels:
               proxy-class: {{ $name }}

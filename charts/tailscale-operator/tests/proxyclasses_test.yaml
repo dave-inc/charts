@@ -109,6 +109,36 @@ tests:
         notExists:
           path: spec.statefulSet.pod.topologySpreadConstraints
 
+  - it: fails when podDisruptionBudget overrides the auto-filled selector
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          podDisruptionBudget:
+            minAvailable: 1
+            selector:
+              matchLabels:
+                app: something-else
+    asserts:
+      - template: proxyclass-pdb.yaml
+        failedTemplate:
+          errorMessage: "proxyClasses[gha-runners-1-exit-node].podDisruptionBudget: selector is set automatically and must not be overridden"
+
+  - it: fails when a topologySpreadConstraint overrides the auto-filled labelSelector
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          topologySpreadConstraints:
+            - maxSkew: 1
+              topologyKey: topology.kubernetes.io/zone
+              whenUnsatisfiable: DoNotSchedule
+              labelSelector:
+                matchLabels:
+                  app: something-else
+    asserts:
+      - template: proxyclasses.yaml
+        failedTemplate:
+          errorMessage: "proxyClasses[gha-runners-1-exit-node].topologySpreadConstraints: labelSelector is set automatically and must not be overridden"
+
   - it: only applies resources to the proxyClass that sets them
     set:
       proxyClasses:

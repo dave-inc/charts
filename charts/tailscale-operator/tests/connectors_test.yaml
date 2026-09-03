@@ -138,7 +138,7 @@ tests:
       - failedTemplate:
           errorMessage: "connectors[plain-connector]: must set one of exitNode, subnetRouter, or appConnector"
 
-  - it: renders subnetRouter when set, alongside exitNode
+  - it: renders subnetRouter when set, without requiring exitNode
     set:
       connectors:
         - name: subnet-connector
