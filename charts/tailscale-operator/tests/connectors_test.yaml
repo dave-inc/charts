@@ -72,6 +72,30 @@ tests:
       - notExists:
           path: spec.replicas
 
+  - it: fails when replicas is 0
+    set:
+      connectors:
+        - name: gha-runners-1-exit-node
+          replicas: 0
+          tags:
+            - "tag:ci-exit"
+          exitNode: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "connectors[gha-runners-1-exit-node]: replicas must be greater than 0 (the operator silently ignores 0 at v1.102.3 and runs 1 replica anyway)"
+
+  - it: fails when replicas is negative
+    set:
+      connectors:
+        - name: gha-runners-1-exit-node
+          replicas: -1
+          tags:
+            - "tag:ci-exit"
+          exitNode: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "connectors[gha-runners-1-exit-node]: replicas must be greater than 0 (the operator silently ignores 0 at v1.102.3 and runs 1 replica anyway)"
+
   - it: replicas greater than one renders hostnamePrefix and replicas, defaulting hostnamePrefix to name
     set:
       connectors:
@@ -103,6 +127,32 @@ tests:
       - equal:
           path: spec.hostnamePrefix
           value: custom-prefix
+
+  - it: fails when both hostname and hostnamePrefix are set
+    set:
+      connectors:
+        - name: gha-runners-1-exit-node
+          hostname: custom-hostname
+          hostnamePrefix: custom-prefix
+          tags:
+            - "tag:ci-exit"
+          exitNode: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "connectors[gha-runners-1-exit-node]: hostname and hostnamePrefix are mutually exclusive"
+
+  - it: fails when hostname is set with replicas greater than 1
+    set:
+      connectors:
+        - name: gha-runners-1-exit-node
+          replicas: 2
+          hostname: custom-hostname
+          tags:
+            - "tag:ci-exit"
+          exitNode: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "connectors[gha-runners-1-exit-node]: hostname cannot be set when replicas is greater than 1; use hostnamePrefix instead"
 
   - it: renders proxyClass only when set
     set:
@@ -173,6 +223,34 @@ tests:
           path: spec.exitNode
       - notExists:
           path: spec.subnetRouter
+
+  - it: renders an empty appConnector (auto-discovered routes) without failing
+    set:
+      connectors:
+        - name: app-connector-auto
+          tags:
+            - "tag:ci-app"
+          appConnector: {}
+    asserts:
+      - equal:
+          path: spec.appConnector
+          value: {}
+      - notExists:
+          path: spec.exitNode
+      - notExists:
+          path: spec.subnetRouter
+
+  - it: fails when an empty appConnector is combined with exitNode
+    set:
+      connectors:
+        - name: app-conn
+          tags:
+            - "tag:ci-app"
+          exitNode: true
+          appConnector: {}
+    asserts:
+      - failedTemplate:
+          errorMessage: "connectors[app-conn]: appConnector is mutually exclusive with exitNode and subnetRouter"
 
   - it: renders one Connector document per entry
     set:

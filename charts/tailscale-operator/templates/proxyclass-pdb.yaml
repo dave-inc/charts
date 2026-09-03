@@ -1,6 +1,6 @@
 {{- range $name, $pc := .Values.proxyClasses }}
 {{- if $pc.podDisruptionBudget }}
-{{- if $pc.podDisruptionBudget.selector }}
+{{- if hasKey $pc.podDisruptionBudget "selector" }}
 {{- fail (printf "proxyClasses[%s].podDisruptionBudget: selector is set automatically and must not be overridden" $name) }}
 {{- end }}
 ---

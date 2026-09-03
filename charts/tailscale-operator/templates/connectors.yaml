@@ -5,11 +5,20 @@
 {{- if not .tags }}
 {{- fail (printf "connectors[%s]: tags is required" .name) }}
 {{- end }}
-{{- if and .appConnector (or .exitNode .subnetRouter) }}
+{{- if and (hasKey . "appConnector") (or .exitNode (hasKey . "subnetRouter")) }}
 {{- fail (printf "connectors[%s]: appConnector is mutually exclusive with exitNode and subnetRouter" .name) }}
 {{- end }}
-{{- if not (or .appConnector .exitNode .subnetRouter) }}
+{{- if not (or (hasKey . "appConnector") .exitNode (hasKey . "subnetRouter")) }}
 {{- fail (printf "connectors[%s]: must set one of exitNode, subnetRouter, or appConnector" .name) }}
+{{- end }}
+{{- if and (hasKey . "replicas") (le (int .replicas) 0) }}
+{{- fail (printf "connectors[%s]: replicas must be greater than 0 (the operator silently ignores 0 at v1.102.3 and runs 1 replica anyway)" .name) }}
+{{- end }}
+{{- if and (hasKey . "hostname") (hasKey . "hostnamePrefix") }}
+{{- fail (printf "connectors[%s]: hostname and hostnamePrefix are mutually exclusive" .name) }}
+{{- end }}
+{{- if and (hasKey . "hostname") (gt (int (.replicas | default 1)) 1) }}
+{{- fail (printf "connectors[%s]: hostname cannot be set when replicas is greater than 1; use hostnamePrefix instead" .name) }}
 {{- end }}
 ---
 # Applied after the operator/CRDs (default sync-wave) so the Connector CRD
@@ -35,6 +44,9 @@ spec:
   replicas: {{ .replicas }}
   hostnamePrefix: {{ .hostnamePrefix | default .name }}
   {{- else }}
+  {{- if hasKey . "replicas" }}
+  replicas: {{ .replicas }}
+  {{- end }}
   hostname: {{ .hostname | default .name }}
   {{- end }}
   tags:
@@ -42,12 +54,12 @@ spec:
   {{- if .proxyClass }}
   proxyClass: {{ .proxyClass }}
   {{- end }}
-  {{- if .appConnector }}
+  {{- if hasKey . "appConnector" }}
   appConnector:
     {{- toYaml .appConnector | nindent 4 }}
   {{- else }}
   exitNode: {{ .exitNode | default false }}
-  {{- if .subnetRouter }}
+  {{- if hasKey . "subnetRouter" }}
   subnetRouter:
     {{- toYaml .subnetRouter | nindent 4 }}
   {{- end }}

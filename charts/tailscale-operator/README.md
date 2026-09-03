@@ -95,7 +95,7 @@ for the full set.
   `oidc-discovery-rbac.yaml`. `ClusterRoleBinding` is cluster-scoped, and
   Helm doesn't enforce release-name uniqueness across namespaces, so its
   name includes both the release name and namespace
-  (`{{ .Release.Name }}-tailscale-operator-{{ .Release.Namespace }}-oidc-discovery`)
+  (`{{ include "tailscale-operator.fullname" . }}-{{ .Release.Namespace }}-oidc-discovery`)
   to avoid colliding with another install of this chart in the same
   cluster.
 
