@@ -98,7 +98,7 @@ spec:
           deployment-group: "canary"
       stableMetadata:
         labels:
-          deployment-group: "control"
+          deployment-group: "stable"
       steps:
         {{- toYaml .Values.canary.steps | nindent 8 }}
 {{- end }}
