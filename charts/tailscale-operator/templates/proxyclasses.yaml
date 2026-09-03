@@ -1,9 +1,13 @@
 {{- range $name, $pc := .Values.proxyClasses }}
 ---
+# Applied after the operator/CRDs (default sync-wave) so the ProxyClass CRD
+# already exists when this is applied.
 apiVersion: tailscale.com/v1alpha1
 kind: ProxyClass
 metadata:
   name: {{ $name }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   statefulSet:
     pod:
