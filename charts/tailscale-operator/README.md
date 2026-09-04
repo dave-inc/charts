@@ -66,6 +66,7 @@ overrides.
 | `proxyClasses.<name>.topologySpreadConstraints` | unset | Spreads that ProxyClass's replicas across zones/nodes. `labelSelector` is filled in automatically from the ProxyClass name. |
 | `proxyClasses.<name>.podDisruptionBudget` | unset | Creates a PDB scoped to that ProxyClass's pods (e.g. `minAvailable: 1`). Omit to leave that ProxyClass without a PDB. |
 | `proxyClasses.<name>.resources` | unset | Resource requests/limits for the `tailscale` proxy container itself (not the operator). |
+| `proxyClasses.<name>.env` | unset | Extra env vars for the `tailscale` proxy container, e.g. `TS_ENABLE_HEALTH_CHECK` (serves `/healthz` on `TS_LOCAL_ADDR_PORT`, default `[::]:9002`, shared with `TS_ENABLE_METRICS` if both are set and `TS_LOCAL_ADDR_PORT` isn't overridden). Each entry is `{name, value}` only, the ProxyClass CRD's `env` schema has no `valueFrom` field, so it can't source a value from a Secret/ConfigMap. |
 | `connectors` | `[]` | List of `tailscale.com/v1alpha1` Connector CRs to create. |
 | `connectors[].name` | — (required) | Used as `metadata.name`, and as the default `connectors[].hostname`/`connectors[].hostnamePrefix`. |
 | `connectors[].tags` | — (required) | Tailscale ACL tags applied to the node. |

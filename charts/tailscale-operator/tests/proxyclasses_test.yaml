@@ -193,3 +193,73 @@ tests:
         documentIndex: 1
         notExists:
           path: spec.statefulSet.pod.tailscaleContainer
+
+  - it: only applies env to the proxyClass that sets it, without requiring resources
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          env:
+            - name: TS_ENABLE_HEALTH_CHECK
+              value: "true"
+        gha-runners-2-exit-node: {}
+    asserts:
+      - template: proxyclasses.yaml
+        documentIndex: 0
+        equal:
+          path: spec.statefulSet.pod.tailscaleContainer.env
+          value:
+            - name: TS_ENABLE_HEALTH_CHECK
+              value: "true"
+      - template: proxyclasses.yaml
+        documentIndex: 0
+        notExists:
+          path: spec.statefulSet.pod.tailscaleContainer.resources
+      - template: proxyclasses.yaml
+        documentIndex: 1
+        notExists:
+          path: spec.statefulSet.pod.tailscaleContainer
+
+  - it: fails when an env entry sets valueFrom, since the CRD only supports name/value
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          env:
+            - name: TS_ENABLE_HEALTH_CHECK
+              valueFrom:
+                secretKeyRef:
+                  name: some-secret
+                  key: some-key
+    asserts:
+      - template: proxyclasses.yaml
+        failedTemplate:
+          errorMessage: "proxyClasses[gha-runners-1-exit-node].env: valueFrom is not supported by the ProxyClass CRD (name/value only); it would be silently pruned"
+
+  - it: renders both resources and env under one tailscaleContainer when both are set
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          env:
+            - name: TS_ENABLE_HEALTH_CHECK
+              value: "true"
+            - name: TS_LOCAL_ADDR_PORT
+              value: "[::]:9002"
+    asserts:
+      - template: proxyclasses.yaml
+        equal:
+          path: spec.statefulSet.pod.tailscaleContainer.resources
+          value:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+      - template: proxyclasses.yaml
+        equal:
+          path: spec.statefulSet.pod.tailscaleContainer.env
+          value:
+            - name: TS_ENABLE_HEALTH_CHECK
+              value: "true"
+            - name: TS_LOCAL_ADDR_PORT
+              value: "[::]:9002"
