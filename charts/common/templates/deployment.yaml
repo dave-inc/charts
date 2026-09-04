@@ -14,7 +14,7 @@ This Deployment always renders as a plain apps/v1 Deployment, even when
 canary.enabled. When canary is on, rollout.yaml renders a Rollout that
 references this Deployment via workloadRef instead of duplicating its pod
 template, per https://argo-rollouts.readthedocs.io/en/stable/migrating/.
-The Deployment keeps serving its own pods (labeled "control") as the
+The Deployment keeps serving its own pods (labeled "stable") as the
 pre-migration baseline; the Rollout adopts the same template to run its
 canary/stable ReplicaSets alongside it and scales the Deployment down per
 canary.scaleDown once healthy.
@@ -64,7 +64,14 @@ spec:
         {{- toYaml .Values.podAnnotations | nindent 8 }}
         {{- end }}
       labels:
-        deployment-group: "control"
+        {{- /*
+        Static default so that "not canary" means the same thing on a service
+        that never migrates to a Rollout as it does on one that has. For a
+        Rollout, Argo overwrites this per ReplicaSet role via the ephemeral
+        canaryMetadata/stableMetadata in rollout.yaml. Not a selector label,
+        so flipping it does not orphan pods.
+        */}}
+        deployment-group: "stable"
         tags.datadoghq.com/version: "{{ .Values.image.tag }}"
       {{- if not .Values.podSelectorLabelsOverride }}
         run: {{ include "common.name" . }}
@@ -234,6 +241,26 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: metadata.name
+            {{- /*
+            DogStatsD origin detection. Custom metrics are sent to the agent
+            over a host port rather than a unix socket, so the agent can't
+            work out which pod they came from and every custom metric in the
+            fleet is currently missing its Kubernetes tags. The agent resolves
+            this pod UID through its tagger at ingestion time instead, so the
+            metric picks up the pod's tags - including the deployment-group
+            ephemeral label - and, because the tagger re-reads labels
+            continuously, follows the canary/stable flip on promotion rather
+            than freezing at pod start.
+
+            hot-shots reads DD_ENTITY_ID natively in its constructor and
+            appends dd.internal.entity_id to globalTags, so no application
+            change is needed. Deliberately outside the apm.enabled guard:
+            DogStatsD is used whether or not APM tracing is on.
+            */}}
+            - name: DD_ENTITY_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
           {{- if .Values.apm.enabled }}
             - name: DD_ENV
               value: {{ .Values.apm.datadogEnvironment | default .Values.environment }}
@@ -263,18 +290,27 @@ spec:
             - name: DD_GIT_REPOSITORY_URL
               value: {{ .Values.apm.repositoryUrl }}
             {{- /*
-            deployment-group flips between "canary" and "control" per-ReplicaSet via
-            the Rollout's canaryMetadata/stableMetadata (see rollout.yaml) when canary
-            is enabled, and is otherwise always "control" (the static pod label above).
-            DD_TAGS is the Datadog Agent/tracer-recognized env var for global tags, so
-            this surfaces the role as a real Datadog tag with no extra chart config.
+            deployment_group is deliberately NOT set as a container env var
+            here. A downward-API fieldRef is resolved once when the container
+            starts and is never refreshed - only downward-API *volume* files
+            track later label changes. The whole point of the label is that it
+            flips on an already-running pod when Argo promotes a canary, so a
+            DD_TAGS value derived this way would be correct for exactly one
+            rollout and then permanently wrong: yesterday's canary keeps
+            reporting deployment_group:canary forever.
+
+            The Datadog agent attaches the tag instead. Its tagger re-reads pod
+            labels continuously, so the tag follows the role. That needs
+            podLabelsAsTags in the cluster's agent values (dave-inc/sre):
+
+              datadog:
+                podLabelsAsTags:
+                  deployment-group: deployment_group
+
+            Setting both would be worse than either alone - the same metrics
+            would carry a frozen tag from the tracer and a live one from the
+            agent.
             */}}
-            - name: DEPLOYMENT_GROUP
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.labels['deployment-group']
-            - name: DD_TAGS
-              value: "deployment_group:$(DEPLOYMENT_GROUP)"
           {{- end }}
           envFrom:
             {{- if .Values.existingConfigMapName }}
