@@ -389,16 +389,6 @@ canary:
       # outright over both the floor and the inherited value, including 1.
       # minReplicas:
       # maxReplicas:
-    # KEDA equivalent of the autoscaling block above - independent of both it and the
-    # top-level kedaScaling.enabled, so the rproxy tier can migrate to KEDA on its own
-    # schedule. Only takes effect once enabled: true; triggers always come from the
-    # top-level kedaScaling.triggers (no rproxy-specific trigger override, matching
-    # autoscaling.metrics' behavior above of falling back to the top-level list).
-    kedaScaling:
-      enabled: false
-      # minReplicas and maxReplicas behave exactly as documented above for autoscaling.
-      # minReplicas:
-      # maxReplicas:
     resources:
       requests:
         cpu: 100m
