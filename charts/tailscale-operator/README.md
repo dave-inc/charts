@@ -62,6 +62,7 @@ overrides.
 | Key | Default | Description |
 | --- | --- | --- |
 | `oidcDiscovery.enabled` | `false` | Publishes this cluster's OIDC discovery/JWKS endpoints to unauthenticated callers so the operator can authenticate via workload identity federation instead of an OAuth client secret. Set to `true` only for consumers using WIF. |
+| `podMonitoring` | unset | Creates a GMP `PodMonitoring` scraping the operator's own controller-runtime metrics (`:8080/metrics`, on by default upstream, control plane not per-ProxyClass data plane). Set to `{}` to enable with the default interval, or `{interval: "15s"}` to override it. |
 | `proxyClasses` | `{}` | Map of `tailscale.com/v1alpha1` ProxyClass name -> config. Each key gets its own `proxy-class` pod label, so PDBs and topology spread never mix connector types together. |
 | `proxyClasses.<name>.topologySpreadConstraints` | unset | Spreads that ProxyClass's replicas across zones/nodes. `labelSelector` is filled in automatically from the ProxyClass name. |
 | `proxyClasses.<name>.podDisruptionBudget` | unset | Creates a PDB scoped to that ProxyClass's pods (e.g. `minAvailable: 1`). Omit to leave that ProxyClass without a PDB. |

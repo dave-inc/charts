@@ -1,0 +1,57 @@
+suite: Operator PodMonitoring
+templates:
+  - operator-podmonitoring.yaml
+tests:
+  - it: renders nothing by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: scrapes the operator's controller-runtime metrics port, defaulting the interval
+    set:
+      podMonitoring: {}
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: operator
+      - equal:
+          path: spec.selector.matchLabels.application
+          value: tailscale-operator
+      - equal:
+          path: spec.endpoints[0].port
+          value: 8080
+      - equal:
+          path: spec.endpoints[0].interval
+          value: "30s"
+
+  - it: allows overriding the scrape interval
+    set:
+      podMonitoring:
+        interval: 15s
+    asserts:
+      - equal:
+          path: spec.endpoints[0].interval
+          value: "15s"
+
+  - it: fails when podMonitoring overrides the auto-filled selector
+    set:
+      podMonitoring:
+        selector:
+          matchLabels:
+            app: something-else
+    asserts:
+      - failedTemplate:
+          errorMessage: "podMonitoring: selector is set automatically and must not be overridden"
+
+  - it: fails when the operator's application pod label has been changed away from the selector's expectation
+    set:
+      podMonitoring: {}
+      tailscale-operator:
+        operatorConfig:
+          podLabels:
+            application: something-else
+    asserts:
+      - failedTemplate:
+          errorMessage: "podMonitoring requires tailscale-operator.operatorConfig.podLabels.application to stay \"tailscale-operator\" (the selector it relies on)"

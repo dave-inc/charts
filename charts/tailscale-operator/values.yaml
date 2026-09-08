@@ -27,6 +27,11 @@ tailscale-operator:
 oidcDiscovery:
   enabled: false
 
+# Scrapes the operator's own controller-runtime metrics (control plane), via a
+# GKE Managed Prometheus PodMonitoring. Unset by default; set to {} to enable
+# with the default interval, or {interval: "15s"} to override it.
+# podMonitoring: {}
+
 # One tailscale.com/v1alpha1 ProxyClass per key, referenced by name from a
 # connectors[] entry's proxyClass field. Each key gets its own pod label and
 # PDB, so different connector types are never disrupted together.
