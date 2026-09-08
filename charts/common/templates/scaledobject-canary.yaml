@@ -1,10 +1,18 @@
 {{- if and .Values.kedaScaling.enabled .Values.canary.enabled }}
 {{- /* Mirrors hpa-canary.yaml's min/max resolution and its comment: canary.autoscaling.maxReplicas
-overrides the root autoscaling.maxReplicas ceiling that common.minReplicas' canary default is
-capped against, so the default cannot exceed maxReplicas. An explicit min above max is left as
-written either way, to be surfaced by the API server rather than masked. */}}
+overrides the ceiling that common.minReplicas' canary default is capped against, so the default
+cannot exceed maxReplicas. An explicit min above max is left as written either way, to be
+surfaced by the API server rather than masked.
+The base ceiling itself mirrors scaledobject.yaml's own resolution (autoscaling.maxReplicas,
+then overridden by kedaScaling.maxReplicas when set) rather than plain autoscaling.maxReplicas
+alone - this is the KEDA path, so once the main tier has migrated (autoscaling block gone,
+kedaScaling.maxReplicas set), canary needs to inherit that, not silently fall back to the
+chart's generic autoscaling.maxReplicas default of 100. */}}
 {{- $canaryAuto := .Values.canary.autoscaling | default dict }}
 {{- $max := (.Values.autoscaling.maxReplicas | int) }}
+{{- if not (kindIs "invalid" .Values.kedaScaling.maxReplicas) }}
+{{- $max = (.Values.kedaScaling.maxReplicas | int) }}
+{{- end }}
 {{- if not (kindIs "invalid" $canaryAuto.maxReplicas) }}
 {{- $max = ($canaryAuto.maxReplicas | int) }}
 {{- end }}

@@ -4,7 +4,15 @@ plain-HPA equivalent is gated on canary.reverseProxy.autoscaling.enabled alone, 
 root autoscaling.enabled. Keeping the KEDA path independent the same way means the rproxy tier can
 be migrated on its own two-sync schedule without being forced to match the main deployment's. */}}
 {{- $rpKeda := .Values.canary.reverseProxy.kedaScaling }}
+{{- /* Base ceiling mirrors scaledobject.yaml's own resolution (autoscaling.maxReplicas, then
+overridden by kedaScaling.maxReplicas when set), not plain autoscaling.maxReplicas alone - this
+is the KEDA path, so once the main tier has migrated (autoscaling block gone, kedaScaling.maxReplicas
+set), rproxy needs to inherit that, not silently fall back to the chart's generic
+autoscaling.maxReplicas default of 100. */}}
 {{- $max := (.Values.autoscaling.maxReplicas | int) }}
+{{- if not (kindIs "invalid" .Values.kedaScaling.maxReplicas) }}
+{{- $max = (.Values.kedaScaling.maxReplicas | int) }}
+{{- end }}
 {{- if not (kindIs "invalid" $rpKeda.maxReplicas) }}
 {{- $max = ($rpKeda.maxReplicas | int) }}
 {{- end }}
