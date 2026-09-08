@@ -234,6 +234,54 @@ tests:
         failedTemplate:
           errorMessage: "proxyClasses[gha-runners-1-exit-node].env: valueFrom is not supported by the ProxyClass CRD (name/value only); it would be silently pruned"
 
+  - it: renders metrics when a proxyClass enables it, leaving its sibling without one
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          metrics:
+            enable: true
+        gha-runners-2-exit-node: {}
+    asserts:
+      - template: proxyclasses.yaml
+        documentIndex: 0
+        equal:
+          path: spec.metrics
+          value:
+            enable: true
+      - template: proxyclasses.yaml
+        documentIndex: 1
+        notExists:
+          path: spec.metrics
+
+  - it: renders metrics with serviceMonitor enabled
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          metrics:
+            enable: true
+            serviceMonitor:
+              enable: true
+    asserts:
+      - template: proxyclasses.yaml
+        equal:
+          path: spec.metrics
+          value:
+            enable: true
+            serviceMonitor:
+              enable: true
+
+  - it: fails when serviceMonitor is enabled without metrics.enable
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          metrics:
+            serviceMonitor:
+              enable: true
+    asserts:
+      - template: proxyclasses.yaml
+        failedTemplate:
+          errorMessage: "proxyClasses[gha-runners-1-exit-node].metrics.serviceMonitor.enable requires metrics.enable: true"
+
   - it: renders both resources and env under one tailscaleContainer when both are set
     set:
       proxyClasses:
