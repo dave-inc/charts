@@ -407,6 +407,17 @@ entries:
     version: 0.12.1-plat-1724-beta.2
   - apiVersion: v2
     appVersion: 1.17.0
+    created: "2026-09-08T19:08:42.472447844Z"
+    description: Standard Service Template
+    digest: 2bf464c202238ff11404609216c1d33922a3dd8d0497f06f37243bb8b9fabbe6
+    kubeVersion: '>=1.30.0-0'
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.12.1-keda-canary-beta.4/common-0.12.1-keda-canary-beta.4.tgz
+    version: 0.12.1-keda-canary-beta.4
+  - apiVersion: v2
+    appVersion: 1.17.0
     created: "2026-09-04T19:47:17.971607131Z"
     description: Standard Service Template
     digest: 2f9fa291d36e03b8347f19c546926fa565d35c221fde7ebd4b858dae0abdb024
@@ -3398,4 +3409,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2026-09-04T19:47:17.974816801Z"
+generated: "2026-09-08T19:08:42.475534753Z"
