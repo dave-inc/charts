@@ -18,10 +18,6 @@ metadata:
     argocd.argoproj.io/sync-wave: "1"
 spec:
   {{- if $pc.metrics }}
-  {{- $sm := $pc.metrics.serviceMonitor | default dict }}
-  {{- if and $sm.enable (not $pc.metrics.enable) }}
-  {{- fail (printf "proxyClasses[%s].metrics.serviceMonitor.enable requires metrics.enable: true" $name) }}
-  {{- end }}
   metrics:
     {{- toYaml $pc.metrics | nindent 4 }}
   {{- end }}

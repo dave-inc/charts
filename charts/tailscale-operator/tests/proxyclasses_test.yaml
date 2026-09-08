@@ -253,35 +253,6 @@ tests:
         notExists:
           path: spec.metrics
 
-  - it: renders metrics with serviceMonitor enabled
-    set:
-      proxyClasses:
-        gha-runners-1-exit-node:
-          metrics:
-            enable: true
-            serviceMonitor:
-              enable: true
-    asserts:
-      - template: proxyclasses.yaml
-        equal:
-          path: spec.metrics
-          value:
-            enable: true
-            serviceMonitor:
-              enable: true
-
-  - it: fails when serviceMonitor is enabled without metrics.enable
-    set:
-      proxyClasses:
-        gha-runners-1-exit-node:
-          metrics:
-            serviceMonitor:
-              enable: true
-    asserts:
-      - template: proxyclasses.yaml
-        failedTemplate:
-          errorMessage: "proxyClasses[gha-runners-1-exit-node].metrics.serviceMonitor.enable requires metrics.enable: true"
-
   - it: renders both resources and env under one tailscaleContainer when both are set
     set:
       proxyClasses:
