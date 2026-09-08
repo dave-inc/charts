@@ -32,6 +32,9 @@ metadata:
   name: {{ include "common.reverseProxyName" . }}
   labels:
     {{- include "common.labels" . | nindent 4 }}
+  annotations:
+    # See scaledobject.yaml - same sync-wave head-start test.
+    argocd.argoproj.io/sync-wave: "-1"
 spec:
   scaleTargetRef:
     apiVersion: apps/v1

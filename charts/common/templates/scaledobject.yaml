@@ -26,6 +26,12 @@ metadata:
   name: {{ include "common.name" . }}
   labels:
     {{- include "common.labels" . | nindent 4 }}
+  annotations:
+    # Syncs before the Deployment (default wave 0). Testing whether giving the ScaledObject
+    # (and its keda-hpa-* HPA) a head start avoids a transient reset of spec.replicas to the
+    # API server's default of 1 when a consumer first migrates off a static replicaCount -
+    # see gke-devel-1 migration rehearsal notes for the live finding this addresses.
+    argocd.argoproj.io/sync-wave: "-1"
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
