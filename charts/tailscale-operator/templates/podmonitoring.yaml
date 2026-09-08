@@ -1,0 +1,24 @@
+{{- range $name, $pc := .Values.proxyClasses }}
+{{- if hasKey $pc "podMonitoring" }}
+{{- $m := $pc.metrics | default dict }}
+{{- if not $m.enable }}
+{{- fail (printf "proxyClasses[%s].podMonitoring requires metrics.enable: true" $name) }}
+{{- end }}
+{{- if hasKey $pc.podMonitoring "selector" }}
+{{- fail (printf "proxyClasses[%s].podMonitoring: selector is set automatically and must not be overridden" $name) }}
+{{- end }}
+---
+# GKE Managed Prometheus scrape config, not a Prometheus Operator ServiceMonitor.
+apiVersion: monitoring.googleapis.com/v1
+kind: PodMonitoring
+metadata:
+  name: {{ $name }}
+spec:
+  selector:
+    matchLabels:
+      proxy-class: {{ $name }}
+  endpoints:
+    - port: metrics
+      interval: {{ $pc.podMonitoring.interval | default "30s" }}
+{{- end }}
+{{- end }}

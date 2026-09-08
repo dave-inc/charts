@@ -71,6 +71,7 @@ proxyClasses: {}
 #       memory: 128Mi
 #   metrics:
 #     enable: true # also auto-sets TS_LOCAL_ADDR_PORT/TS_ENABLE_METRICS below, don't repeat them
+#   podMonitoring: {} # GMP scrape of the metrics above, requires metrics.enable: true
 #   env:
 #     - name: TS_ENABLE_HEALTH_CHECK
 #       value: "true" # serves /healthz on the same port metrics.enable uses

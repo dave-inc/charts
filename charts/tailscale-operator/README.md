@@ -67,7 +67,8 @@ overrides.
 | `proxyClasses.<name>.podDisruptionBudget` | unset | Creates a PDB scoped to that ProxyClass's pods (e.g. `minAvailable: 1`). Omit to leave that ProxyClass without a PDB. |
 | `proxyClasses.<name>.resources` | unset | Resource requests/limits for the `tailscale` proxy container itself (not the operator). |
 | `proxyClasses.<name>.env` | unset | Extra env vars for the `tailscale` proxy container, e.g. `TS_ENABLE_HEALTH_CHECK` (serves `/healthz` on `TS_LOCAL_ADDR_PORT`, default `[::]:9002`, shared with `TS_ENABLE_METRICS` if both are set and `TS_LOCAL_ADDR_PORT` isn't overridden). Each entry is `{name, value}` only, the ProxyClass CRD's `env` schema has no `valueFrom` field, so it can't source a value from a Secret/ConfigMap. |
-| `proxyClasses.<name>.metrics.enable` | unset | Serves Prometheus metrics at `<pod-ip>:9002/metrics`. Auto-sets `TS_LOCAL_ADDR_PORT`/`TS_ENABLE_METRICS`, so don't set `TS_LOCAL_ADDR_PORT` again under `env`. Scrape via a `PodMonitoring` selecting that ProxyClass's `proxy-class` pod label (this cluster uses GKE Managed Prometheus, not the Prometheus Operator, so no `ServiceMonitor` here). |
+| `proxyClasses.<name>.metrics.enable` | unset | Serves Prometheus metrics at `<pod-ip>:9002/metrics`. Auto-sets `TS_LOCAL_ADDR_PORT`/`TS_ENABLE_METRICS`, so don't set `TS_LOCAL_ADDR_PORT` again under `env`. |
+| `proxyClasses.<name>.podMonitoring` | unset | Creates a GMP `PodMonitoring` (this cluster uses GKE Managed Prometheus, not the Prometheus Operator, so no `ServiceMonitor`) scraping that metrics endpoint. Requires `metrics.enable: true`. `selector` is filled in automatically; `interval` defaults to `30s`. |
 | `connectors` | `[]` | List of `tailscale.com/v1alpha1` Connector CRs to create. |
 | `connectors[].name` | — (required) | Used as `metadata.name`, and as the default `connectors[].hostname`/`connectors[].hostnamePrefix`. |
 | `connectors[].tags` | — (required) | Tailscale ACL tags applied to the node. |
