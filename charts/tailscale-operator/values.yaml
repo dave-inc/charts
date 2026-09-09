@@ -92,9 +92,9 @@ proxyClasses: {}
 #   metrics:
 #     enable: true
 #   podMonitoring: {}
-#   env:
-#     - name: TS_ENABLE_HEALTH_CHECK
-#       value: "true"
+#   # Don't set env: TS_ENABLE_HEALTH_CHECK here -- the operator's
+#   # peerrelay-reconciler injects it itself, and a duplicate entry makes
+#   # the StatefulSet apply fail outright (no pods ever come up).
 
 # One entry per tailscale.com/v1alpha1 Connector to create.
 # https://tailscale.com/docs/kubernetes-operator/connector/deploy-subnet-router

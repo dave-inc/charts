@@ -119,6 +119,20 @@ tests:
       - failedTemplate:
           errorMessage: 'peerRelays[gha-runners-1-peer-relay]: proxyClass "missing-class" does not match a key in proxyClasses'
 
+  - it: fails when proxyClass sets env TS_ENABLE_HEALTH_CHECK
+    set:
+      proxyClasses:
+        peer-relay:
+          env:
+            - name: TS_ENABLE_HEALTH_CHECK
+              value: "true"
+      peerRelays:
+        - name: peer-relay
+          proxyClass: peer-relay
+    asserts:
+      - failedTemplate:
+          errorMessage: 'peerRelays[peer-relay]: proxyClass "peer-relay" must not set env TS_ENABLE_HEALTH_CHECK -- the operator injects it itself for PeerRelay proxies, and a duplicate entry fails the StatefulSet apply'
+
   - it: renders tailnet, service, and aws when set
     set:
       peerRelays:

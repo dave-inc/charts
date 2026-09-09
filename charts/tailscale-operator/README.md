@@ -89,6 +89,8 @@ overrides.
 | `peerRelays[].tailnet` | unset | Tailnet this PeerRelay should join, if not the default. Immutable once set. |
 | `peerRelays[].service` / `aws` | unset | Passed through as-is; see the PeerRelay CRD for `service.annotations` and AWS Elastic IP pinning. |
 
+A `proxyClasses` entry referenced by a `peerRelays[].proxyClass` must **not** set `env: TS_ENABLE_HEALTH_CHECK` -- the operator's `peerrelay-reconciler` injects that itself (each PeerRelay replica has its own LoadBalancer Service needing a health check), and a duplicate entry makes the StatefulSet apply fail outright, silently, with no pods ever created.
+
 The `tailscale-operator.*` keys (operator image, `operatorConfig`, `ingressClass`,
 etc.) pass straight through to the upstream subchart — see [its own
 values.yaml](https://github.com/tailscale/tailscale/blob/main/cmd/k8s-operator/deploy/chart/values.yaml)
