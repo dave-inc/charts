@@ -17,12 +17,13 @@ pieces upstream doesn't provide, without patching Tailscale's own templates:
   optionally publishes this cluster's OIDC discovery/JWKS endpoints so
   Tailscale can validate the operator's ServiceAccount token, so clusters can
   run without a long-lived OAuth client secret.
-- **Connectors and ProxyClasses on top of the operator.** Upstream ships the
-  operator and CRDs; it doesn't create any `Connector` or `ProxyClass`
-  resources for you. `templates/connectors.yaml` and
-  `templates/proxyclasses.yaml` turn `values.yaml` entries into those CRs,
-  plus a PDB per `ProxyClass` (`templates/proxyclass-pdb.yaml`) so different
-  connector types (e.g. an HA exit node vs. a subnet router) are never
+- **Connectors, PeerRelays, and ProxyClasses on top of the operator.**
+  Upstream ships the operator and CRDs; it doesn't create any `Connector`,
+  `PeerRelay`, or `ProxyClass` resources for you. `templates/connectors.yaml`,
+  `templates/peerrelays.yaml`, and `templates/proxyclasses.yaml` turn
+  `values.yaml` entries into those CRs, plus a PDB per `ProxyClass`
+  (`templates/proxyclass-pdb.yaml`) so different connector/peer relay types
+  (e.g. an HA exit node vs. a subnet router vs. a peer relay) are never
   disrupted together.
 
 ## Usage
@@ -79,6 +80,14 @@ overrides.
 | `connectors[].exitNode` | `false` | Advertises the Connector as an exit node. Mutually exclusive with `appConnector`. |
 | `connectors[].subnetRouter` | unset | `advertiseRoutes` for subnet routing (required, non-empty). Mutually exclusive with `appConnector`. |
 | `connectors[].appConnector` | unset | App connector config (e.g. `routes`). Mutually exclusive with `exitNode`/`subnetRouter`. |
+| `peerRelays` | `[]` | List of `tailscale.com/v1alpha1` PeerRelay CRs to create. Lets two tailnet nodes that can't reach each other directly relay traffic through a third node instead of falling back to DERP. https://tailscale.com/kb/1115/high-availability |
+| `peerRelays[].name` | — (required) | Used as `metadata.name`, and as the default `peerRelays[].hostnamePrefix`. |
+| `peerRelays[].hostnamePrefix` | defaults to `.name` | Every PeerRelay replica gets this prefix plus its StatefulSet ordinal appended (there's no singular `hostname` field, unlike Connector -- it's always rendered). |
+| `peerRelays[].replicas` | unset (operator defaults to `1`) | Set to enable HA peer relays. |
+| `peerRelays[].tags` | unset (operator defaults to `[tag:k8s]`) | Tailscale ACL tags applied to the node. |
+| `peerRelays[].proxyClass` | unset | References a key under `proxyClasses` to apply that spread/PDB/resources config to this PeerRelay. Must match a `proxyClasses` key when set. |
+| `peerRelays[].tailnet` | unset | Tailnet this PeerRelay should join, if not the default. Immutable once set. |
+| `peerRelays[].service` / `aws` | unset | Passed through as-is; see the PeerRelay CRD for `service.annotations` and AWS Elastic IP pinning. |
 
 The `tailscale-operator.*` keys (operator image, `operatorConfig`, `ingressClass`,
 etc.) pass straight through to the upstream subchart — see [its own
@@ -91,6 +100,9 @@ for the full set.
   `appConnector` is mutually exclusive with `exitNode`/`subnetRouter`; a
   `replicas` value greater than 1 renders `hostnamePrefix` instead of
   `hostname` (HA Connectors require a prefix, not a fixed hostname).
+- `peerRelays[]` entries render one `PeerRelay` CR each. Unlike Connector,
+  `hostnamePrefix` is always rendered (defaulting to `.name`), since PeerRelay
+  has no singular `hostname` field.
 - `proxyClasses` is a map, one `ProxyClass` per key. Each key gets its own
   `proxy-class` pod label (not `app`, which the operator manages itself and
   sets to the parent's UID), so `topologySpreadConstraints` and the sibling PDB's

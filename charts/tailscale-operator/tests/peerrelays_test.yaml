@@ -1,0 +1,162 @@
+suite: PeerRelay
+templates:
+  - peerrelays.yaml
+tests:
+  - it: fails when name is missing
+    set:
+      peerRelays:
+        - tags:
+            - "tag:peer-relay"
+    asserts:
+      - failedTemplate:
+          errorMessage: "peerRelays[]: name is required"
+
+  - it: renders hostnamePrefix defaulting to name, and omits replicas when unset
+    set:
+      peerRelays:
+        - name: gha-runners-1-peer-relay
+          tags:
+            - "tag:peer-relay"
+    asserts:
+      - isKind:
+          of: PeerRelay
+      - equal:
+          path: metadata.name
+          value: gha-runners-1-peer-relay
+      - equal:
+          path: spec.hostnamePrefix
+          value: gha-runners-1-peer-relay
+      - notExists:
+          path: spec.replicas
+
+  - it: honors an explicit hostnamePrefix override
+    set:
+      peerRelays:
+        - name: gha-runners-1-peer-relay
+          hostnamePrefix: custom-prefix
+          tags:
+            - "tag:peer-relay"
+    asserts:
+      - equal:
+          path: spec.hostnamePrefix
+          value: custom-prefix
+
+  - it: renders replicas when set
+    set:
+      peerRelays:
+        - name: gha-runners-1-peer-relay
+          replicas: 2
+          tags:
+            - "tag:peer-relay"
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 2
+
+  - it: fails when replicas is negative
+    set:
+      peerRelays:
+        - name: gha-runners-1-peer-relay
+          replicas: -1
+          tags:
+            - "tag:peer-relay"
+    asserts:
+      - failedTemplate:
+          errorMessage: "peerRelays[gha-runners-1-peer-relay]: replicas cannot be negative"
+
+  - it: renders tags
+    set:
+      peerRelays:
+        - name: gha-runners-1-peer-relay
+          tags:
+            - "tag:peer-relay"
+    asserts:
+      - equal:
+          path: spec.tags
+          value:
+            - "tag:peer-relay"
+
+  - it: omits tags when unset
+    set:
+      peerRelays:
+        - name: gha-runners-1-peer-relay
+    asserts:
+      - notExists:
+          path: spec.tags
+
+  - it: renders proxyClass only when set
+    set:
+      peerRelays:
+        - name: gha-runners-1-peer-relay
+          tags:
+            - "tag:peer-relay"
+    asserts:
+      - notExists:
+          path: spec.proxyClass
+
+  - it: renders the configured proxyClass
+    set:
+      proxyClasses:
+        gha-runners-1-peer-relay: {}
+      peerRelays:
+        - name: gha-runners-1-peer-relay
+          proxyClass: gha-runners-1-peer-relay
+          tags:
+            - "tag:peer-relay"
+    asserts:
+      - equal:
+          path: spec.proxyClass
+          value: gha-runners-1-peer-relay
+
+  - it: fails when proxyClass is not a key in proxyClasses
+    set:
+      peerRelays:
+        - name: gha-runners-1-peer-relay
+          proxyClass: missing-class
+          tags:
+            - "tag:peer-relay"
+    asserts:
+      - failedTemplate:
+          errorMessage: 'peerRelays[gha-runners-1-peer-relay]: proxyClass "missing-class" does not match a key in proxyClasses'
+
+  - it: renders tailnet, service, and aws when set
+    set:
+      peerRelays:
+        - name: gha-runners-1-peer-relay
+          tailnet: example.ts.net
+          service:
+            annotations:
+              foo: bar
+          aws:
+            elasticIPs:
+              - allocationID: eipalloc-0123abcd
+                subnetID: subnet-0123abcd
+    asserts:
+      - equal:
+          path: spec.tailnet
+          value: example.ts.net
+      - equal:
+          path: spec.service.annotations.foo
+          value: bar
+      - equal:
+          path: spec.aws.elasticIPs[0].allocationID
+          value: eipalloc-0123abcd
+
+  - it: renders one PeerRelay document per entry
+    set:
+      peerRelays:
+        - name: first-peer-relay
+          tags:
+            - "tag:peer-relay"
+        - name: second-peer-relay
+          tags:
+            - "tag:peer-relay"
+    asserts:
+      - documentIndex: 0
+        equal:
+          path: metadata.name
+          value: first-peer-relay
+      - documentIndex: 1
+        equal:
+          path: metadata.name
+          value: second-peer-relay

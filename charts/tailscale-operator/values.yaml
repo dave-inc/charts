@@ -80,6 +80,21 @@ proxyClasses: {}
 #   env:
 #     - name: TS_ENABLE_HEALTH_CHECK
 #       value: "true" # serves /healthz on the same port metrics.enable uses
+# gha-runners-1-peer-relay: # referenced by peerRelays[].proxyClass below
+#   podDisruptionBudget:
+#     minAvailable: 1
+#   resources:
+#     requests:
+#       cpu: 100m
+#       memory: 128Mi
+#     limits:
+#       memory: 128Mi
+#   metrics:
+#     enable: true
+#   podMonitoring: {}
+#   env:
+#     - name: TS_ENABLE_HEALTH_CHECK
+#       value: "true"
 
 # One entry per tailscale.com/v1alpha1 Connector to create.
 # https://tailscale.com/docs/kubernetes-operator/connector/deploy-subnet-router
@@ -101,3 +116,13 @@ connectors: []
 #   tags:
 #     - "tag:github-connector"
 #   appConnector: {} # routes auto-discovered via DNS once domains are set in Apps
+
+# One entry per tailscale.com/v1alpha1 PeerRelay to create. Peer relays let
+# two tailnet nodes that can't reach each other directly (e.g. both behind
+# hard NAT) relay traffic through a third node instead of falling back to
+# DERP. https://tailscale.com/kb/1115/high-availability
+peerRelays: []
+# - name: gha-runners-1-peer-relay
+#   proxyClass: gha-runners-1-peer-relay
+#   tags:
+#     - "tag:peer-relay"
