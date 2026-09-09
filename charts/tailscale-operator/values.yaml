@@ -80,7 +80,7 @@ proxyClasses: {}
 #   env:
 #     - name: TS_ENABLE_HEALTH_CHECK
 #       value: "true" # serves /healthz on the same port metrics.enable uses
-# gha-runners-1-peer-relay: # referenced by peerRelays[].proxyClass below
+# peer-relay: # referenced by peerRelays[].proxyClass below
 #   podDisruptionBudget:
 #     minAvailable: 1
 #   resources:
@@ -122,7 +122,7 @@ connectors: []
 # hard NAT) relay traffic through a third node instead of falling back to
 # DERP. https://tailscale.com/kb/1115/high-availability
 peerRelays: []
-# - name: gha-runners-1-peer-relay
-#   proxyClass: gha-runners-1-peer-relay
+# - name: peer-relay
+#   proxyClass: peer-relay
 #   tags:
 #     - "tag:peer-relay"

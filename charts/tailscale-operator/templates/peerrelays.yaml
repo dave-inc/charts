@@ -11,19 +11,8 @@
 {{- end }}
 {{- end }}
 ---
-# Applied after the operator/CRDs (default sync-wave) so the PeerRelay CRD
-# already exists when this is applied.
-#
-# PeerRelay is cluster-scoped (github.com/tailscale/tailscale
-# cmd/k8s-operator/deploy/crds/tailscale.com_peerrelays.yaml), and its name
-# below is the raw peerRelays[].name, not prefixed by release or namespace --
-# same rationale as Connector/ProxyClass above: one release per cluster (see
-# README.md#usage), so there's no other release's PeerRelays to collide
-# with.
-#
-# Unlike Connector, PeerRelay has no singular `hostname` field -- every
-# replica gets `hostnamePrefix` plus its StatefulSet ordinal, even when
-# replicas is 1, so hostnamePrefix is always rendered here.
+# Cluster-scoped, one release per cluster, so name isn't prefixed. No
+# singular hostname field, so hostnamePrefix is always rendered.
 apiVersion: tailscale.com/v1alpha1
 kind: PeerRelay
 metadata:
