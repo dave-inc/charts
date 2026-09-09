@@ -96,9 +96,15 @@ proxyClasses: {}
 #       memory: 128Mi
 #     limits:
 #       memory: 128Mi
-#   metrics:
-#     enable: true
-#   podMonitoring: {}
+#   # metrics.enable is a no-op for PeerRelay proxies (confirmed against
+#   # upstream source, github.com/tailscale/tailscale
+#   # k8s-operator/reconciler/tailscaled): wire it manually via env instead,
+#   # and point podMonitoring.port at the port that's actually there.
+#   podMonitoring:
+#     port: healthz
+#   env:
+#     - name: TS_ENABLE_METRICS
+#       value: "true"
 #   # Don't set env: TS_ENABLE_HEALTH_CHECK here -- the operator's
 #   # peerrelay-reconciler injects it itself, and a duplicate entry makes
 #   # the StatefulSet apply fail outright (no pods ever come up).

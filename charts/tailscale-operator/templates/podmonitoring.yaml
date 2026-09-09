@@ -1,10 +1,11 @@
 {{- range $name, $pc := .Values.proxyClasses }}
-{{- if hasKey $pc "podMonitoring" }}
+{{- if and (hasKey $pc "podMonitoring") (kindIs "map" $pc.podMonitoring) }}
 {{- $m := $pc.metrics | default dict }}
-{{- if not $m.enable }}
-{{- fail (printf "proxyClasses[%s].podMonitoring requires metrics.enable: true" $name) }}
+{{- $podMonitoring := $pc.podMonitoring }}
+{{- if not (or $m.enable $podMonitoring.port) }}
+{{- fail (printf "proxyClasses[%s].podMonitoring requires metrics.enable: true, or podMonitoring.port set explicitly when metrics is wired manually via env (e.g. for PeerRelay, where metrics.enable is a no-op and the container's only port is \"healthz\", not \"metrics\")" $name) }}
 {{- end }}
-{{- if hasKey $pc.podMonitoring "selector" }}
+{{- if hasKey $podMonitoring "selector" }}
 {{- fail (printf "proxyClasses[%s].podMonitoring: selector is set automatically and must not be overridden" $name) }}
 {{- end }}
 ---
@@ -19,7 +20,7 @@ spec:
     matchLabels:
       proxy-class: {{ $name }}
   endpoints:
-    - port: metrics
-      interval: {{ $pc.podMonitoring.interval | default "30s" }}
+    - port: {{ $podMonitoring.port | default "metrics" }}
+      interval: {{ $podMonitoring.interval | default "30s" }}
 {{- end }}
 {{- end }}
