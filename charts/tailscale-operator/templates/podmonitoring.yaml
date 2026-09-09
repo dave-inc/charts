@@ -20,6 +20,12 @@ spec:
     matchLabels:
       proxy-class: {{ $name }}
   endpoints:
+    {{- if $podMonitoring.port }}
+    # {{ $podMonitoring.port }} is being scraped for metrics here (not its
+    # usual health-check purpose), because this proxyClass's real
+    # container port isn't named "metrics" -- e.g. PeerRelay only ever
+    # gets "healthz", which TS_ENABLE_METRICS also serves /metrics from.
+    {{- end }}
     - port: {{ $podMonitoring.port | default "metrics" }}
       interval: {{ $podMonitoring.interval | default "30s" }}
 {{- end }}
