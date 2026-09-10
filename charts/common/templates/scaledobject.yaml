@@ -55,11 +55,20 @@ spec:
     failureThreshold: {{ $failureThreshold }}
     replicas: {{ $fallbackReplicas }}
   {{- end }}
-  {{- if .Values.hpaBehavior.enabled }}
+  {{- /* keda-hpa-<ScaledObject name> must be <= 63 chars (a Kubernetes object name limit);
+  a long service name can push the derived HPA name past that. hpaName lets a service
+  override just the generated HPA's name without renaming the ScaledObject/Deployment
+  themselves (which other tooling, dashboards, and alerts key on by their existing name). */}}
+  {{- if or .Values.hpaBehavior.enabled .Values.kedaScaling.hpaName }}
   advanced:
     horizontalPodAutoscalerConfig:
+      {{- if .Values.kedaScaling.hpaName }}
+      name: {{ .Values.kedaScaling.hpaName }}
+      {{- end }}
+      {{- if .Values.hpaBehavior.enabled }}
       behavior:
         {{- toYaml .Values.hpaBehavior.behavior | nindent 8 }}
+      {{- end }}
   {{- end }}
   triggers:
     {{- toYaml .Values.kedaScaling.triggers | nindent 4 }}
