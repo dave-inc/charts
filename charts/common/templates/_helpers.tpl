@@ -46,14 +46,26 @@ Selector labels
 {{- end }}
 
 {{/*
-Whether canary is enabled. Driven entirely by `global.canary.enabled` -- the
-umbrella chart's single toggle that also drives the `gatewayapi` chart's
-stable+canary backendRef expansion (see
-charts/gatewayapi/templates/httproute.yaml). There is no chart-local override.
+Whether canary is enabled. Driven by `global.canary.enabled` -- the umbrella
+chart's single toggle that also drives the `gatewayapi` chart's stable+canary
+backendRef expansion (see charts/gatewayapi/templates/httproute.yaml) -- unless
+this chart's own `canary.enabled` is explicitly set to `false`, which always
+wins.
+
+That opt-out exists for services that must never run a Rollout at all, e.g. a
+fixed-replica deployment where even a transient extra canary Pod would
+violate an invariant the service depends on: `canary.enabled: false` drops
+this service out of every wave's canary rollout regardless of the umbrella
+toggle, with no need to coordinate an exception at that level. There is no
+matching override to force canary on independent of the umbrella toggle --
+enabling it here alone would still leave the `gatewayapi` chart's backendRef
+expansion off, so the Rollout would have no traffic split to plug into.
+
 Emits "true" when enabled, "" otherwise -- safe to use directly as an `if` condition.
 */}}
 {{- define "common.canaryEnabled" -}}
-{{- if (dig "canary" "enabled" false (default dict .Values.global)) }}true{{ end -}}
+{{- if eq .Values.canary.enabled false -}}
+{{- else if (dig "canary" "enabled" false (default dict .Values.global)) }}true{{ end -}}
 {{- end }}
 
 {{/*

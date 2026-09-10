@@ -20,6 +20,17 @@ This breaks the resource cycle as one direction: Deployment/Services → HTTPRou
 Rollout → autoscaler. If a canary HTTPRoute overrides its default sync-wave, keep it
 below the Rollout's wave or override the Rollout and autoscaler waves together.
 
+## Opting a deployment out of canary
+
+`global.canary.enabled` is a single toggle at the umbrella-chart level, driving every
+service deployed alongside it into canary together. Set this chart's own
+`canary.enabled: false` to opt one service out regardless of that toggle: it always
+renders a plain Deployment with a static `replicaCount`, never a Rollout, and no
+canary/stable Services. Use this for a service pinned to an exact replica count by an
+invariant a transient extra canary Pod would violate. There is no matching override in
+the other direction — enabling canary here alone still leaves the `gatewayapi` chart's
+backendRef expansion off, so the Rollout would have no traffic split to plug into.
+
 ## Upgrading to 0.13.0
 
 This release changes shutdown and rollout timing for services, so a Pod that previously

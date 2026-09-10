@@ -257,11 +257,24 @@ serviceGracefulRollout:
 # https://argo-rollouts.readthedocs.io/en/stable/migrating/. HPA/VPA/KEDA
 # scaleTargetRef then points at the Rollout instead of the Deployment.
 canary:
-  # Whether canary is on is controlled entirely by `global.canary.enabled`
-  # (not set here) -- a single toggle at the umbrella-chart level (see
-  # sre/charts/<service>/*/values.yaml in the deployment repo) that drives
-  # both this chart and the `gatewayapi` chart's stable+canary backendRef
-  # expansion, so the same boolean never needs to be set in two places.
+  # Whether canary is on is normally controlled entirely by
+  # `global.canary.enabled` (not set here) -- a single toggle at the
+  # umbrella-chart level (see sre/charts/<service>/*/values.yaml in the
+  # deployment repo) that drives both this chart and the `gatewayapi`
+  # chart's stable+canary backendRef expansion, so the same boolean never
+  # needs to be set in two places.
+  #
+  # Set this to `false` to opt this service out of canary altogether,
+  # regardless of the umbrella toggle: it always renders a plain Deployment
+  # (never a Rollout), with a static `replicaCount` and no canary/stable
+  # Services. Use this for a service that must never run extra canary Pods
+  # alongside its stable ones, e.g. one pinned to an exact replica count by
+  # an invariant a transient canary Pod would violate. There is no matching
+  # `true` override to force canary on independent of the umbrella toggle --
+  # the umbrella still needs to know, since it also drives the `gatewayapi`
+  # chart's backendRef expansion this chart's own Rollout would otherwise
+  # have no traffic split to plug into.
+  # enabled:
   # What the Rollout does to the referenced Deployment once its own
   # ReplicaSet is healthy: "never" leaves it running at full size,
   # "onsuccess" scales it to 0 once, "progressively" scales it down in step
@@ -466,7 +479,7 @@ kedaScaling:
     enabled: false
     failureThreshold: 3
     replicas: ~          # defaults to minReplicas/kedaScaling.minReplicas above
-  hpaName: ~           # KEDA derives the ScaledObject's HPA as keda-hpa-<ScaledObject name>, which must be <= 63 chars; set this to override just the generated HPA's name (<= 63 chars) when a long service name would otherwise exceed that limit. Same override exists for the canary/rproxy tiers as canary.autoscaling.hpaName / canary.reverseProxy.kedaScaling.hpaName.
+  hpaName: ~           # KEDA derives the ScaledObject's HPA as keda-hpa-<ScaledObject name>, which must be <= 63 chars; set this to override just the generated HPA's name (<= 63 chars) when a long service name would otherwise exceed that limit.
   triggers: []
 # Example — Pub/Sub trigger (replaces type: External HPA metric):
 #

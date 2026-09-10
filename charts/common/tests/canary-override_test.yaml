@@ -1,0 +1,65 @@
+suite: canary.enabled false opts a service out of canary regardless of global.canary.enabled
+templates:
+  - deployment.yaml
+  - rollout.yaml
+  - service-stable.yaml
+  - service-canary.yaml
+  - hpa.yaml
+  - scaledobject.yaml
+  - vpa.yaml
+values:
+  - ./fixtures/minimal-values.yaml
+set:
+  global.canary.enabled: true
+  service.enabled: true
+  replicaCount: 3
+tests:
+  - it: renders a plain Deployment with the static replicaCount, no Rollout, and no canary/stable Services
+    set:
+      canary.enabled: false
+    asserts:
+      - template: deployment.yaml
+        isKind:
+          of: Deployment
+      - template: deployment.yaml
+        equal:
+          path: spec.replicas
+          value: 3
+      - template: rollout.yaml
+        hasDocuments:
+          count: 0
+      - template: service-stable.yaml
+        hasDocuments:
+          count: 0
+      - template: service-canary.yaml
+        hasDocuments:
+          count: 0
+
+  - it: targets the Deployment (not a Rollout) for HPA, ScaledObject and VPA
+    set:
+      canary.enabled: false
+      autoscaling.enabled: true
+      kedaScaling.enabled: true
+      verticalPodAutoscaler.enabled: true
+    asserts:
+      - template: hpa.yaml
+        equal:
+          path: spec.scaleTargetRef.kind
+          value: Deployment
+      - template: scaledobject.yaml
+        equal:
+          path: spec.scaleTargetRef.kind
+          value: Deployment
+      - template: vpa.yaml
+        equal:
+          path: spec.targetRef.kind
+          value: Deployment
+
+  - it: still runs a Rollout when canary.enabled is left unset and global.canary.enabled is true
+    asserts:
+      - template: rollout.yaml
+        isKind:
+          of: Rollout
+      - template: deployment.yaml
+        notExists:
+          path: spec.replicas
