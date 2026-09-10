@@ -58,11 +58,23 @@ spec:
     failureThreshold: {{ $failureThreshold }}
     replicas: {{ $fallbackReplicas }}
   {{- end }}
-  {{- if .Values.hpaBehavior.enabled }}
+  {{- /* Same 63-char HPA-name limit as scaledobject.yaml - see its comment. The rproxy tier's
+  derived name (common.reverseProxyName) is the base name plus a suffix, so it can hit this
+  limit even when the main tier doesn't; canary.reverseProxy.kedaScaling.hpaName overrides
+  just the rproxy ScaledObject's generated HPA name. */}}
+  {{- if or .Values.hpaBehavior.enabled $rpKeda.hpaName }}
   advanced:
     horizontalPodAutoscalerConfig:
+      {{- if $rpKeda.hpaName }}
+      {{- if gt (len $rpKeda.hpaName) 63 }}
+      {{- fail "canary.reverseProxy.kedaScaling.hpaName must be <= 63 characters" }}
+      {{- end }}
+      name: {{ $rpKeda.hpaName | quote }}
+      {{- end }}
+      {{- if .Values.hpaBehavior.enabled }}
       behavior:
         {{- toYaml .Values.hpaBehavior.behavior | nindent 8 }}
+      {{- end }}
   {{- end }}
   {{- /* Same trigger source as the main ScaledObject - matches hpa-rproxy.yaml, which falls back
   to root .Values.autoscaling.metrics via coalesce when no rproxy-specific override is set. No

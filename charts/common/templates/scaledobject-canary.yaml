@@ -53,11 +53,23 @@ spec:
     failureThreshold: {{ $failureThreshold }}
     replicas: {{ $fallbackReplicas }}
   {{- end }}
-  {{- if .Values.hpaBehavior.enabled }}
+  {{- /* Same 63-char HPA-name limit as scaledobject.yaml - see its comment. The canary tier's
+  derived name (common.canaryName) is the base name plus a suffix, so it can hit this limit
+  even when the main tier doesn't; canary.autoscaling.hpaName overrides just the canary
+  ScaledObject's generated HPA name. */}}
+  {{- if or .Values.hpaBehavior.enabled $canaryAuto.hpaName }}
   advanced:
     horizontalPodAutoscalerConfig:
+      {{- if $canaryAuto.hpaName }}
+      {{- if gt (len $canaryAuto.hpaName) 63 }}
+      {{- fail "canary.autoscaling.hpaName must be <= 63 characters" }}
+      {{- end }}
+      name: {{ $canaryAuto.hpaName | quote }}
+      {{- end }}
+      {{- if .Values.hpaBehavior.enabled }}
       behavior:
         {{- toYaml .Values.hpaBehavior.behavior | nindent 8 }}
+      {{- end }}
   {{- end }}
   {{- /* Same trigger source as the main ScaledObject - matches hpa-canary.yaml, which reuses
   .Values.autoscaling.metrics verbatim rather than supporting a canary-specific metrics override
