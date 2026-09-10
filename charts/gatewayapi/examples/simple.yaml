@@ -7,7 +7,7 @@
 #
 # Every rendered HTTPRoute, HealthCheckPolicy and GCPBackendPolicy also gets
 # `argocd.argoproj.io/sync-wave: "2"` by default (see values.yaml), so Argo CD
-# reconciles the target Service — created at sync-wave "1" — before these
+# reconciles the target Service — normally created in the implicit wave "0" — before these
 # resources attach to it. That default is overridable per item via
 # `metadata.annotations` (the route below sets its own sync-wave to show this).
 enabled: true

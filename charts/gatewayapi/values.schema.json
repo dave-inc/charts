@@ -75,7 +75,13 @@
                         },
                         "weight": {
                           "type": "integer",
-                          "const": 1
+                          "minimum": 0,
+                          "maximum": 1000000
+                        },
+                        "canaryWeight": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 1000000
                         }
                       },
                       "additionalProperties": false
@@ -236,7 +242,7 @@
                         "backendRefs": {
                           "type": "array",
                           "minItems": 1,
-                          "maxItems": 1,
+                          "maxItems": 2,
                           "items": {
                             "type": "object",
                             "properties": {
@@ -250,7 +256,8 @@
                               },
                               "weight": {
                                 "type": "integer",
-                                "const": 1
+                                "minimum": 0,
+                                "maximum": 1000000
                               },
                               "group": {
                                 "type": "string",
@@ -259,6 +266,15 @@
                               "kind": {
                                 "type": "string",
                                 "const": "Service"
+                              },
+                              "canary": {
+                                "type": "boolean",
+                                "description": "Shorthand: expands this single entry into a stable+canary backendRef pair named \"<name>-stable\"/\"<name>-canary\" (matching what the `common` chart derives by default for the same base name when its own canary.enabled is true)."
+                              },
+                              "canaryWeight": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 1000000
                               }
                             },
                             "required": [

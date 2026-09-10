@@ -30,8 +30,8 @@ healthCheckPolicies:
   # When an items entry rawSpec is false, the spec block will be merged with defaults defined here.
   default:
     # Default annotations applied to every rendered resource, overridable per item
-    # via metadata.annotations. sync-wave "2" ensures the target Service (created
-    # at sync-wave "1" by the common/cloudarmor charts) reconciles first.
+    # via metadata.annotations. sync-wave "2" leaves time after the target
+    # Service is created for its GCP-side NEG/backend registration to settle.
     metadata:
       annotations:
         argocd.argoproj.io/sync-wave: "2"
@@ -98,8 +98,8 @@ gcpBackendPolicies:
   # When an items entry rawSpec is false, the spec block will be merged with defaults defined here.
   default:
     # Default annotations applied to every rendered resource, overridable per item
-    # via metadata.annotations. sync-wave "2" ensures the target Service (created
-    # at sync-wave "1" by the common/cloudarmor charts) reconciles first.
+    # via metadata.annotations. sync-wave "2" leaves time after the target
+    # Service is created for its GCP-side NEG/backend registration to settle.
     metadata:
       annotations:
         argocd.argoproj.io/sync-wave: "2"
@@ -172,8 +172,8 @@ routes:
   # When an items entry rawSpec is false, the spec block will be merged with defaults defined here.
   default:
     # Default annotations applied to every rendered resource, overridable per item
-    # via metadata.annotations. sync-wave "2" ensures the target Service (created
-    # at sync-wave "1" by the common/cloudarmor charts) reconciles first.
+    # via metadata.annotations. sync-wave "2" leaves time after the target
+    # Service is created for its GCP-side NEG/backend registration to settle.
     metadata:
       annotations:
         argocd.argoproj.io/sync-wave: "2"
@@ -187,6 +187,12 @@ routes:
           group: ""
           kind: Service
           weight: 1
+          # Default weight for the canary half of the pair every backendRef
+          # expands into when `global.canary.enabled` is true (see below) --
+          # 0 so a freshly-created route sends no traffic to the canary
+          # Service until Argo Rollouts' Gateway API plugin takes over and
+          # starts mutating this weight as the rollout progresses.
+          canaryWeight: 0
         match:
           path:
             type: PathPrefix
@@ -208,6 +214,31 @@ routes:
 #        - backendRefs:
 #            - name: example-service
 #              port: 80
+
+## Canary route example: whenever `global.canary.enabled` is true (a single
+## toggle set once at the umbrella-chart level and shared automatically with
+## every subchart, including `common` -- see
+## charts/common/templates/_helpers.tpl `common.canaryEnabled`), every
+## backendRef here expands into the stable+canary pair (named
+## "<name>-stable"/"<name>-canary") that the `common` chart always creates
+## in that case. Pointing a route at the same base `name` is all that's
+## needed -- no need to hand-type both Service names, and no per-backendRef
+## setting to turn on.
+#  - name: example-service
+#    spec:
+#      hostnames:
+#        - example-service.daveapi.io
+#      parentRefs:
+#        - name: default
+#      rules:
+#        - backendRefs:
+#            - name: example-service
+#              port: 80
+#              # Optional overrides -- defaults are 1 (stable) and 0 (canary),
+#              # which is functionally identical (100% of traffic to stable)
+#              # since weight is relative between the two backendRefs.
+#              # weight: 100
+#              # canaryWeight: 0
 
 ## Elaborated route example, no defaults:
 #  - name: main

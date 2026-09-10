@@ -34,7 +34,7 @@
               },
               "csmStaticIpName": {
                 "type": "string",
-                "$comment": "Only used if canary.enabled is true. Optional, If not set, a name is generated using Release.Name with '-csm'"
+                "$comment": "Optional, If not set, a name is generated using Release.Name with '-csm'"
               },
               "staticIpName": {
                 "type": "string"
@@ -79,9 +79,6 @@
                               "type": "integer",
                               "minimum": 1,
                               "maximum": 65535
-                            },
-                            "canary": {
-                              "type": "boolean"
                             }
                           },
                           "required": [
@@ -153,9 +150,6 @@
                         "type": "integer",
                         "minimum": 1,
                         "maximum": 65535
-                      },
-                      "canary": {
-                        "type": "boolean"
                       }
                     },
                     "required": [
@@ -317,7 +311,7 @@
         },
         "csmStaticIpName": {
           "type": "string",
-          "$comment": "Only used if canary.enabled is true. Optional, If not set, a name is generated using Release.Name with '-csm'"
+          "$comment": "Optional, If not set, a name is generated using Release.Name with '-csm'"
         },
         "service": {
           "type": "object",
