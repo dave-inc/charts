@@ -210,6 +210,17 @@ entries:
     version: 0.13.0-beta.1
   - apiVersion: v2
     appVersion: 1.17.0
+    created: "2026-09-10T02:22:10.893541359Z"
+    description: Standard Service Template
+    digest: 534715f11c30f7749a6da24e43bf9bc647b3e223b55b155b551108e0672388ed
+    kubeVersion: '>=1.30.0-0'
+    name: common
+    type: application
+    urls:
+    - https://github.com/dave-inc/charts/releases/download/common-0.12.3/common-0.12.3.tgz
+    version: 0.12.3
+  - apiVersion: v2
+    appVersion: 1.17.0
     created: "2026-09-09T22:36:42.006288205Z"
     description: Standard Service Template
     digest: 8affc6875d2c7911e3e4b5d7c7c37b05f624fc65f02e5d4e9b64497c545e87af
@@ -1355,9 +1366,9 @@ entries:
     version: 0.8.9-bei-719
   - apiVersion: v2
     appVersion: 1.17.0
-    created: "2024-09-18T16:21:03.735084914Z"
+    created: "2024-09-18T23:07:53.957992564Z"
     description: Standard Service Template
-    digest: 7bb442d82472d79639f3a077bf8317ab46a4ae1bf9463a270126f28b1baa1b47
+    digest: c7e242bc43a7734a20e868ad3ad6e13ee5cb946482122f743ff485de32804d62
     name: common
     type: application
     urls:
@@ -1365,9 +1376,9 @@ entries:
     version: 0.8.9-bei-719
   - apiVersion: v2
     appVersion: 1.17.0
-    created: "2024-09-18T23:07:53.957992564Z"
+    created: "2024-09-18T16:21:03.735084914Z"
     description: Standard Service Template
-    digest: c7e242bc43a7734a20e868ad3ad6e13ee5cb946482122f743ff485de32804d62
+    digest: 7bb442d82472d79639f3a077bf8317ab46a4ae1bf9463a270126f28b1baa1b47
     name: common
     type: application
     urls:
@@ -3431,4 +3442,4 @@ entries:
     urls:
     - https://github.com/dave-inc/charts/releases/download/workflow-0.1.0-beta.1/workflow-0.1.0-beta.1.tgz
     version: 0.1.0-beta.1
-generated: "2026-09-09T22:36:42.009279138Z"
+generated: "2026-09-10T02:22:10.896147272Z"
