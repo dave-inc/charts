@@ -26,6 +26,12 @@ metadata:
   name: {{ include "common.name" . }}
   labels:
     {{- include "common.labels" . | nindent 4 }}
+  annotations:
+    # Syncs before the Deployment (default wave 0). Testing whether giving the ScaledObject
+    # (and its keda-hpa-* HPA) a head start avoids a transient reset of spec.replicas to the
+    # API server's default of 1 when a consumer first migrates off a static replicaCount -
+    # see gke-devel-1 migration rehearsal notes for the live finding this addresses.
+    argocd.argoproj.io/sync-wave: "-1"
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
@@ -49,11 +55,23 @@ spec:
     failureThreshold: {{ $failureThreshold }}
     replicas: {{ $fallbackReplicas }}
   {{- end }}
-  {{- if .Values.hpaBehavior.enabled }}
+  {{- /* keda-hpa-<ScaledObject name> must be <= 63 chars (a Kubernetes object name limit);
+  a long service name can push the derived HPA name past that. hpaName lets a service
+  override just the generated HPA's name without renaming the ScaledObject/Deployment
+  themselves (which other tooling, dashboards, and alerts key on by their existing name). */}}
+  {{- if or .Values.hpaBehavior.enabled .Values.kedaScaling.hpaName }}
   advanced:
     horizontalPodAutoscalerConfig:
+      {{- if .Values.kedaScaling.hpaName }}
+      {{- if gt (len .Values.kedaScaling.hpaName) 63 }}
+      {{- fail "kedaScaling.hpaName must be <= 63 characters" }}
+      {{- end }}
+      name: {{ .Values.kedaScaling.hpaName | quote }}
+      {{- end }}
+      {{- if .Values.hpaBehavior.enabled }}
       behavior:
         {{- toYaml .Values.hpaBehavior.behavior | nindent 8 }}
+      {{- end }}
   {{- end }}
   triggers:
     {{- toYaml .Values.kedaScaling.triggers | nindent 4 }}
