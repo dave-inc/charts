@@ -399,6 +399,9 @@ canary:
       # minReplicas and maxReplicas behave exactly as documented above for autoscaling.
       # minReplicas:
       # maxReplicas:
+      # hpaName overrides the rproxy tier's generated HPA name - see the top-level
+      # kedaScaling.hpaName comment above for why this exists.
+      # hpaName:
     resources:
       requests:
         cpu: 100m
@@ -415,6 +418,8 @@ canary:
   # autoscaling:
   #  minReplicas: 1 (defaults to .Values.autoscaling.minReplicas)
   #  maxReplicas: 10 (defaults to .Values.autoscaling.maxReplicas)
+  #  hpaName: overrides the canary tier's generated HPA name - see the top-level
+  #    kedaScaling.hpaName comment above for why this exists (KEDA path only).
   # percentage of traffic that should be sent to canary. (100 - weight) is sent to non-canary deployment.
   # weight: 5
   # image:
@@ -571,6 +576,7 @@ kedaScaling:
     enabled: false
     failureThreshold: 3
     replicas: ~          # defaults to minReplicas/kedaScaling.minReplicas above
+  hpaName: ~           # KEDA derives the ScaledObject's HPA as keda-hpa-<ScaledObject name>, which must be <= 63 chars; set this to override just the generated HPA's name (<= 63 chars) when a long service name would otherwise exceed that limit. Same override exists for the canary/rproxy tiers as canary.autoscaling.hpaName / canary.reverseProxy.kedaScaling.hpaName.
   triggers: []
 # Example — Pub/Sub trigger (replaces type: External HPA metric):
 #
