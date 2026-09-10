@@ -1,5 +1,6 @@
-{{- if hasKey .Values "podMonitoring" }}
-{{- if hasKey .Values.podMonitoring "selector" }}
+{{- if and (hasKey .Values "podMonitoring") (kindIs "map" .Values.podMonitoring) }}
+{{- $podMonitoring := .Values.podMonitoring }}
+{{- if hasKey $podMonitoring "selector" }}
 {{- fail "podMonitoring: selector is set automatically and must not be overridden" }}
 {{- end }}
 {{- $sub := index .Values "tailscale-operator" | default dict }}
@@ -22,5 +23,5 @@ spec:
       application: tailscale-operator
   endpoints:
     - port: 8080
-      interval: {{ .Values.podMonitoring.interval | default "30s" }}
+      interval: {{ $podMonitoring.interval | default "30s" }}
 {{- end }}

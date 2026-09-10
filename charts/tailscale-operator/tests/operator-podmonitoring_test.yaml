@@ -7,6 +7,13 @@ tests:
       - hasDocuments:
           count: 0
 
+  - it: treats a null podMonitoring value as unset
+    set:
+      podMonitoring: null
+    asserts:
+      - hasDocuments:
+          count: 0
+
   - it: scrapes the operator's controller-runtime metrics port, defaulting the interval
     set:
       podMonitoring: {}
