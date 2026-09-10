@@ -1,0 +1,66 @@
+# Generic wrapper for the Tailscale Kubernetes operator. Reusable across
+# clusters -- each consumer is its own Application (e.g. apps/sre/<cluster>-tailscale.yaml)
+# supplying its own oauth credentials, tags, and connectors via helm.parameters.
+tailscale-operator:
+  operatorConfig:
+    defaultTags:
+      - "tag:k8s-operator"
+    podLabels:
+      application: tailscale-operator
+      env: production
+      team: bei
+      email: team-bei-at-dave-com
+      slack_channel: eng-back-end-infra
+    resources:
+      requests:
+        cpu: 200m
+        memory: 128Mi
+      limits:
+        memory: 128Mi
+
+  ingressClass:
+    enabled: false
+
+# Set to true only for consumers authenticating via workload identity
+# federation -- this publishes the cluster's OIDC discovery/JWKS endpoints to
+# unauthenticated callers so Tailscale can validate the operator's token.
+oidcDiscovery:
+  enabled: false
+
+# One tailscale.com/v1alpha1 ProxyClass per key, referenced by name from a
+# connectors[] entry's proxyClass field. Each key gets its own pod label and
+# PDB, so different connector types are never disrupted together.
+# https://tailscale.com/kb/1445/kubernetes-operator-customization
+proxyClasses: {}
+# gha-runners-1-exit-node:
+#   topologySpreadConstraints: # spreads replicas across zones and nodes; matches connectors[].proxyClass
+#     - maxSkew: 1
+#       topologyKey: topology.kubernetes.io/zone
+#       whenUnsatisfiable: DoNotSchedule
+#     - maxSkew: 1
+#       topologyKey: kubernetes.io/hostname
+#       whenUnsatisfiable: DoNotSchedule
+#   podDisruptionBudget:
+#     minAvailable: 1
+#   resources: # for the tailscale proxy container itself, not the operator.
+#     # WireGuard encrypt/decrypt runs in userspace here, so CPU scales with
+#     # actual egress throughput (unlike the operator's reconciliation loop) --
+#     # low request for idle baseline, higher limit to absorb bursts during
+#     # dependency-heavy CI builds.
+#     requests:
+#       cpu: 100m
+#       memory: 128Mi
+#     limits:
+#       cpu: 1000m
+#       memory: 128Mi
+
+# One entry per tailscale.com/v1alpha1 Connector to create.
+# https://tailscale.com/docs/kubernetes-operator/connector/deploy-subnet-router
+connectors: []
+# - name: gha-runners-1-exit-node
+#   replicas: 2 # HA: hostnamePrefix required instead of hostname when > 1
+#   hostnamePrefix: gha-runners-1-exit-node
+#   proxyClass: gha-runners-1-exit-node
+#   tags:
+#     - "tag:ci-exit"
+#   exitNode: true

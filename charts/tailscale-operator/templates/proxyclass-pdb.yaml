@@ -1,0 +1,17 @@
+{{- range $name, $pc := .Values.proxyClasses }}
+{{- if $pc.podDisruptionBudget }}
+{{- if hasKey $pc.podDisruptionBudget "selector" }}
+{{- fail (printf "proxyClasses[%s].podDisruptionBudget: selector is set automatically and must not be overridden" $name) }}
+{{- end }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ $name }}
+spec:
+  selector:
+    matchLabels:
+      proxy-class: {{ $name }}
+  {{- toYaml $pc.podDisruptionBudget | nindent 2 }}
+{{- end }}
+{{- end }}

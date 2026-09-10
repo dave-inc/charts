@@ -466,6 +466,7 @@ kedaScaling:
     enabled: false
     failureThreshold: 3
     replicas: ~          # defaults to minReplicas/kedaScaling.minReplicas above
+  hpaName: ~           # KEDA derives the ScaledObject's HPA as keda-hpa-<ScaledObject name>, which must be <= 63 chars; set this to override just the generated HPA's name (<= 63 chars) when a long service name would otherwise exceed that limit. Same override exists for the canary/rproxy tiers as canary.autoscaling.hpaName / canary.reverseProxy.kedaScaling.hpaName.
   triggers: []
 # Example — Pub/Sub trigger (replaces type: External HPA metric):
 #
