@@ -1,0 +1,98 @@
+suite: PodMonitoring
+templates:
+  - podmonitoring.yaml
+tests:
+  - it: renders nothing when no proxyClass requests it
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          metrics:
+            enable: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: treats a null proxyClass podMonitoring value as unset
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          metrics:
+            enable: true
+          podMonitoring: null
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: fails when podMonitoring is set without metrics.enable or an explicit port
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          podMonitoring: {}
+    asserts:
+      - failedTemplate:
+          errorMessage: 'proxyClasses[gha-runners-1-exit-node].podMonitoring requires metrics.enable: true, or podMonitoring.port set explicitly when metrics is wired manually via env (e.g. for PeerRelay, where metrics.enable is a no-op and the container''s only port is "healthz", not "metrics")'
+
+  - it: allows an explicit podMonitoring.port without metrics.enable, for PeerRelay proxyClasses
+    set:
+      proxyClasses:
+        peer-relay:
+          env:
+            - name: TS_ENABLE_METRICS
+              value: "true"
+          podMonitoring:
+            port: healthz
+    asserts:
+      - equal:
+          path: spec.endpoints[0].port
+          value: healthz
+
+  - it: scopes the selector to the requesting proxyClass, defaulting the interval
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          metrics:
+            enable: true
+          podMonitoring: {}
+        gha-runners-2-exit-node: {}
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: gha-runners-1-exit-node
+      - equal:
+          path: spec.selector.matchLabels.proxy-class
+          value: gha-runners-1-exit-node
+      - equal:
+          path: spec.endpoints[0].port
+          value: metrics
+      - equal:
+          path: spec.endpoints[0].interval
+          value: "30s"
+
+  - it: allows overriding the scrape interval
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          metrics:
+            enable: true
+          podMonitoring:
+            interval: 15s
+    asserts:
+      - equal:
+          path: spec.endpoints[0].interval
+          value: "15s"
+
+  - it: fails when podMonitoring overrides the auto-filled selector
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          metrics:
+            enable: true
+          podMonitoring:
+            selector:
+              matchLabels:
+                app: something-else
+    asserts:
+      - failedTemplate:
+          errorMessage: "proxyClasses[gha-runners-1-exit-node].podMonitoring: selector is set automatically and must not be overridden"

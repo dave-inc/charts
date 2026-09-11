@@ -17,6 +17,10 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 spec:
+  {{- if $pc.metrics }}
+  metrics:
+    {{- toYaml $pc.metrics | nindent 4 }}
+  {{- end }}
   statefulSet:
     pod:
       labels:
@@ -33,9 +37,20 @@ spec:
           {{- toYaml . | nindent 10 }}
         {{- end }}
       {{- end }}
-      {{- if $pc.resources }}
+      {{- if or $pc.resources $pc.env }}
       tailscaleContainer:
+        {{- if $pc.resources }}
         resources:
           {{- toYaml $pc.resources | nindent 10 }}
+        {{- end }}
+        {{- if $pc.env }}
+        {{- range $pc.env }}
+        {{- if hasKey . "valueFrom" }}
+        {{- fail (printf "proxyClasses[%s].env: valueFrom is not supported by the ProxyClass CRD (name/value only); it would be silently pruned" $name) }}
+        {{- end }}
+        {{- end }}
+        env:
+          {{- toYaml $pc.env | nindent 10 }}
+        {{- end }}
       {{- end }}
 {{- end }}
