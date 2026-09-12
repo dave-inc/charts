@@ -187,24 +187,26 @@ before it.
 version. release-please maintains it from then on, and the only manual edit is
 adding a line when a chart is added.
 
-Seeded values were taken from the newest non-prerelease tag per chart:
+Seeded values are the newest non-prerelease GitHub Release per chart, matching
+`Chart.yaml` where that file is already on a stable version:
 
-| chart | seeded from |
-| --- | --- |
-| cloudsql-proxy | `cloudsql-proxy-0.1.0` |
-| common | `common-0.11.0` |
-| dave-npd | `dave-npd-0.3.0` |
-| gateway-bundle | `gateway-bundle-2.2.0` |
-| gatewayapi | `gatewayapi-2.10.0` |
-| job | `job-0.2.1` |
-| kyverno-policies | `kyverno-policies-0.1.1` |
-| tailscale-operator | `tailscale-operator-0.1.1` |
-| workflow | `workflow-0.1.0` |
+| chart | seeded from | Chart.yaml on master |
+| --- | --- | --- |
+| cloudsql-proxy | `cloudsql-proxy-0.1.0` | `0.1.1-beta.0` |
+| common | `common-0.12.3` | `0.12.3` |
+| dave-npd | `dave-npd-0.3.0` | `0.3.0` |
+| gateway-bundle | `gateway-bundle-2.3.0` | `2.3.0` |
+| gatewayapi | `gatewayapi-2.11.0` | `2.11.0` |
+| job | `job-0.2.1` | `0.2.2-beta.1` |
+| kyverno-policies | `kyverno-policies-0.1.1` | `0.1.2-beta.4` |
+| tailscale-operator | `tailscale-operator-0.1.1` | `0.1.1` |
+| workflow | `workflow-0.1.0` | `0.1.1-beta.5` |
 
-The first release PR will therefore replace the hand-maintained `-beta.N` suffixes
-currently sitting in `Chart.yaml` with clean stable versions. `common` moves from
-`0.11.1-beta.19` to `0.12.0` rather than continuing the beta chain. This looks
-like a jump and is expected.
+Charts whose `Chart.yaml` already equals the seed stay there until a later
+change produces a real bump. Charts still sitting on a `-beta.N` suffix get a
+clean stable version on the first release PR, computed from commits since the
+seed rather than by continuing the beta chain. `job` moving off `0.2.2-beta.1`
+is expected.
 
 ### Betas are retired
 

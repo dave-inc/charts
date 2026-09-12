@@ -131,7 +131,7 @@ Then in the consuming repo:
 ```yaml
 dependencies:
   - name: common
-    version: 0.11.0
+    version: 0.12.3 # example only; copy the current value from charts/common/Chart.yaml
     repository: "file:///tmp/charts"
 ```
 
