@@ -1,0 +1,71 @@
+suite: HPA/VPA autoscaling
+templates:
+  - hpa.yaml
+  - vpa.yaml
+values:
+  - ./fixtures/minimal-values.yaml
+set:
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: Utilization
+            averageUtilization: 70
+  verticalPodAutoscaler:
+    enabled: true
+tests:
+  - it: renders the HPA targeting the Deployment with the configured replicas and metrics
+    asserts:
+      - template: hpa.yaml
+        isKind:
+          of: HorizontalPodAutoscaler
+      - template: hpa.yaml
+        equal:
+          path: spec.scaleTargetRef
+          value:
+            apiVersion: apps/v1
+            kind: Deployment
+            name: test-app
+      - template: hpa.yaml
+        equal:
+          path: spec.minReplicas
+          value: 2
+      - template: hpa.yaml
+        equal:
+          path: spec.maxReplicas
+          value: 5
+      - template: hpa.yaml
+        equal:
+          path: spec.metrics
+          value:
+            - type: Resource
+              resource:
+                name: cpu
+                target:
+                  type: Utilization
+                  averageUtilization: 70
+
+  - it: renders the VPA targeting the same Deployment with updateMode Off
+    asserts:
+      - template: vpa.yaml
+        isKind:
+          of: VerticalPodAutoscaler
+      - template: vpa.yaml
+        equal:
+          path: spec.targetRef
+          value:
+            apiVersion: apps/v1
+            kind: Deployment
+            name: test-app
+      - template: vpa.yaml
+        equal:
+          path: spec.updatePolicy.updateMode
+          value: "Off"
+      - template: vpa.yaml
+        notExists:
+          path: metadata.annotations

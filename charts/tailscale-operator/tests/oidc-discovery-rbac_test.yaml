@@ -1,0 +1,96 @@
+suite: OIDC discovery ClusterRoleBinding
+templates:
+  - oidc-discovery-rbac.yaml
+tests:
+  - it: renders nothing when oidcDiscovery is disabled (the default)
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders nothing when enabled is the string false
+    set:
+      oidcDiscovery:
+        enabled: "false"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders nothing when oidcDiscovery is an empty map
+    set:
+      oidcDiscovery: {}
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders nothing when oidcDiscovery is null
+    set:
+      oidcDiscovery: null
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: publishes OIDC discovery when enabled is the string true
+    set:
+      oidcDiscovery:
+        enabled: "true"
+    asserts:
+      - isKind:
+          of: ClusterRoleBinding
+
+  - it: publishes OIDC discovery to unauthenticated callers when enabled
+    release:
+      name: my-cluster
+    set:
+      oidcDiscovery:
+        enabled: true
+    asserts:
+      - isKind:
+          of: ClusterRoleBinding
+      - equal:
+          path: roleRef
+          value:
+            apiGroup: rbac.authorization.k8s.io
+            kind: ClusterRole
+            name: system:service-account-issuer-discovery
+      - equal:
+          path: subjects
+          value:
+            - kind: Group
+              name: system:unauthenticated
+              apiGroup: rbac.authorization.k8s.io
+
+  - it: scopes the binding name to the release and namespace so multiple installs don't collide
+    release:
+      name: my-cluster
+      namespace: tailscale
+    set:
+      oidcDiscovery:
+        enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-cluster-tailscale-operator-tailscale-oidc-discovery
+
+  - it: gives a second release a distinct binding name
+    release:
+      name: other-cluster
+      namespace: tailscale
+    set:
+      oidcDiscovery:
+        enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: other-cluster-tailscale-operator-tailscale-oidc-discovery
+
+  - it: gives the same release name in a different namespace a distinct binding name
+    release:
+      name: my-cluster
+      namespace: other-namespace
+    set:
+      oidcDiscovery:
+        enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-cluster-tailscale-operator-other-namespace-oidc-discovery

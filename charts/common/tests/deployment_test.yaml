@@ -1,0 +1,110 @@
+suite: Deployment container image, port, args, resources and probes
+templates:
+  - deployment.yaml
+values:
+  - ./fixtures/minimal-values.yaml
+set:
+  image:
+    repository: example-repo/example-app
+    tag: v1.2.3
+  deploymentContainer:
+    port: 8095
+    args: ["node", "dist/index.js"]
+    livenessProbe:
+      path: /health/liveness
+      initialDelaySeconds: 10
+      periodSeconds: 30
+      timeoutSeconds: 3
+      successThreshold: 1
+      failureThreshold: 2
+    readinessProbe:
+      path: /health/readiness
+      initialDelaySeconds: 10
+      periodSeconds: 30
+      timeoutSeconds: 3
+      successThreshold: 1
+      failureThreshold: 2
+    startupProbe:
+      path: /health/liveness
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      timeoutSeconds: 5
+      successThreshold: 1
+      failureThreshold: 3
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+  additionalLabels:
+    team: platform
+    env: staging
+tests:
+  - it: renders the container image, port, args and resources
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: example-repo/example-app:v1.2.3
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].containerPort
+          value: 8095
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value:
+            - node
+            - dist/index.js
+      - equal:
+          path: spec.template.spec.containers[0].resources
+          value:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+
+  - it: renders liveness, readiness and startup probes, defaulting probe port to deploymentContainer.port
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe
+          value:
+            httpGet:
+              path: /health/liveness
+              port: 8095
+            failureThreshold: 2
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 3
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe
+          value:
+            httpGet:
+              path: /health/readiness
+              port: 8095
+            failureThreshold: 2
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 3
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe
+          value:
+            httpGet:
+              path: /health/liveness
+              port: 8095
+            failureThreshold: 3
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+
+  - it: merges additionalLabels into the pod template labels
+    asserts:
+      - isSubset:
+          path: spec.template.metadata.labels
+          content:
+            team: platform
+            env: staging

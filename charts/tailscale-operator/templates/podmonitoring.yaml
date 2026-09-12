@@ -1,0 +1,32 @@
+{{- range $name, $pc := .Values.proxyClasses }}
+{{- if and (hasKey $pc "podMonitoring") (kindIs "map" $pc.podMonitoring) }}
+{{- $m := $pc.metrics | default dict }}
+{{- $podMonitoring := $pc.podMonitoring }}
+{{- if not (or $m.enable $podMonitoring.port) }}
+{{- fail (printf "proxyClasses[%s].podMonitoring requires metrics.enable: true, or podMonitoring.port set explicitly when metrics is wired manually via env (e.g. for PeerRelay, where metrics.enable is a no-op and the container's only port is \"healthz\", not \"metrics\")" $name) }}
+{{- end }}
+{{- if hasKey $podMonitoring "selector" }}
+{{- fail (printf "proxyClasses[%s].podMonitoring: selector is set automatically and must not be overridden" $name) }}
+{{- end }}
+---
+# GKE Managed Prometheus scrape config, not a Prometheus Operator ServiceMonitor.
+apiVersion: monitoring.googleapis.com/v1
+kind: PodMonitoring
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      proxy-class: {{ $name }}
+  endpoints:
+    {{- if $podMonitoring.port }}
+    # {{ $podMonitoring.port }} is being scraped for metrics here (not its
+    # usual health-check purpose), because this proxyClass's real
+    # container port isn't named "metrics" -- e.g. PeerRelay only ever
+    # gets "healthz", which TS_ENABLE_METRICS also serves /metrics from.
+    {{- end }}
+    - port: {{ $podMonitoring.port | default "metrics" }}
+      interval: {{ $podMonitoring.interval | default "30s" }}
+{{- end }}
+{{- end }}

@@ -888,6 +888,12 @@
                           "enabled"
                         ],
                         "additionalProperties": false
+                      },
+                      "securityPolicy": {
+                        "type": "string",
+                        "description": "Name of a pre-existing Google Cloud Armor security policy to attach to this backend service. Must already exist in GCP; the chart does not create it. Scope must match the GatewayClass: a global policy for gke-l7-global-external-managed, a regional policy in the cluster's region for gke-l7-regional-external-managed / gke-l7-rilb. Set to \"\" to DETACH an already-attached policy; omit the key entirely to leave whatever is currently attached untouched.",
+                        "maxLength": 63,
+                        "pattern": "^$|^[a-z]([-a-z0-9]*[a-z0-9])?$"
                       }
                     },
                     "additionalProperties": false

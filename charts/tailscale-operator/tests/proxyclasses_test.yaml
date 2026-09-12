@@ -1,0 +1,313 @@
+suite: ProxyClass and its sibling PDB
+templates:
+  - proxyclasses.yaml
+  - proxyclass-pdb.yaml
+tests:
+  - it: renders nothing when no proxyClasses are configured (the default)
+    asserts:
+      - template: proxyclasses.yaml
+        hasDocuments:
+          count: 0
+      - template: proxyclass-pdb.yaml
+        hasDocuments:
+          count: 0
+
+  - it: gives each proxyClass its own name and proxy-class label, with no PDB by default
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node: {}
+        gha-runners-2-exit-node: {}
+    asserts:
+      - template: proxyclasses.yaml
+        documentIndex: 0
+        equal:
+          path: metadata.name
+          value: gha-runners-1-exit-node
+      - template: proxyclasses.yaml
+        documentIndex: 0
+        equal:
+          path: spec.statefulSet.pod.labels.proxy-class
+          value: gha-runners-1-exit-node
+      - template: proxyclasses.yaml
+        documentIndex: 1
+        equal:
+          path: metadata.name
+          value: gha-runners-2-exit-node
+      - template: proxyclasses.yaml
+        documentIndex: 1
+        equal:
+          path: spec.statefulSet.pod.labels.proxy-class
+          value: gha-runners-2-exit-node
+      - template: proxyclass-pdb.yaml
+        hasDocuments:
+          count: 0
+
+  - it: only creates a PDB for a proxyClass that requests one, leaving its sibling undisrupted
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          podDisruptionBudget:
+            minAvailable: 1
+        gha-runners-2-exit-node: {}
+    asserts:
+      - template: proxyclass-pdb.yaml
+        hasDocuments:
+          count: 1
+      - template: proxyclass-pdb.yaml
+        equal:
+          path: metadata.name
+          value: gha-runners-1-exit-node
+      - template: proxyclass-pdb.yaml
+        equal:
+          path: spec.minAvailable
+          value: 1
+
+  - it: scopes each PDB's selector to its own proxyClass label, not a sibling's
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          podDisruptionBudget:
+            minAvailable: 1
+        gha-runners-2-exit-node:
+          podDisruptionBudget:
+            minAvailable: 2
+    asserts:
+      - template: proxyclass-pdb.yaml
+        documentIndex: 0
+        equal:
+          path: spec.selector.matchLabels.proxy-class
+          value: gha-runners-1-exit-node
+      - template: proxyclass-pdb.yaml
+        documentIndex: 1
+        equal:
+          path: spec.selector.matchLabels.proxy-class
+          value: gha-runners-2-exit-node
+
+  - it: only applies topologySpreadConstraints to the proxyClass that sets them
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          topologySpreadConstraints:
+            - maxSkew: 1
+              topologyKey: topology.kubernetes.io/zone
+              whenUnsatisfiable: DoNotSchedule
+        gha-runners-2-exit-node: {}
+    asserts:
+      - template: proxyclasses.yaml
+        documentIndex: 0
+        equal:
+          path: spec.statefulSet.pod.topologySpreadConstraints
+          value:
+            - labelSelector:
+                matchLabels:
+                  proxy-class: gha-runners-1-exit-node
+              maxSkew: 1
+              topologyKey: topology.kubernetes.io/zone
+              whenUnsatisfiable: DoNotSchedule
+      - template: proxyclasses.yaml
+        documentIndex: 1
+        notExists:
+          path: spec.statefulSet.pod.topologySpreadConstraints
+
+  - it: renders zone and hostname spread for a PeerRelay proxyClass, matching the appc-github pattern
+    set:
+      proxyClasses:
+        peer-relay:
+          topologySpreadConstraints:
+            - maxSkew: 1
+              topologyKey: topology.kubernetes.io/zone
+              whenUnsatisfiable: DoNotSchedule
+            - maxSkew: 1
+              topologyKey: kubernetes.io/hostname
+              whenUnsatisfiable: DoNotSchedule
+    asserts:
+      - template: proxyclasses.yaml
+        equal:
+          path: spec.statefulSet.pod.topologySpreadConstraints
+          value:
+            - labelSelector:
+                matchLabels:
+                  proxy-class: peer-relay
+              maxSkew: 1
+              topologyKey: topology.kubernetes.io/zone
+              whenUnsatisfiable: DoNotSchedule
+            - labelSelector:
+                matchLabels:
+                  proxy-class: peer-relay
+              maxSkew: 1
+              topologyKey: kubernetes.io/hostname
+              whenUnsatisfiable: DoNotSchedule
+
+  - it: fails when podDisruptionBudget overrides the auto-filled selector
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          podDisruptionBudget:
+            minAvailable: 1
+            selector:
+              matchLabels:
+                app: something-else
+    asserts:
+      - template: proxyclass-pdb.yaml
+        failedTemplate:
+          errorMessage: "proxyClasses[gha-runners-1-exit-node].podDisruptionBudget: selector is set automatically and must not be overridden"
+
+  - it: fails when podDisruptionBudget sets selector to null
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          podDisruptionBudget:
+            minAvailable: 1
+            selector: null
+    asserts:
+      - template: proxyclass-pdb.yaml
+        failedTemplate:
+          errorMessage: "proxyClasses[gha-runners-1-exit-node].podDisruptionBudget: selector is set automatically and must not be overridden"
+
+  - it: fails when a topologySpreadConstraint overrides the auto-filled labelSelector
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          topologySpreadConstraints:
+            - maxSkew: 1
+              topologyKey: topology.kubernetes.io/zone
+              whenUnsatisfiable: DoNotSchedule
+              labelSelector:
+                matchLabels:
+                  app: something-else
+    asserts:
+      - template: proxyclasses.yaml
+        failedTemplate:
+          errorMessage: "proxyClasses[gha-runners-1-exit-node].topologySpreadConstraints: labelSelector is set automatically and must not be overridden"
+
+  - it: fails when a topologySpreadConstraint sets labelSelector to null
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          topologySpreadConstraints:
+            - maxSkew: 1
+              topologyKey: topology.kubernetes.io/zone
+              whenUnsatisfiable: DoNotSchedule
+              labelSelector: null
+    asserts:
+      - template: proxyclasses.yaml
+        failedTemplate:
+          errorMessage: "proxyClasses[gha-runners-1-exit-node].topologySpreadConstraints: labelSelector is set automatically and must not be overridden"
+
+  - it: only applies resources to the proxyClass that sets them
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 1000m
+              memory: 128Mi
+        gha-runners-2-exit-node: {}
+    asserts:
+      - template: proxyclasses.yaml
+        documentIndex: 0
+        equal:
+          path: spec.statefulSet.pod.tailscaleContainer.resources
+          value:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 1000m
+              memory: 128Mi
+      - template: proxyclasses.yaml
+        documentIndex: 1
+        notExists:
+          path: spec.statefulSet.pod.tailscaleContainer
+
+  - it: only applies env to the proxyClass that sets it, without requiring resources
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          env:
+            - name: TS_ENABLE_HEALTH_CHECK
+              value: "true"
+        gha-runners-2-exit-node: {}
+    asserts:
+      - template: proxyclasses.yaml
+        documentIndex: 0
+        equal:
+          path: spec.statefulSet.pod.tailscaleContainer.env
+          value:
+            - name: TS_ENABLE_HEALTH_CHECK
+              value: "true"
+      - template: proxyclasses.yaml
+        documentIndex: 0
+        notExists:
+          path: spec.statefulSet.pod.tailscaleContainer.resources
+      - template: proxyclasses.yaml
+        documentIndex: 1
+        notExists:
+          path: spec.statefulSet.pod.tailscaleContainer
+
+  - it: fails when an env entry sets valueFrom, since the CRD only supports name/value
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          env:
+            - name: TS_ENABLE_HEALTH_CHECK
+              valueFrom:
+                secretKeyRef:
+                  name: some-secret
+                  key: some-key
+    asserts:
+      - template: proxyclasses.yaml
+        failedTemplate:
+          errorMessage: "proxyClasses[gha-runners-1-exit-node].env: valueFrom is not supported by the ProxyClass CRD (name/value only); it would be silently pruned"
+
+  - it: renders metrics when a proxyClass enables it, leaving its sibling without one
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          metrics:
+            enable: true
+        gha-runners-2-exit-node: {}
+    asserts:
+      - template: proxyclasses.yaml
+        documentIndex: 0
+        equal:
+          path: spec.metrics
+          value:
+            enable: true
+      - template: proxyclasses.yaml
+        documentIndex: 1
+        notExists:
+          path: spec.metrics
+
+  - it: renders both resources and env under one tailscaleContainer when both are set
+    set:
+      proxyClasses:
+        gha-runners-1-exit-node:
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          env:
+            - name: TS_ENABLE_HEALTH_CHECK
+              value: "true"
+            - name: TS_LOCAL_ADDR_PORT
+              value: "[::]:9002"
+    asserts:
+      - template: proxyclasses.yaml
+        equal:
+          path: spec.statefulSet.pod.tailscaleContainer.resources
+          value:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+      - template: proxyclasses.yaml
+        equal:
+          path: spec.statefulSet.pod.tailscaleContainer.env
+          value:
+            - name: TS_ENABLE_HEALTH_CHECK
+              value: "true"
+            - name: TS_LOCAL_ADDR_PORT
+              value: "[::]:9002"
