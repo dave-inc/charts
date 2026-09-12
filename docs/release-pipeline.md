@@ -198,6 +198,7 @@ Seeded values were taken from the newest non-prerelease tag per chart:
 | gatewayapi | `gatewayapi-2.10.0` |
 | job | `job-0.2.1` |
 | kyverno-policies | `kyverno-policies-0.1.1` |
+| tailscale-operator | `tailscale-operator-0.1.1` |
 | workflow | `workflow-0.1.0` |
 
 The first release PR will therefore replace the hand-maintained `-beta.N` suffixes

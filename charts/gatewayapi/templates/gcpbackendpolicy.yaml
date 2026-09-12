@@ -34,12 +34,20 @@ spec:
 {{- if and $gcpBackendPolicyDefinition.spec $gcpBackendPolicyDefinition.rawSpec }}
   {{- toYaml $gcpBackendPolicyDefinition.spec | nindent 2 }}
 {{- else }}
+  {{- $itemDefaults := (dig "default" dict $gcpBackendPolicyDefinition.spec) | default dict }}
   default:
     connectionDraining:
       drainingTimeoutSec: {{ dig "default" "connectionDraining" "drainingTimeoutSec" $.Values.gcpBackendPolicies.default.spec.default.connectionDraining.drainingTimeoutSec $gcpBackendPolicyDefinition.spec }}
     timeoutSec: {{ dig "default" "timeoutSec" $.Values.gcpBackendPolicies.default.spec.default.timeoutSec $gcpBackendPolicyDefinition.spec }}
     logging:
       enabled: {{ dig "default" "logging" "enabled" $.Values.gcpBackendPolicies.default.spec.default.logging.enabled $gcpBackendPolicyDefinition.spec }}
+    {{- /* Cloud Armor. Presence-based, NOT truthiness-based: an explicit
+           `securityPolicy: ""` must render as `securityPolicy: ""`, because GKE
+           reads that as "detach the attached policy", whereas omitting the field
+           leaves whatever is attached untouched. */}}
+    {{- if hasKey $itemDefaults "securityPolicy" }}
+    securityPolicy: {{ $itemDefaults.securityPolicy | quote }}
+    {{- end }}
   targetRef:
     group: {{ $gcpBackendPolicyDefinition.spec.targetRef.group | default $.Values.gcpBackendPolicies.default.spec.targetRef.group | quote }}
     kind: {{ $gcpBackendPolicyDefinition.spec.targetRef.kind | default $.Values.gcpBackendPolicies.default.spec.targetRef.kind }}

@@ -22,6 +22,11 @@ and backend policies.
   to a backend Service to configure backend-service settings (here, the response
   timeout and the connection-draining timeout), alongside an HTTP health check
   policy.
+- [cloud-armor](./cloud-armor.yaml): How to attach a Google Cloud Armor
+  security policy to a backend Service via `GCPBackendPolicy.spec.default.securityPolicy`.
+  The policy must already exist in GCP; the chart only references it by name.
+  Also documents the three states of the field -- omitted (leave untouched), a
+  name (attach), and `""` (detach) -- and the regional-vs-global scope rule.
 - [section-name](./section-name.yaml): An example that pins the route to a
   specific Gateway listener via `parentRefs[].sectionName`, alongside an HTTP
   health check policy and a GCPBackendPolicy.

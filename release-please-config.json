@@ -12,6 +12,7 @@
     "charts/gatewayapi": {},
     "charts/job": {},
     "charts/kyverno-policies": {},
+    "charts/tailscale-operator": {},
     "charts/workflow": {}
   }
 }

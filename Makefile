@@ -10,18 +10,19 @@ SHELL := /bin/bash
 # runs inside the job that pushes it back to a branch, without a commit here.
 BUNDLER := @skriptfabrik/json-schema-bundler@0.6.42
 
-.PHONY: help schemas lint
+.PHONY: help schemas lint test
 
 help:
 	@echo "schemas  regenerate values.schema.json from each chart's schemas/"
 	@echo "lint     helm lint every chart"
+	@echo "test     helm unittest every chart that has tests/"
 
 # values.schema.json is generated but committed, and CI fails if the committed
 # copy is stale. Run this after editing anything under a chart's schemas/.
 # Written to a temp file and moved into place only on success. A redirect straight
-# onto values.schema.json truncates it before the bundler runs, so a failure would
-# leave an empty schema that helm cannot parse. pipefail is what makes that failure
-# visible at all, since jq alone would report success on empty input.
+# onto values.schema.json truncates it before the bundler runs, so a failure
+# would leave an empty schema that helm cannot parse. pipefail is what makes that
+# failure visible at all, since jq alone would report success on empty input.
 schemas:
 	@for dir in charts/*/; do \
 		[ -f "$$dir/schemas/schema.yaml" ] || continue; \
@@ -37,4 +38,13 @@ lint:
 		[ -f "$$dir/Chart.yaml" ] || continue; \
 		helm dependency update "$$dir" || exit 1; \
 		helm lint "$$dir" || exit 1; \
+	done
+
+# Runs helm-unittest for every chart that has a tests/ directory, so this
+# doesn't need updating as more charts gain test coverage.
+test:
+	@for d in charts/*/tests; do \
+		chart=$$(dirname "$$d"); \
+		echo "==> $$chart"; \
+		helm unittest "$$chart" || exit 1; \
 	done

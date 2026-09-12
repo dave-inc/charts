@@ -117,6 +117,61 @@ is also handled where the `Gateway` resource is defined.
 
 The `Gateway` helm chart is found [here](../gateway-bundle).
 
+### Cloud Armor (security policies)
+
+A `GCPBackendPolicy` can attach a [Google Cloud Armor](https://cloud.google.com/armor/docs)
+security policy to the backend service, giving the backend WAF and rate-limiting
+protection:
+
+```yaml
+gcpBackendPolicies:
+  items:
+    - name: example-service
+      spec:
+        default:
+          securityPolicy: example-service-ca
+        targetRef:
+          name: example-service
+```
+
+The chart **does not create the policy** — `securityPolicy` names a Cloud Armor
+security policy that must already exist in GCP (managed by Terraform or
+`gcloud`). This is the Gateway API equivalent of the `common` chart's
+`cloudArmor.backendConfig.securityPolicy.name` for classic Ingress. Note the
+shapes differ — a plain string here, an object with a `name` key there — so
+migrating from Ingress is not a copy-paste.
+
+`securityPolicy` has three states, and they are **not** interchangeable:
+
+| Value | Effect |
+| --- | --- |
+| key omitted | Leaves whatever policy is attached untouched. The chart emits no field. |
+| `securityPolicy: my-policy-ca` | Attaches `my-policy-ca`. |
+| `securityPolicy: ""` | **Detaches** the attached policy. |
+
+The empty string is a foot-gun worth repeating: to stop managing the policy,
+**delete the line** — do not blank it out. Changing `securityPolicy: my-ca` to
+`securityPolicy: ""` silently removes WAF protection from the backend, and in an
+Argo CD diff it looks like a trivial cleanup.
+
+Two further constraints, neither of which the chart can validate for you:
+
+- **Scope must match the GatewayClass.** The field is a bare name with no
+  project or region qualifier; the GKE controller resolves it in the cluster's
+  project, and at the cluster's region for regional GatewayClasses. Use a
+  *global* policy for `gke-l7-global-external-managed` and a *regional* policy
+  in the cluster's region for `gke-l7-regional-external-managed` or
+  `gke-l7-rilb`. A mismatch renders fine and then fails at reconcile time —
+  check `kubectl describe gcpbackendpolicy <name>` after applying.
+- **Cross-project policies are unreachable.** Shared-VPC setups with Cloud Armor
+  living in a host project cannot be referenced through this field.
+
+There is deliberately no chart-wide `securityPolicy` default under
+`gcpBackendPolicies.default`, and the schema rejects one. Because the field's
+no-op value is *key absence*, a per-item setting can only add a value and never
+remove one — so an item could not opt out of a chart-wide default without
+setting `""` and thereby detaching its policy. Set `securityPolicy` per item.
+
 ### Sync ordering (Argo CD sync-wave)
 
 Every `HTTPRoute`, `HealthCheckPolicy` and `GCPBackendPolicy` this chart renders

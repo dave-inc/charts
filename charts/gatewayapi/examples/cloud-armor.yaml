@@ -1,0 +1,61 @@
+# Extends the minimal Gateway API deployment (see simple.yaml) with a Cloud
+# Armor security policy attached to the backend Service via GCPBackendPolicy.
+#
+# `spec.default.securityPolicy` names a Google Cloud Armor security policy that
+# MUST ALREADY EXIST in GCP -- this chart does not create it. Manage the policy
+# itself with Terraform or gcloud.
+#
+# The policy's scope must match the GatewayClass of the Gateway the route
+# attaches to: a global policy for gke-l7-global-external-managed, a regional
+# policy in the cluster's region for gke-l7-regional-external-managed or
+# gke-l7-rilb. A mismatch renders fine here and then fails at reconcile time;
+# check `kubectl describe gcpbackendpolicy example-service` after applying.
+enabled: true
+routes:
+  items:
+    - name: example-service
+      spec:
+        hostnames:
+          - example-service.trydave.com
+        parentRefs:
+          - name: default
+        rules:
+          - backendRefs:
+              - name: example-service
+                port: 80
+healthCheckPolicies:
+  items:
+    - name: example-service
+      spec:
+        default:
+          config:
+            httpHealthCheck:
+              port: 8080
+              requestPath: /healthz
+        targetRef:
+          name: example-service
+gcpBackendPolicies:
+  items:
+    - name: example-service
+      spec:
+        default:
+          # Name of the pre-existing Cloud Armor security policy to attach.
+          securityPolicy: example-service-ca
+        # The Service this policy attaches to.
+        targetRef:
+          name: example-service
+
+    # Detaching a policy. `securityPolicy: ""` is NOT the same as omitting the
+    # key: the empty string actively DISASSOCIATES whatever policy is currently
+    # attached, whereas omitting the key leaves it untouched.
+    #
+    # So to stop managing the policy, DELETE the line -- do not blank it out.
+    # Blanking it out drops WAF protection from the backend while looking like a
+    # harmless cleanup in an Argo CD diff.
+    #
+    # - name: legacy-service
+    #   spec:
+    #     default:
+    #       securityPolicy: ""
+    #     targetRef:
+    #       name: legacy-service
