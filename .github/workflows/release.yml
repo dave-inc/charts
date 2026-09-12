@@ -15,6 +15,8 @@ concurrency:
 # fails to install.
 env:
   HELM_VERSION: v4.2.4
+  HELM_OCI_REGISTRY: oci://us-docker.pkg.dev/artifact-storage-5748/helm-charts
+  WIF_PROVIDER: projects/973400095566/locations/global/workloadIdentityPools/gha-pool-staging-daveinc/providers/gha-provider-staging-daveinc
 
 jobs:
   # Opens/updates a PR that bumps `version` in each changed chart's Chart.yaml and
@@ -23,7 +25,7 @@ jobs:
   #
   # When that PR is merged, this same job creates the git tag and the GitHub
   # Release, with the per-release changelog as the release body. The publish job
-  # below then attaches the packaged chart and updates the repo index.
+  # below then pushes each packaged chart to Artifact Registry.
   #
   # Opening the PR fails with "GitHub Actions is not permitted to create or
   # approve pull requests" unless either the repo enables that setting or this
@@ -88,160 +90,102 @@ jobs:
             echo "::warning::Could not arm auto-merge on #$PR. Is allow_auto_merge enabled? See docs/repo-setup.md."
           fi
 
-  # Packages the charts release-please just released, attaches each package to the
-  # release release-please created, and regenerates index.yaml on gh-pages.
+  # Packages the charts release-please just released and pushes them to
+  # Artifact Registry as OCI. GitHub Pages / chart-releaser are not written.
+  # Historical index.yaml stays as an archive; new versions are OCI only.
   #
-  # chart-releaser is deliberately driven by hand here rather than through its
-  # action's default path, because that path calls `cr upload`, which creates the
-  # GitHub Release itself and would overwrite release-please's changelog body with
-  # the chart description.
+  # Auth is direct WIF against gha-provider-staging-daveinc. Do not set
+  # service_account. Do not set environment: on this job; that changes the
+  # GitHub OIDC sub and prod IAM will 403. Trigger is push to master only, so
+  # the expected sub is repo:dave-inc/charts:ref:refs/heads/master.
   #
-  # The two obvious ways to stop it doing that both break publishing:
-  #
-  #   skip_upload    cr.sh returns early from update_index() whenever this is set,
-  #                  so index.yaml is never pushed and nothing is installable.
-  #   skip_existing  implemented as a bare `continue` that runs before the asset
-  #                  upload, so the release keeps release-please's notes but never
-  #                  gets its .tgz. `cr index` builds entries by reading a
-  #                  release's assets, so the chart is then silently absent from
-  #                  index.yaml. The release page looks correct and the chart
-  #                  cannot be installed.
+  # Blocked on SRE-7517 applying helm-charts in artifact-storage-5748.
   publish:
     needs: release-please
     if: needs.release-please.outputs.releases_created == 'true'
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-    env:
-      CR_INSTALL_DIR: ${{ github.workspace }}/.cr-bin
+      contents: read
+      id-token: write
     steps:
-      # Twingate only connects when the key is configured. Forks do not have the
-      # secret, and without this guard the whole workflow fails there before doing
-      # any work.
-      - name: Check Twingate configuration
-        id: twingate
-        env:
-          TWINGATE_SERVICE_KEY: ${{ secrets.TWINGATE_SERVICE_KEY }}
-        run: |
-          if [ -n "$TWINGATE_SERVICE_KEY" ]; then
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "TWINGATE_SERVICE_KEY not set, skipping Twingate"
-          fi
-
-      - name: Connect to Twingate
-        if: steps.twingate.outputs.enabled == 'true'
-        uses: twingate/github-action@a8e6c2471f32650531a4683f45e485a2e97e048c # v1.5
-        with:
-          service-key: ${{ secrets.TWINGATE_SERVICE_KEY }}
-
-      # Full history so the gh-pages ref is present locally. `cr index` builds a
-      # worktree from it to commit index.yaml.
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          fetch-depth: 0
-
-      - name: Configure Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          persist-credentials: false
 
       - name: Set up Helm
         uses: azure/setup-helm@fe7b79cd5ee1e45176fcad797de68ecaf3ca4814 # v4.2.0
         with:
           version: ${{ env.HELM_VERSION }}
 
-      # The action appends install_dir to $GITHUB_PATH itself, so cr is available
-      # to every later step without any help here.
-      - name: Install chart-releaser
-        uses: helm/chart-releaser-action@cae68fefc6b5f367a0275617c9f83181ba54714f # v1.7.0
-        with:
-          install_only: true
-          install_dir: ${{ env.CR_INSTALL_DIR }}
+      - name: Print GitHub OIDC sub
+        env:
+          WIF_PROVIDER: ${{ env.WIF_PROVIDER }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, urllib.request, base64
+          from urllib.parse import quote
+          url = os.environ["ACTIONS_ID_TOKEN_REQUEST_URL"]
+          req_token = os.environ["ACTIONS_ID_TOKEN_REQUEST_TOKEN"]
+          aud = "https://iam.googleapis.com/" + os.environ["WIF_PROVIDER"]
+          req = urllib.request.Request(
+              url + "&audience=" + quote(aud, safe=""),
+              headers={"Authorization": f"bearer {req_token}"},
+          )
+          with urllib.request.urlopen(req) as resp:
+              jwt = json.load(resp)["value"]
+          payload = jwt.split(".")[1]
+          pad = "=" * (-len(payload) % 4)
+          claims = json.loads(base64.urlsafe_b64decode(payload + pad))
+          for key in ("sub", "repository", "ref", "environment"):
+              print(f"{key}={claims.get(key, '')}")
+          PY
 
-      # cr package has no dependency-update flag, and helm package fails outright
-      # on an unvendored dependency. Only dave-npd has one today, but running this
-      # everywhere costs nothing and stops that from being a trap later.
-      - name: Package released charts
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          project_id: artifact-storage-5748
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          create_credentials_file: true
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+
+      - name: Configure docker for Artifact Registry
+        run: gcloud auth configure-docker us-docker.pkg.dev --quiet
+
+      - name: Package and push released charts
         env:
           PATHS_RELEASED: ${{ needs.release-please.outputs.paths_released }}
         run: |
           set -euo pipefail
-          mkdir -p .cr-release-packages
+          mkdir -p .release-packages
 
           mapfile -t dirs < <(jq -r '.[]' <<<"$PATHS_RELEASED")
           for dir in "${dirs[@]}"; do
             echo "::group::package $dir"
             helm dependency update "$dir"
-            cr package "$dir" --package-path .cr-release-packages
+            helm package "$dir" -d .release-packages
             echo "::endgroup::"
           done
 
-      # helm names a package <name>-<version>.tgz and release-please tags
-      # <component>-<version> with include-v-in-tag disabled. Both take that string
-      # from Chart.yaml's `name`, not from the directory, so they agree by
-      # construction and the lint check on name-matches-directory is not what holds
-      # this together.
-      - name: Attach packages to their releases
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          for pkg in .cr-release-packages/*.tgz; do
-            tag=$(basename "$pkg" .tgz)
-            echo "uploading $pkg to release $tag"
-            # --clobber so a re-run repairs a partial upload instead of failing.
-            gh release upload "$tag" "$pkg" --clobber
-          done
-
-      # Reads each release's assets and adds an index entry pointing at the asset
-      # download URL, so it has to run after the upload above.
-      - name: Update the charts index
-        env:
-          CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          # cr writes the merged index to .cr-index/index.yaml and does not create
-          # the directory itself, so without this it exits on a missing path.
-          mkdir -p .cr-index
-          cr index \
-            --owner "${{ github.repository_owner }}" \
-            --git-repo "${{ github.event.repository.name }}" \
-            --package-path .cr-release-packages \
-            --index-path .cr-index/index.yaml \
-            --push
-
-      # The one failure in this pipeline that is otherwise silent. `cr index` only
-      # considers packages from the current run and only adds an entry when one is
-      # absent, so it never backfills. If this job dies between creating a release
-      # and updating the index, the release page looks complete and the chart is not
-      # installable, and no later run repairs it: the next push releases nothing, so
-      # `releases_created` is false and this job never runs again.
-      #
-      # Re-running this job fixes it, because `--clobber` above makes the upload
-      # idempotent. That only helps if someone knows, hence failing loudly here.
-      - name: Verify every released chart is in the index
-        run: |
-          set -euo pipefail
           missing=0
-          for pkg in .cr-release-packages/*.tgz; do
-            # Read these from the packaged chart rather than by splitting the
-            # filename, which cannot tell the hyphen in `kyverno-policies` from the
-            # one in a version like `0.1.2-beta.4`.
+          for pkg in .release-packages/*.tgz; do
             name=$(helm show chart "$pkg" | yq -r '.name')
             version=$(helm show chart "$pkg" | yq -r '.version')
-            if ! yq -e ".entries.\"$name\"[] | select(.version == \"$version\")" \
-                 .cr-index/index.yaml >/dev/null 2>&1; then
-              echo "::error::$name $version is missing from index.yaml and is not installable"
+            echo "::group::push $name $version"
+            helm push "$pkg" "$HELM_OCI_REGISTRY"
+            if ! helm show chart "${HELM_OCI_REGISTRY}/${name}" --version "$version" >/dev/null; then
+              echo "::error::$name $version is missing from $HELM_OCI_REGISTRY"
               missing=1
             else
               echo "ok $name $version"
             fi
+            echo "::endgroup::"
           done
 
           if [ "$missing" -ne 0 ]; then
-            echo "::error::Re-run this job to repair the index. See docs/release-pipeline.md."
+            echo "::error::Re-run this job to repair the OCI push. See docs/release-pipeline.md."
             exit 1
           fi

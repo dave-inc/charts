@@ -9,6 +9,9 @@ on:
 env:
   HELM_VERSION: v4.2.4
 
+permissions:
+  contents: read
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -16,6 +19,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # 4.2.2
+        with:
+          persist-credentials: false
 
       - name: Set up Helm
         uses: azure/setup-helm@fe7b79cd5ee1e45176fcad797de68ecaf3ca4814 # v4.2.0
@@ -60,8 +65,8 @@ jobs:
           fi
 
           # The helm strategy derives the release tag component from Chart.yaml's
-          # `name`, while chart-releaser derives it from the directory name. If they
-          # disagree the two tools tag different things.
+          # `name`. Helm package uses the same field. If they disagree with the
+          # directory name, humans will look in the wrong place.
           for dir in $charts; do
             name=$(yq -r '.name' "$dir/Chart.yaml")
             base=$(basename "$dir")
@@ -109,7 +114,11 @@ jobs:
         run: |
           set -euo pipefail
           make schemas
-          if ! git diff --exit-code -- '**/values.schema.json'; then
+          # git diff ignores untracked files. Stage first so a new chart's
+          # values.schema.json cannot slip through.
+          find charts -maxdepth 2 -name values.schema.json -exec git add -- {} +
+          if ! git diff --cached --quiet; then
             echo "::error::values.schema.json is stale. Run 'make schemas' and commit the result."
+            git diff --cached --stat
             exit 1
           fi

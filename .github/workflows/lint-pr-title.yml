@@ -33,6 +33,6 @@ jobs:
           # to charts by file path, not by scope, so a scope enum here would be
           # decoration that needs updating every time a chart is added or removed.
           requireScope: false
-          subjectPattern: ^(?![A-Z]).+$
+          subjectPattern: ^[a-z].+$
           subjectPatternError: |
-            The subject "{subject}" should start with a lowercase character.
+            The subject "{subject}" should start with a lowercase letter.

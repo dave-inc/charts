@@ -73,19 +73,23 @@ falling back to `GITHUB_TOKEN` if it is unavailable:
 ```yaml
 - name: Mint an app token
   id: app-token
-  continue-on-error: true
   uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
   with:
     app-id: ${{ secrets.DEVX_GH_APP_ID }}
     private-key: ${{ secrets.DEVX_GH_APP_S_KEY }}
-    owner: ${{ github.repository_owner }}
+    permission-contents: write
 ```
+
+Leave `owner` and `repositories` unset. Setting `owner` without `repositories`
+scopes the token to every repository in the installation. The workflows name the
+permissions they need instead.
 
 This calls the public action directly rather than
 `dave-inc/common-workflows/.github/actions/create-github-app-token`, which wraps
 the same action at the same version. The wrapper lives in a private repo, and an
 action that cannot be resolved fails the job during *Set up job*, before
-`continue-on-error` applies. Calling the action directly keeps the fallback real.
+`continue-on-error` applies. Calling the action directly keeps the `release.yml`
+fallback real.
 
 Two grants are needed, both of existing things rather than anything new:
 
@@ -199,8 +203,8 @@ exercised end to end before being written down here.
 
 - The step 1 command returned exactly the intended state.
 - A full release ran through: a chart change opened a release PR, merging it
-  created the tag and GitHub Release with the changelog as its body, and the
-  publish job attached the packaged chart and updated `index.yaml`.
+  created the tag and GitHub Release with the changelog as its body. The Pages
+  publish path used in that fork test has been replaced by OCI push.
 - With step 2 unset, release-please failed with the error quoted above.
 - With required checks enabled and no app token, the release PR was unmergeable
   even with `--admin`, which is why that step was dropped.
@@ -213,6 +217,7 @@ Each step reverts independently.
 # 1
 gh api -X PATCH repos/dave-inc/charts \
   -F allow_merge_commit=true -F allow_rebase_merge=true \
+  -F allow_auto_merge=false \
   -f squash_merge_commit_title=COMMIT_OR_PR_TITLE \
   -f squash_merge_commit_message=COMMIT_MESSAGES
 
@@ -228,3 +233,6 @@ stopping it, which is the argument for reverting step 2 instead if the pipeline
 needs to be switched off in a hurry. Removing the ability to open the release PR
 stops it cleanly and changes nothing about how charts already published are
 consumed.
+
+`allow_auto_merge=false` in rollback #1 restores GitHub's default. Step 1 turns
+it on. If it was already true before that PATCH, leave it true.

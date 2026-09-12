@@ -32,9 +32,10 @@ dependencies:
 ## Validations through JSON schema
 
 > [!IMPORTANT]
-> `values.schema.json` is generated but committed. You do not need to regenerate
-> it by hand: a PR touching a chart's `schemas/` directory gets the rebuilt file
-> committed to the branch automatically. Run `make schemas` if you want it sooner.
+> `values.schema.json` is generated but committed. On a branch in this
+> repository, a PR touching a chart's `schemas/` directory gets the rebuilt file
+> committed automatically. Fork PRs cannot receive that push: run `make schemas`
+> and commit the result. Run it locally anyway if you want it sooner.
 
 We use JSON schema to validate our custom charts. To enable that feature a `values.schema.json` file at the root directory for a given chart must be present. e.g. `charts/common/values.schema.json`.
 
@@ -75,5 +76,6 @@ to be published to test a branch.
 2. release-please opens a PR titled `chore(master): release` containing the
    version bump and changelog. Get approvals from #sre-support on that PR.
 3. Merge the release PR. release-please tags and creates the GitHub Release with
-   the changelog as its notes, then chart-releaser packages the chart and updates
-   the repo index.
+   the changelog as its notes. The publish job pushes the chart to
+   `oci://us-docker.pkg.dev/artifact-storage-5748/helm-charts`. New versions are
+   not written to GitHub Pages.

@@ -31,11 +31,14 @@ Titles follow [Conventional Commits](https://www.conventionalcommits.org/):
 | --- | --- |
 | `feat` | minor bump (`0.3.1` to `0.4.0`) |
 | `fix` | patch bump (`0.3.1` to `0.3.2`) |
-| `feat!`, or `BREAKING CHANGE:` in the body | major bump (`0.3.1` to `1.0.0`) |
+| `<type>!` in the PR title (`feat!`, `fix!`, …) | major bump (`0.3.1` to `1.0.0`) |
 | `chore`, `docs`, `refactor`, `test`, `ci`, `build`, `style` | no release |
 
 A scope is optional and has no effect on which chart is released. Use one if it
 helps a human read the log.
+
+Squash commits use a blank message body, so a `BREAKING CHANGE:` footer in the PR
+body never reaches release-please. Put `!` in the title.
 
 ## How a change becomes a release
 
@@ -52,12 +55,13 @@ charts releases both.
    it. Nothing is published before then, so merging to `master` is safe.
 4. Merging the release PR lands the version bump on `master`. release-please then
    tags `job-0.3.2` and creates the GitHub Release, using the changelog it wrote
-   as the release notes. chart-releaser packages the chart, attaches the `.tgz` to
-   that release, and updates `index.yaml` on `gh-pages`.
+   as the release notes. The publish job packages the chart and pushes it to
+   `oci://us-docker.pkg.dev/artifact-storage-5748/helm-charts`. GitHub Pages is not
+   updated.
 
-The published result is the same as it has always been, from the same tags and the
-same `index.yaml`. The differences are that a bot writes the version bump instead
-of you, and the release notes are the changelog rather than the chart description.
+New versions exist only as OCI. `https://dave-inc.github.io/charts` is a frozen
+archive of versions already there. A bot writes the version bump instead of you,
+and the GitHub Release notes are the changelog rather than the chart description.
 
 ### The release PR and SOC-CI
 
@@ -135,8 +139,7 @@ dependencies:
 
 1. Create `charts/<name>/` with a `Chart.yaml` whose `name` matches the
    directory name. CI enforces this, because release-please derives the release
-   tag from `Chart.yaml`'s `name` while chart-releaser derives it from the
-   directory.
+   tag from `Chart.yaml`'s `name` and Helm packages from that same field.
 2. Add the path to `release-please-config.json` under `packages`.
 3. Add the path to `.release-please-manifest.json` with the version you consider
    already released. Use `0.0.0` for a brand new chart.
@@ -149,17 +152,17 @@ does not know about is silently frozen forever.
 `values.schema.json` is generated from each chart's `schemas/` directory but is
 committed to the repo, because Helm needs it at install time.
 
-You do not have to regenerate it. When a PR touches anything under a chart's
-`schemas/`, the Bundle Schemas workflow rebuilds `values.schema.json` and pushes
-the result to your branch as a `chore(schemas):` commit. Pull before you push
-again, or you will conflict with it.
+You do not have to regenerate it on a branch in this repository. When a PR
+touches anything under a chart's `schemas/`, the Bundle Schemas workflow rebuilds
+`values.schema.json` and pushes the result to your branch as a `chore(schemas):`
+commit. Pull before you push again, or you will conflict with it.
 
-If you would rather not wait for CI, or your PR comes from a fork where the
-workflow cannot push for you:
+Fork PRs cannot receive that push. Run this and commit the result:
 
 ```sh
 make schemas
 ```
 
-`helm lint` regenerates and fails on any remaining difference, so a stale schema
-cannot reach a release either way.
+`lint.yml` runs `make schemas` and fails if the committed `values.schema.json`
+does not match `schemas/`. `helm lint` alone does not regenerate or compare that
+file.
