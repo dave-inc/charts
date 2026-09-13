@@ -1,3 +1,17 @@
 .vscode
 .idea
 .DS_Store
+
+# Produced by `helm dependency update`. Committing these makes every local lint
+# look like a chart change, which release-please would then turn into a release.
+charts/*/charts/
+charts/*/Chart.lock
+
+# Produced by `helm package` and chart-releaser.
+*.tgz
+.cr-release-packages/
+.cr-index/
+
+# `make schemas` writes here and moves it into place, so it only survives a run
+# that was killed part way through. Committing one would be pure noise.
+charts/*/values.schema.json.tmp
