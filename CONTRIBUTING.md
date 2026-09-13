@@ -98,9 +98,9 @@ master.
 Beta versions already published stay published, so anything pinning one keeps
 resolving. Move those pins to a stable version when convenient.
 
-Render your branch directly instead.
+Render your branch directly, or consume the per-PR OCI build.
 
-### In a cluster
+### In a cluster, chart is the Application source
 
 Point the Argo CD Application at this repo and set `targetRevision` to your
 branch. Argo renders the chart straight from git, so your branch is what runs,
@@ -115,6 +115,24 @@ spec:
 ```
 
 Set `targetRevision` back to `HEAD` before merging.
+
+### In a cluster, chart is a Helm dependency
+
+A service Chart.yaml that depends on `common` (or any other chart here) resolves
+that dependency from the registry, not from a branch. Each PR publishes changed
+charts to `oci://us-docker.pkg.dev/artifact-storage-5748/helm-charts-pr` at
+`<chartversion>-pr<PR>.<run_id>`. The workflow comments the exact versions on
+the PR.
+
+```yaml
+dependencies:
+  - name: common
+    version: 0.12.3-pr123.456789 # copy from the PR comment
+    repository: oci://us-docker.pkg.dev/artifact-storage-5748/helm-charts-pr
+```
+
+Do not vendor `charts/*.tgz`. Argo CD fetches at sync. Those tags are deleted
+after 14 days and are never promoted to a release.
 
 ### Locally
 
