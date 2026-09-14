@@ -92,7 +92,7 @@ tests:
           value: /readyz
       - equal:
           path: spec.template.spec.containers[0].readinessProbe.httpGet.port
-          value: http-metrics
+          value: telemetry
 
   - it: allows overriding the image tag
     set:
