@@ -32,7 +32,7 @@ tests:
           path: metadata.namespace
           value: tailscale
 
-  - it: grants list/watch on Connector, PeerRelay, and only the two CRDs it watches
+  - it: grants list/watch on Connector, PeerRelay, and CRDs
     set:
       customResourceState: {}
     asserts:
@@ -47,9 +47,6 @@ tests:
               - apiextensions.k8s.io
             resources:
               - customresourcedefinitions
-            resourceNames:
-              - connectors.tailscale.com
-              - peerrelays.tailscale.com
             verbs:
               - list
               - watch

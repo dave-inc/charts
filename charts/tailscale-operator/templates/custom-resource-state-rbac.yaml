@@ -18,9 +18,9 @@ rules:
       - apiextensions.k8s.io
     resources:
       - customresourcedefinitions
-    resourceNames:
-      - connectors.tailscale.com
-      - peerrelays.tailscale.com
+    # resourceNames can't scope list/watch (only get/update/delete on a
+    # single named object) -- kube-state-metrics' CRD discovery reflector
+    # does a collection-wide list/watch, so this must stay cluster-wide.
     verbs:
       - list
       - watch
