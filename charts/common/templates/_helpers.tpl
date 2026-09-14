@@ -459,7 +459,9 @@ kind: Service
 metadata:
   name: {{ .name }}
   annotations:
-    argocd.argoproj.io/sync-wave: "1"
+    {{- if not (hasKey (.annotations | default dict) "argocd.argoproj.io/sync-wave") }}
+    argocd.argoproj.io/sync-wave: "-1"
+    {{- end }}
     {{- if .annotations }}
     {{- toYaml .annotations | nindent 4 }}
     {{- end }}

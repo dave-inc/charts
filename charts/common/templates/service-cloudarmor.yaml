@@ -31,6 +31,13 @@ metadata:
   labels:
     {{- $labels | nindent 4 }}
   annotations:
+    {{- /* Same reasoning as service.yaml's own sync-wave: a selector change here
+    (e.g. a service migrating off a now-removed tier whose Deployment/Service/etc.
+    get pruned in the same sync) needs to reach the API server, and the LB start
+    discovering the new endpoints, before that prune happens - both this Service
+    and an unannotated pruned resource default to wave 0, with no ordering between
+    them otherwise. See charts/common/README.md's "Argo CD order" section. */}}
+    argocd.argoproj.io/sync-wave: "-1"
     cloud.google.com/backend-config: >
       {{- if $.Values.cloudArmor.backendConfig.iap }}
       {"ports": {"80":"{{ $commonname }}", "443":"{{ $commonname }}"},"default": "{{ $commonname }}"}
