@@ -1,0 +1,99 @@
+suite: Custom Resource State RBAC
+templates:
+  - custom-resource-state-rbac.yaml
+tests:
+  - it: renders nothing by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: treats a null customResourceState value as unset
+    set:
+      customResourceState: null
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: creates a ServiceAccount in the release namespace
+    release:
+      namespace: tailscale
+    set:
+      customResourceState: {}
+    asserts:
+      - documentIndex: 0
+        isKind:
+          of: ServiceAccount
+      - documentIndex: 0
+        equal:
+          path: metadata.name
+          value: custom-resource-state-exporter
+      - documentIndex: 0
+        equal:
+          path: metadata.namespace
+          value: tailscale
+
+  - it: grants list/watch on Connector, PeerRelay, and CRDs
+    set:
+      customResourceState: {}
+    asserts:
+      - documentIndex: 1
+        isKind:
+          of: ClusterRole
+      - documentIndex: 1
+        contains:
+          path: rules
+          content:
+            apiGroups:
+              - apiextensions.k8s.io
+            resources:
+              - customresourcedefinitions
+            verbs:
+              - list
+              - watch
+      - documentIndex: 1
+        contains:
+          path: rules
+          content:
+            apiGroups:
+              - tailscale.com
+            resources:
+              - connectors
+              - peerrelays
+            verbs:
+              - list
+              - watch
+
+  - it: scopes ClusterRole and ClusterRoleBinding names to the release and namespace
+    release:
+      name: my-cluster
+      namespace: tailscale
+    set:
+      customResourceState: {}
+    asserts:
+      - documentIndex: 1
+        equal:
+          path: metadata.name
+          value: my-cluster-tailscale-operator-tailscale-crs
+      - documentIndex: 2
+        isKind:
+          of: ClusterRoleBinding
+      - documentIndex: 2
+        equal:
+          path: metadata.name
+          value: my-cluster-tailscale-operator-tailscale-crs
+      - documentIndex: 2
+        equal:
+          path: subjects[0].namespace
+          value: tailscale
+
+  - it: gives the same release name in a different namespace a distinct binding name
+    release:
+      name: my-cluster
+      namespace: other-namespace
+    set:
+      customResourceState: {}
+    asserts:
+      - documentIndex: 2
+        equal:
+          path: metadata.name
+          value: my-cluster-tailscale-operator-other-namespace-crs

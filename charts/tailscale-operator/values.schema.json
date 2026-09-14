@@ -25,6 +25,14 @@
           "aws": { "type": "object" }
         }
       }
+    },
+    "customResourceState": {
+      "type": ["object", "null"],
+      "properties": {
+        "podMonitoring": { "type": "object" },
+        "image": { "type": "object" },
+        "resources": { "type": "object" }
+      }
     }
   }
 }

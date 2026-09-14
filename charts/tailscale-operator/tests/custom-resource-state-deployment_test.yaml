@@ -1,0 +1,93 @@
+suite: Custom Resource State Deployment
+templates:
+  - custom-resource-state-deployment.yaml
+tests:
+  - it: renders nothing by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: treats a null customResourceState value as unset
+    set:
+      customResourceState: null
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: deploys CRS-only kube-state-metrics in the release namespace
+    release:
+      namespace: tailscale
+    set:
+      customResourceState: {}
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: metadata.name
+          value: custom-resource-state-exporter
+      - equal:
+          path: metadata.namespace
+          value: tailscale
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: custom-resource-state-exporter
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value:
+            - --custom-resource-state-only=true
+            - --custom-resource-state-config-file=/etc/kube-state-metrics/config.yaml
+            - --port=8080
+            - --telemetry-port=8081
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.20.0
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].name
+          value: http-metrics
+      - equal:
+          path: spec.selector.matchLabels.application
+          value: tailscale-custom-resource-state-exporter
+
+  - it: copies Kyverno labels from the operator and overrides application
+    set:
+      customResourceState: {}
+    asserts:
+      - equal:
+          path: metadata.labels.application
+          value: tailscale-custom-resource-state-exporter
+      - equal:
+          path: metadata.labels.env
+          value: production
+      - equal:
+          path: metadata.labels.email
+          value: team-bei-at-dave-com
+      - equal:
+          path: metadata.labels.slack_channel
+          value: eng-back-end-infra
+      - equal:
+          path: spec.template.metadata.labels.application
+          value: tailscale-custom-resource-state-exporter
+
+  - it: requires liveness, readiness, and startup probes
+    set:
+      customResourceState: {}
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.httpGet.path
+          value: /healthz
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.path
+          value: /livez
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /readyz
+
+  - it: allows overriding the image tag
+    set:
+      customResourceState:
+        image:
+          tag: v2.19.0
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.19.0

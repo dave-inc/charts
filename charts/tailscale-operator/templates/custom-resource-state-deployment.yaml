@@ -1,0 +1,74 @@
+{{- if and (hasKey .Values "customResourceState") (kindIs "map" .Values.customResourceState) }}
+{{- $crs := .Values.customResourceState }}
+{{- $image := $crs.image | default dict }}
+---
+# CRS-only kube-state-metrics: emits kube_tailscale_connector_* and
+# kube_tailscale_peerrelay_* from the CRs this chart creates.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "tailscale-operator.customResourceState.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "tailscale-operator.customResourceState.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      application: tailscale-custom-resource-state-exporter
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include "tailscale-operator.customResourceState.config" . | sha256sum }}
+      labels:
+        {{- include "tailscale-operator.customResourceState.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "tailscale-operator.customResourceState.name" . }}
+      automountServiceAccountToken: true
+      containers:
+        - name: kube-state-metrics
+          image: {{ printf "%s:%s" ($image.repository | default "registry.k8s.io/kube-state-metrics/kube-state-metrics") ($image.tag | default "v2.20.0") }}
+          imagePullPolicy: {{ $image.pullPolicy | default "IfNotPresent" }}
+          args:
+            - --custom-resource-state-only=true
+            - --custom-resource-state-config-file=/etc/kube-state-metrics/config.yaml
+            - --port=8080
+            - --telemetry-port=8081
+          ports:
+            - name: http-metrics
+              containerPort: 8080
+              protocol: TCP
+            - name: telemetry
+              containerPort: 8081
+              protocol: TCP
+          volumeMounts:
+            - name: config
+              mountPath: /etc/kube-state-metrics
+              readOnly: true
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http-metrics
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: http-metrics
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: telemetry
+          resources:
+            {{- toYaml ($crs.resources | default (dict "requests" (dict "cpu" "50m" "memory" "64Mi") "limits" (dict "memory" "64Mi"))) | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65534
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "tailscale-operator.customResourceState.name" . }}
+{{- end }}

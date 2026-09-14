@@ -32,6 +32,16 @@ oidcDiscovery:
 # with the default interval, or {interval: "15s"} to override it.
 # podMonitoring: {}
 
+# CRS-only kube-state-metrics in this release namespace, watching Connector
+# and PeerRelay CRs. Unset by default; set to {} to enable (Deployment + RBAC
+# + ConfigMap + GMP PodMonitoring). Does not enable GKE's kube-state-metrics
+# package and does not emit kube_deployment_*/kube_statefulset_*.
+# https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/extend/customresourcestate-metrics.md
+# customResourceState: {}
+# customResourceState:
+#   podMonitoring:
+#     interval: 15s
+
 # One tailscale.com/v1alpha1 ProxyClass per key, referenced by name from a
 # connectors[] entry's proxyClass field. Each key gets its own pod label and
 # PDB, so different connector types are never disrupted together.
@@ -71,9 +81,9 @@ proxyClasses: {}
 #   resources:
 #     requests:
 #       cpu: 100m
-#       memory: 128Mi
+#       memory: 512Mi
 #     limits:
-#       memory: 128Mi
+#       memory: 512Mi
 #   metrics:
 #     enable: true # also auto-sets TS_LOCAL_ADDR_PORT/TS_ENABLE_METRICS below, don't repeat them
 #   podMonitoring: {} # GMP scrape of the metrics above, requires metrics.enable: true
@@ -93,9 +103,9 @@ proxyClasses: {}
 #   resources:
 #     requests:
 #       cpu: 100m
-#       memory: 128Mi
+#       memory: 512Mi
 #     limits:
-#       memory: 128Mi
+#       memory: 512Mi
 #   # metrics.enable is a no-op for PeerRelay proxies (confirmed against
 #   # upstream source, github.com/tailscale/tailscale
 #   # k8s-operator/reconciler/tailscaled): wire it manually via env instead,
