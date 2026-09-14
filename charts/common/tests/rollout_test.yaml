@@ -29,6 +29,18 @@ tests:
       - template: service-canary.yaml
         isKind:
           of: Service
+      # Wave -1, same as service.yaml/service-cloudarmor.yaml: ahead of the default
+      # wave (0) that a service migrating off a now-removed tier prunes that tier's
+      # resources in, and still ahead of the HTTPRoute (wave 2) that depends on
+      # these Services existing.
+      - template: service-stable.yaml
+        equal:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+          value: "-1"
+      - template: service-canary.yaml
+        equal:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+          value: "-1"
 
   - it: omits canaryService/stableService, any trafficRouting block, and the stable/canary Services when service.enabled is false, with default trafficRouting
     set:

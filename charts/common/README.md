@@ -10,15 +10,35 @@ it.
 
 ## Argo CD order for canary rollouts
 
-When canary is enabled, the chart applies the stable and canary Services in sync wave
-`"1"`, then the Gateway API chart applies its `HTTPRoute` in wave `"2"`. The Rollout is
-in wave `"3"`, allowing its Gateway API traffic-routing plugin to update an existing
-route, and an HPA, VPA, or KEDA `ScaledObject` targeting that Rollout is in wave `"4"`.
-The referenced Deployment remains in the default wave `"0"`.
+Every Service this chart creates — the plain `Service` (`service.yaml`), the Cloud Armor
+`Service` (`service-cloudarmor.yaml`), and, when canary is enabled, the stable and canary
+Services (`service-stable.yaml`/`service-canary.yaml`) — applies in sync wave `"-1"`, ahead
+of everything else. That protects a service migrating off a now-removed tier (its
+Deployment, Service, etc. pruned in the same sync, as happened when this chart moved off a
+separate reverse-proxy/canary-Deployment architecture onto Argo Rollouts): the Service's
+selector change needs to reach the API server, and the load balancer or kube-proxy needs to
+start discovering the new endpoints, before that prune happens. Without an explicit wave, a
+Service defaults to `"0"` — the same wave as an unannotated pruned resource — with no
+ordering between the two. Set `service.annotations["argocd.argoproj.io/sync-wave"]` to
+override the plain Service's wave; the others don't expose an override today.
 
-This breaks the resource cycle as one direction: Deployment/Services → HTTPRoute →
-Rollout → autoscaler. If a canary HTTPRoute overrides its default sync-wave, keep it
-below the Rollout's wave or override the Rollout and autoscaler waves together.
+After that, the Gateway API chart applies its `HTTPRoute` in wave `"2"` (needing both
+Rollouts-managed Services to already exist, which wave `"-1"` guarantees). The Rollout is
+in wave `"3"`, allowing its Gateway API traffic-routing plugin to update the existing route,
+and an HPA, VPA, or KEDA `ScaledObject` targeting that Rollout is in wave `"4"`. The
+referenced Deployment remains in the default wave `"0"`.
+
+This breaks the resource cycle as one direction: Services → HTTPRoute → Rollout →
+autoscaler. If a canary HTTPRoute overrides its default sync-wave, keep it below the
+Rollout's wave or override the Rollout and autoscaler waves together.
+
+A sync-wave only orders when Argo CD *applies* each resource — it does not wait for the
+load balancer's health checks or NEG registration to actually converge, and it can't make a
+tier's own removal (e.g. deleting a reverse proxy that was the sole thing routing traffic
+for both internal and external callers) atomic with the new path taking over. Treat the
+wave ordering here as reducing, not eliminating, the risk of a one-time migration like that;
+watch the real traffic/health signals live during it, or stage it as two changes, rather
+than relying on the chart alone.
 
 ## Opting a deployment out of canary
 

@@ -11,9 +11,15 @@ kind: Service
 metadata:
   name: {{ include "common.stableServiceName" . }}
   annotations:
-    # The Gateway API HTTPRoute is applied in wave 2. Its backendRefs need both
-    # Rollouts-managed Services to exist before that reconciliation begins.
-    argocd.argoproj.io/sync-wave: "1"
+    # -1 satisfies two separate ordering needs at once: it's still before the
+    # Gateway API HTTPRoute (wave 2), whose backendRefs need both Rollouts-managed
+    # Services to exist before that reconciliation begins, and it's also ahead of
+    # the default wave (0) that a service migrating off a now-removed tier prunes
+    # that tier's resources in - see service.yaml's own comment for why that
+    # ordering matters. A Service can exist with no endpoints before its target
+    # Pods do, so moving this earlier than strictly required by the HTTPRoute has
+    # no downside.
+    argocd.argoproj.io/sync-wave: "-1"
   labels:
     {{- include "common.labels" . | nindent 4 }}
 spec:
