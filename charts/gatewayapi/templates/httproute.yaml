@@ -16,7 +16,18 @@ kind: HTTPRoute
 metadata:
   {{- $userAnnotations := dig "metadata" "annotations" dict $routeDefinition }}
   {{- $defaultAnnotations := dig "default" "metadata" "annotations" dict $.Values.routes }}
-  {{- if or $userAnnotations $defaultAnnotations }}
+  {{- $canaryEnabled := dig "canary" "enabled" false (default dict $.Values.global) }}
+  {{- /*
+  When canary is enabled, this HTTPRoute is load-bearing for the Rollout's own
+  health: Argo Rollouts' gatewayAPI traffic-routing plugin (see
+  charts/common/templates/rollout.yaml) has to patch this route's weights for
+  the Rollout to ever go healthy. That makes the Rollout depend on this route,
+  so the Rollout is given a sync-wave (see rollout.yaml) *after* this route's
+  default "2" instead of the reverse -- keeping this route at "2" preserves its
+  own buffer after the Services it targets (see values.yaml), rather than
+  trading that buffer away to unblock the Rollout.
+  */}}
+  {{- if or $userAnnotations $defaultAnnotations $canaryEnabled }}
   annotations:
     {{- range $k, $v := $defaultAnnotations }}
     {{- if not (hasKey $userAnnotations $k) }}
@@ -25,6 +36,11 @@ metadata:
     {{- end }}
     {{- with $userAnnotations }}
     {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- if $canaryEnabled }}
+    # This signal lets Argo CD ignore only Rollouts-managed backend weights.
+    # See the Application-level rule in README.md.
+    charts.dave.com/argo-rollouts-managed-weights: "true"
     {{- end }}
   {{- end }}
   labels:
@@ -54,11 +70,45 @@ spec:
       {{- if .backendRefs }}
       backendRefs:
         {{- range .backendRefs }}
+        {{- /*
+        Whether canary is on is controlled entirely by `global.canary.enabled`
+        -- the same umbrella-level toggle the `common` chart's
+        `common.canaryEnabled` helper reads (see
+        charts/common/templates/_helpers.tpl) -- so the same boolean never
+        needs to be set again here per backendRef.
+        */}}
+        {{- if (dig "canary" "enabled" false (default dict $.Values.global)) }}
+        {{- /*
+        Every backendRef expands into the stable+canary pair Argo Rollouts'
+        Gateway API traffic router plugin expects, so a canary route doesn't
+        require hand-typing both Service names and weights. `name` here is
+        the app's base name -- the expanded Service names below match what
+        the `common` chart derives by default for the same base name (see
+        `common.canaryServiceName`/`common.stableServiceName` in
+        charts/common/templates/_helpers.tpl): "<name>-stable"/"<name>-canary".
+        */}}
+        - group: {{ .group | default $.Values.routes.default.spec.rule.backendRef.group | quote }}
+          kind: {{ .kind | default $.Values.routes.default.spec.rule.backendRef.kind }}
+          name: {{ .name }}-stable
+          port: {{ .port }}
+          weight: {{ if hasKey . "weight" }}{{ .weight }}{{ else }}{{ $.Values.routes.default.spec.rule.backendRef.weight }}{{ end }}
+        - group: {{ .group | default $.Values.routes.default.spec.rule.backendRef.group | quote }}
+          kind: {{ .kind | default $.Values.routes.default.spec.rule.backendRef.kind }}
+          name: {{ .name }}-canary
+          port: {{ .port }}
+          weight: {{ if hasKey . "canaryWeight" }}{{ .canaryWeight }}{{ else }}{{ $.Values.routes.default.spec.rule.backendRef.canaryWeight }}{{ end }}
+        {{- else }}
         - group: {{ .group | default $.Values.routes.default.spec.rule.backendRef.group | quote }}
           kind: {{ .kind | default $.Values.routes.default.spec.rule.backendRef.kind }}
           name: {{ .name }}
           port: {{ .port }}
-          weight: {{ .weight | default $.Values.routes.default.spec.rule.backendRef.weight }}
+          {{- /*
+          `default` treats 0 as empty, which would silently replace an
+          explicit `weight: 0` (the common starting point for a canary
+          backendRef) with the default weight. Check for the key instead.
+          */}}
+          weight: {{ if hasKey . "weight" }}{{ .weight }}{{ else }}{{ $.Values.routes.default.spec.rule.backendRef.weight }}{{ end }}
+        {{- end }}
         {{- end }}
       {{- end }}
       {{- if .matches }}
