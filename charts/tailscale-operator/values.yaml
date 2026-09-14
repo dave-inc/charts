@@ -41,6 +41,12 @@ oidcDiscovery:
 # customResourceState:
 #   podMonitoring:
 #     interval: 15s
+#   resources: # defaults to the below when unset
+#     requests:
+#       cpu: 50m
+#       memory: 64Mi
+#     limits:
+#       memory: 64Mi
 
 # One tailscale.com/v1alpha1 ProxyClass per key, referenced by name from a
 # connectors[] entry's proxyClass field. Each key gets its own pod label and

@@ -9,6 +9,11 @@ kind: Deployment
 metadata:
   name: {{ include "tailscale-operator.customResourceState.name" . }}
   namespace: {{ .Release.Namespace }}
+  annotations:
+    # Same rationale as connectors.yaml/peerrelays.yaml/proxyclasses.yaml:
+    # this container reads the Connector/PeerRelay CRDs at startup, which
+    # install in the default sync-wave, so it must land after them.
+    argocd.argoproj.io/sync-wave: "1"
   labels:
     {{- include "tailscale-operator.customResourceState.labels" . | nindent 4 }}
 spec:

@@ -29,6 +29,9 @@ tests:
           path: metadata.namespace
           value: tailscale
       - equal:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+          value: "1"
+      - equal:
           path: spec.template.spec.serviceAccountName
           value: custom-resource-state-exporter
       - equal:
