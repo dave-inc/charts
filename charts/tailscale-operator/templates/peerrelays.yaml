@@ -1,0 +1,53 @@
+{{- range .Values.peerRelays }}
+{{- if not .name }}
+{{- fail "peerRelays[]: name is required" }}
+{{- end }}
+{{- if and (hasKey . "replicas") (lt (int .replicas) 0) }}
+{{- fail (printf "peerRelays[%s]: replicas cannot be negative" .name) }}
+{{- end }}
+{{- if .proxyClass }}
+{{- $peerRelayName := .name }}
+{{- $proxyClassName := .proxyClass }}
+{{- if not (hasKey ($.Values.proxyClasses | default dict) $proxyClassName) }}
+{{- fail (printf "peerRelays[%s]: proxyClass %q does not match a key in proxyClasses" $peerRelayName $proxyClassName) }}
+{{- end }}
+{{- $pc := get $.Values.proxyClasses $proxyClassName }}
+{{- range ($pc.env | default list) }}
+{{- if eq .name "TS_ENABLE_HEALTH_CHECK" }}
+{{- fail (printf "peerRelays[%s]: proxyClass %q must not set env TS_ENABLE_HEALTH_CHECK -- the operator injects it itself for PeerRelay proxies, and a duplicate entry fails the StatefulSet apply" $peerRelayName $proxyClassName) }}
+{{- end }}
+{{- end }}
+{{- end }}
+---
+# Cluster-scoped, one release per cluster, so name isn't prefixed. No
+# singular hostname field, so hostnamePrefix is always rendered.
+apiVersion: tailscale.com/v1alpha1
+kind: PeerRelay
+metadata:
+  name: {{ .name }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  hostnamePrefix: {{ .hostnamePrefix | default .name }}
+  {{- if hasKey . "replicas" }}
+  replicas: {{ .replicas }}
+  {{- end }}
+  {{- if .tags }}
+  tags:
+    {{- toYaml .tags | nindent 4 }}
+  {{- end }}
+  {{- if .proxyClass }}
+  proxyClass: {{ .proxyClass }}
+  {{- end }}
+  {{- if .tailnet }}
+  tailnet: {{ .tailnet }}
+  {{- end }}
+  {{- if .service }}
+  service:
+    {{- toYaml .service | nindent 4 }}
+  {{- end }}
+  {{- if .aws }}
+  aws:
+    {{- toYaml .aws | nindent 4 }}
+  {{- end }}
+{{- end }}

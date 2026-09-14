@@ -27,6 +27,11 @@ tailscale-operator:
 oidcDiscovery:
   enabled: false
 
+# Scrapes the operator's own controller-runtime metrics (control plane), via a
+# GKE Managed Prometheus PodMonitoring. Unset by default; set to {} to enable
+# with the default interval, or {interval: "15s"} to override it.
+# podMonitoring: {}
+
 # One tailscale.com/v1alpha1 ProxyClass per key, referenced by name from a
 # connectors[] entry's proxyClass field. Each key gets its own pod label and
 # PDB, so different connector types are never disrupted together.
@@ -53,6 +58,56 @@ proxyClasses: {}
 #     limits:
 #       cpu: 1000m
 #       memory: 128Mi
+# appc-github: # HA app connector: 2+ replicas need their own spread/PDB, same as an exit node
+#   topologySpreadConstraints:
+#     - maxSkew: 1
+#       topologyKey: topology.kubernetes.io/zone
+#       whenUnsatisfiable: DoNotSchedule
+#     - maxSkew: 1
+#       topologyKey: kubernetes.io/hostname
+#       whenUnsatisfiable: DoNotSchedule
+#   podDisruptionBudget:
+#     minAvailable: 1
+#   resources:
+#     requests:
+#       cpu: 100m
+#       memory: 128Mi
+#     limits:
+#       memory: 128Mi
+#   metrics:
+#     enable: true # also auto-sets TS_LOCAL_ADDR_PORT/TS_ENABLE_METRICS below, don't repeat them
+#   podMonitoring: {} # GMP scrape of the metrics above, requires metrics.enable: true
+#   env:
+#     - name: TS_ENABLE_HEALTH_CHECK
+#       value: "true" # serves /healthz on the same port metrics.enable uses
+# peer-relay: # referenced by peerRelays[].proxyClass below
+#   topologySpreadConstraints: # spreads replicas across zones and nodes
+#     - maxSkew: 1
+#       topologyKey: topology.kubernetes.io/zone
+#       whenUnsatisfiable: DoNotSchedule
+#     - maxSkew: 1
+#       topologyKey: kubernetes.io/hostname
+#       whenUnsatisfiable: DoNotSchedule
+#   podDisruptionBudget:
+#     minAvailable: 1
+#   resources:
+#     requests:
+#       cpu: 100m
+#       memory: 128Mi
+#     limits:
+#       memory: 128Mi
+#   # metrics.enable is a no-op for PeerRelay proxies (confirmed against
+#   # upstream source, github.com/tailscale/tailscale
+#   # k8s-operator/reconciler/tailscaled): wire it manually via env instead,
+#   # and point podMonitoring.port at the port that's actually there.
+#   podMonitoring:
+#     port: healthz
+#   env:
+#     - name: TS_ENABLE_METRICS
+#       value: "true"
+#   # Don't set env: TS_ENABLE_HEALTH_CHECK here -- the operator's
+#   # peerrelay-reconciler injects it itself, and a duplicate entry makes
+#   # the StatefulSet apply fail outright (no pods ever come up).
 
 # One entry per tailscale.com/v1alpha1 Connector to create.
 # https://tailscale.com/docs/kubernetes-operator/connector/deploy-subnet-router
@@ -64,3 +119,23 @@ connectors: []
 #   tags:
 #     - "tag:ci-exit"
 #   exitNode: true
+# - name: appc-github
+#   # HA app connector: multiple app connector devices give failover, not
+#   # closest-node routing -- Tailscale docs describe this as failover only.
+#   # https://tailscale.com/kb/1281/app-connectors
+#   replicas: 2
+#   hostnamePrefix: appc-github
+#   proxyClass: appc-github
+#   tags:
+#     - "tag:github-connector"
+#   appConnector: {} # routes auto-discovered via DNS once domains are set in Apps
+
+# One entry per tailscale.com/v1alpha1 PeerRelay to create. Peer relays let
+# two tailnet nodes that can't reach each other directly (e.g. both behind
+# hard NAT) relay traffic through a third node instead of falling back to
+# DERP. https://tailscale.com/kb/1115/high-availability
+peerRelays: []
+# - name: peer-relay
+#   proxyClass: peer-relay
+#   tags:
+#     - "tag:peer-relay"

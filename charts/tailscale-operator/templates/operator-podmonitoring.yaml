@@ -1,0 +1,27 @@
+{{- if and (hasKey .Values "podMonitoring") (kindIs "map" .Values.podMonitoring) }}
+{{- $podMonitoring := .Values.podMonitoring }}
+{{- if hasKey $podMonitoring "selector" }}
+{{- fail "podMonitoring: selector is set automatically and must not be overridden" }}
+{{- end }}
+{{- $sub := index .Values "tailscale-operator" | default dict }}
+{{- $operatorConfig := $sub.operatorConfig | default dict }}
+{{- $podLabels := $operatorConfig.podLabels | default dict }}
+{{- if ne (get $podLabels "application") "tailscale-operator" }}
+{{- fail "podMonitoring requires tailscale-operator.operatorConfig.podLabels.application to stay \"tailscale-operator\" (the selector it relies on)" }}
+{{- end }}
+---
+# GKE Managed Prometheus scrape of the operator's own controller-runtime
+# metrics endpoint (control plane), not a Prometheus Operator ServiceMonitor.
+apiVersion: monitoring.googleapis.com/v1
+kind: PodMonitoring
+metadata:
+  name: operator
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      application: tailscale-operator
+  endpoints:
+    - port: 8080
+      interval: {{ $podMonitoring.interval | default "30s" }}
+{{- end }}
