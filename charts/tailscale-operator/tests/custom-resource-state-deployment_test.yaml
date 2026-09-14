@@ -79,11 +79,20 @@ tests:
           path: spec.template.spec.containers[0].startupProbe.httpGet.path
           value: /healthz
       - equal:
+          path: spec.template.spec.containers[0].startupProbe.httpGet.port
+          value: http-metrics
+      - equal:
           path: spec.template.spec.containers[0].livenessProbe.httpGet.path
           value: /livez
       - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.port
+          value: http-metrics
+      - equal:
           path: spec.template.spec.containers[0].readinessProbe.httpGet.path
           value: /readyz
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.port
+          value: http-metrics
 
   - it: allows overriding the image tag
     set:

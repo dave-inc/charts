@@ -33,11 +33,16 @@ custom-resource-state-exporter
 
 {{/*
 ClusterRole/Binding name. Cluster-scoped, so it includes release and
-namespace (same collision concern as OIDC discovery) and is truncated to
-63 chars.
+namespace (same collision concern as OIDC discovery). ClusterRole/Binding
+names follow the standard Kubernetes object name limit (253 chars), not
+the 63-char DNS label limit that "tailscale-operator.fullname" itself
+already applies -- truncating here at 63 again could cut into the
+namespace or "-crs" suffix and collide two different releases/namespaces
+onto the same name, so trunc at 253 instead, which no realistic
+release+namespace pair can reach.
 */}}
 {{- define "tailscale-operator.customResourceState.clusterRoleName" -}}
-{{- printf "%s-%s-crs" (include "tailscale-operator.fullname" .) .Release.Namespace | trunc 63 | trimSuffix "-" }}
+{{- printf "%s-%s-crs" (include "tailscale-operator.fullname" .) .Release.Namespace | trunc 253 | trimSuffix "-" }}
 {{- end }}
 
 {{/*

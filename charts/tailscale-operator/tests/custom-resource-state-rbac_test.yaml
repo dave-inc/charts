@@ -97,3 +97,31 @@ tests:
         equal:
           path: metadata.name
           value: my-cluster-tailscale-operator-other-namespace-crs
+
+  - it: doesn't collide two namespaces once the release name alone already fills the old 63-char cap
+    # "tailscale-operator.fullname" truncates at 63 chars on its own, so once
+    # the release name pushes it there, re-truncating clusterRoleName at 63
+    # (the old behavior) drops the namespace and "-crs" suffix entirely --
+    # both namespaces below would render the exact same ClusterRole name.
+    release:
+      name: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      namespace: ns-one
+    set:
+      customResourceState: {}
+    asserts:
+      - documentIndex: 1
+        equal:
+          path: metadata.name
+          value: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-tailscale-op-ns-one-crs
+
+  - it: and the other namespace gets a different name, not the same truncated one
+    release:
+      name: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      namespace: ns-two
+    set:
+      customResourceState: {}
+    asserts:
+      - documentIndex: 1
+        equal:
+          path: metadata.name
+          value: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-tailscale-op-ns-two-crs

@@ -61,7 +61,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /readyz
-              port: telemetry
+              port: http-metrics
           resources:
             {{- toYaml ($crs.resources | default (dict "requests" (dict "cpu" "50m" "memory" "64Mi") "limits" (dict "memory" "64Mi"))) | nindent 12 }}
           securityContext:
