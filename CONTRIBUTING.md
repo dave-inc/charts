@@ -84,8 +84,8 @@ satisfy that check. Two things follow from this:
 ### Sweeping changes
 
 Because attribution is by file path, a change that touches every chart releases
-every chart. Renaming a shared label or reformatting all `values.yaml` files will
-produce eight releases. If that is not what you want, split the change so each
+every chart. Renaming a shared label or reformatting all `values.yaml` files is
+that kind of change. If that is not what you want, split the change so each
 chart moves on its own PR, or use a non-releasing type like `chore`.
 
 ## Testing a chart before release
@@ -136,22 +136,18 @@ after 14 days and are never promoted to a release.
 
 ### Locally
 
-Package the chart and point your consuming chart at the tarball.
-
-```sh
-cd charts/common
-helm dependency update .
-helm package . -d /tmp/charts
-```
-
-Then in the consuming repo:
+Point the consuming chart at the checked-out chart directory. Helm `file://`
+dependencies resolve a directory that contains `Chart.yaml`, not a folder of
+packaged `.tgz` files.
 
 ```yaml
 dependencies:
   - name: common
     version: 0.12.3 # example only; copy the current value from charts/common/Chart.yaml
-    repository: "file:///tmp/charts"
+    repository: "file://../charts/charts/common"
 ```
+
+Then run `helm dependency update` in the consuming chart.
 
 ## Adding a chart
 

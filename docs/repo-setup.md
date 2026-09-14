@@ -191,10 +191,8 @@ This matters more for the first run than any later one, because every commit now
 master arrived by merge commit, so the bootstrap is computed from history that
 predates the squash-only rule.
 
-Last run against `dave-inc/charts` at the time of writing: all eight anchors
-resolved, three charts reported zero commits, and the proposal was
-`cloudsql-proxy 0.2.0`, `common 0.12.0`, `job 0.3.0`, `kyverno-policies 0.1.2` and
-`workflow 0.2.0`.
+Re-run the command before merge. The proposal changes as charts and history
+change, so a recorded result here would go stale.
 
 ## What was already verified
 
