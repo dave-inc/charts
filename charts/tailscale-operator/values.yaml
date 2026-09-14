@@ -85,8 +85,8 @@ proxyClasses: {}
 #   podDisruptionBudget:
 #     minAvailable: 1
 #   resources:
-#     requests:
-#       cpu: 100m
+#     requests: # no cpu limit: let it burst freely, cap only the baseline
+#       cpu: 500m
 #       memory: 512Mi
 #     limits:
 #       memory: 512Mi
@@ -107,8 +107,8 @@ proxyClasses: {}
 #   podDisruptionBudget:
 #     minAvailable: 1
 #   resources:
-#     requests:
-#       cpu: 100m
+#     requests: # no cpu limit: GOMAXPROCS=1 below caps it to a single core anyway
+#       cpu: 500m
 #       memory: 512Mi
 #     limits:
 #       memory: 512Mi
@@ -121,6 +121,12 @@ proxyClasses: {}
 #   env:
 #     - name: TS_ENABLE_METRICS
 #       value: "true"
+#     # Pins the socket-reader/wireguard-go pool count to 1: those scale
+#     # per-CPU visible to the container, not per actual load, so on
+#     # high-core nodes memory balloons well past the limit above.
+#     # https://github.com/tailscale/tailscale/issues/18774
+#     - name: GOMAXPROCS
+#       value: "1"
 #   # Don't set env: TS_ENABLE_HEALTH_CHECK here -- the operator's
 #   # peerrelay-reconciler injects it itself, and a duplicate entry makes
 #   # the StatefulSet apply fail outright (no pods ever come up).
