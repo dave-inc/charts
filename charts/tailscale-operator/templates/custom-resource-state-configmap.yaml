@@ -1,0 +1,14 @@
+{{- if and (hasKey .Values "customResourceState") (kindIs "map" .Values.customResourceState) }}
+---
+# kube-state-metrics Custom Resource State config for Connector and PeerRelay.
+# Cluster-scoped CRs; omit field/label selectors so every instance is watched.
+# https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/extend/customresourcestate-metrics.md
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "tailscale-operator.customResourceState.name" . }}
+  namespace: {{ .Release.Namespace }}
+data:
+  config.yaml: |
+    {{- include "tailscale-operator.customResourceState.config" . | nindent 4 }}
+{{- end }}

@@ -25,6 +25,12 @@ pieces upstream doesn't provide, without patching Tailscale's own templates:
   (`templates/proxyclass-pdb.yaml`) so different connector/peer relay types
   (e.g. an HA exit node vs. a subnet router vs. a peer relay) are never
   disrupted together.
+- **Connector and PeerRelay CR metrics.** `customResourceState: {}` deploys a
+  CRS-only kube-state-metrics in this release namespace and a GMP
+  `PodMonitoring` that scrapes it, so `kube_tailscale_connector_*` /
+  `kube_tailscale_peerrelay_*` follow the same Cloud Monitoring → Datadog
+  path as the operator and ProxyClass scrapes. It does not turn on GKE's
+  kube-state-metrics package (`kube_deployment_*` / `kube_statefulset_*`).
 
 ## Usage
 
@@ -64,6 +70,10 @@ overrides.
 | --- | --- | --- |
 | `oidcDiscovery.enabled` | `false` | Publishes this cluster's OIDC discovery/JWKS endpoints to unauthenticated callers so the operator can authenticate via workload identity federation instead of an OAuth client secret. Set to `true` only for consumers using WIF. |
 | `podMonitoring` | unset | Creates a GMP `PodMonitoring` scraping the operator's own controller-runtime metrics (`:8080/metrics`, on by default upstream, control plane not per-ProxyClass data plane). Set to `{}` to enable with the default interval, or `{interval: "15s"}` to override it. |
+| `customResourceState` | unset | Deploys a CRS-only kube-state-metrics in this release namespace watching `Connector` and `PeerRelay`, plus a GMP `PodMonitoring` scraping `:8080` (`http-metrics`). Set to `{}` to enable. Emits `kube_tailscale_connector_status` / `kube_tailscale_connector_replicas` (labels include `name`, `proxy_class`, `is_app_connector`, `is_exit_node`) and `kube_tailscale_peerrelay_status` / `kube_tailscale_peerrelay_replicas`. |
+| `customResourceState.podMonitoring.interval` | `30s` | Scrape interval for the CRS metrics endpoint. `selector` is set automatically and must not be overridden. |
+| `customResourceState.image` | `registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.20.0` | Image `repository` / `tag` / `pullPolicy` for the CRS kube-state-metrics container. |
+| `customResourceState.resources` | `50m` CPU / `64Mi` memory request, `64Mi` limit | Resource requests/limits for that container. |
 | `proxyClasses` | `{}` | Map of `tailscale.com/v1alpha1` ProxyClass name -> config. Each key gets its own `proxy-class` pod label, so PDBs and topology spread never mix connector types together. |
 | `proxyClasses.<name>.topologySpreadConstraints` | unset | Spreads that ProxyClass's replicas across zones/nodes. `labelSelector` is filled in automatically from the ProxyClass name. |
 | `proxyClasses.<name>.podDisruptionBudget` | unset | Creates a PDB scoped to that ProxyClass's pods (e.g. `minAvailable: 1`). Omit to leave that ProxyClass without a PDB. |
@@ -116,6 +126,11 @@ for the full set.
   (`{{ include "tailscale-operator.fullname" . }}-{{ .Release.Namespace }}-oidc-discovery`)
   to avoid colliding with another install of this chart in the same
   cluster.
+- `customResourceState: {}` renders a ConfigMap, ServiceAccount, ClusterRole,
+  ClusterRoleBinding, Deployment, and PodMonitoring named
+  `custom-resource-state-exporter` in the release namespace. The ClusterRole/Binding
+  names include release and namespace, same as OIDC discovery. `is_app_connector`
+  and `is_exit_node` are labels on the Connector series, not separate metrics.
 
 Run `helm unittest charts/tailscale-operator` to exercise this branching
 logic (see `tests/`).
