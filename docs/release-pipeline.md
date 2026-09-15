@@ -199,7 +199,7 @@ Seeded values are the newest non-prerelease GitHub Release per chart, matching
 | gatewayapi | `gatewayapi-2.11.0` | `2.11.0` |
 | job | `job-0.2.1` | `0.2.2-beta.1` |
 | kyverno-policies | `kyverno-policies-0.1.1` | `0.1.2-beta.4` |
-| tailscale-operator | `tailscale-operator-0.1.1` | `0.1.1` |
+| tailscale-operator | `tailscale-operator-0.1.3` | `0.1.3` |
 | workflow | `workflow-0.1.0` | `0.1.1-beta.5` |
 
 Charts whose `Chart.yaml` already equals the seed stay there until a later
