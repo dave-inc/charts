@@ -1,0 +1,23 @@
+{{- if and (hasKey .Values "customResourceState") (kindIs "map" .Values.customResourceState) }}
+{{- $crs := .Values.customResourceState }}
+{{- $podMonitoring := $crs.podMonitoring | default dict }}
+{{- if hasKey $podMonitoring "selector" }}
+{{- fail "customResourceState.podMonitoring: selector is set automatically and must not be overridden" }}
+{{- end }}
+---
+# GKE Managed Prometheus scrape of the CRS-only kube-state-metrics
+# resource metrics port. Same path as operator/ProxyClass PodMonitoring:
+# gmp-collector → Cloud Monitoring → Datadog GCP integration.
+apiVersion: monitoring.googleapis.com/v1
+kind: PodMonitoring
+metadata:
+  name: {{ include "tailscale-operator.customResourceState.name" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      application: tailscale-custom-resource-state-exporter
+  endpoints:
+    - port: http-metrics
+      interval: {{ $podMonitoring.interval | default "30s" }}
+{{- end }}

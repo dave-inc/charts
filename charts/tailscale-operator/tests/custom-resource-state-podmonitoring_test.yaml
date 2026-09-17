@@ -1,0 +1,60 @@
+suite: Custom Resource State PodMonitoring
+templates:
+  - custom-resource-state-podmonitoring.yaml
+tests:
+  - it: renders nothing by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: treats a null customResourceState value as unset
+    set:
+      customResourceState: null
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: scrapes http-metrics in the release namespace, defaulting the interval
+    release:
+      namespace: tailscale
+    set:
+      customResourceState: {}
+    asserts:
+      - isKind:
+          of: PodMonitoring
+      - equal:
+          path: metadata.name
+          value: custom-resource-state-exporter
+      - equal:
+          path: metadata.namespace
+          value: tailscale
+      - equal:
+          path: spec.selector.matchLabels.application
+          value: tailscale-custom-resource-state-exporter
+      - equal:
+          path: spec.endpoints[0].port
+          value: http-metrics
+      - equal:
+          path: spec.endpoints[0].interval
+          value: "30s"
+
+  - it: allows overriding the scrape interval
+    set:
+      customResourceState:
+        podMonitoring:
+          interval: 15s
+    asserts:
+      - equal:
+          path: spec.endpoints[0].interval
+          value: "15s"
+
+  - it: fails when podMonitoring overrides the auto-filled selector
+    set:
+      customResourceState:
+        podMonitoring:
+          selector:
+            matchLabels:
+              app: something-else
+    asserts:
+      - failedTemplate:
+          errorMessage: "customResourceState.podMonitoring: selector is set automatically and must not be overridden"
