@@ -1,0 +1,46 @@
+suite: Live deployment-group labels for Datadog and @dave-inc/logger
+templates:
+  - deployment.yaml
+  - rollout.yaml
+values:
+  - ./fixtures/minimal-values.yaml
+tests:
+  - it: labels plain Deployment pods stable, not control
+    asserts:
+      - template: deployment.yaml
+        equal:
+          path: spec.template.metadata.labels.deployment-group
+          value: stable
+
+  - it: always mounts the downward-API podinfo volume at /etc/podinfo
+    asserts:
+      - template: deployment.yaml
+        contains:
+          path: spec.template.spec.volumes
+          content:
+            name: podinfo
+            downwardAPI:
+              items:
+                - path: labels
+                  fieldRef:
+                    fieldPath: metadata.labels
+      - template: deployment.yaml
+        contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: podinfo
+            mountPath: /etc/podinfo
+            readOnly: true
+
+  - it: sets Rollout ephemeral metadata to canary vs stable
+    set:
+      global.canary.enabled: true
+    asserts:
+      - template: rollout.yaml
+        equal:
+          path: spec.strategy.canary.canaryMetadata.labels.deployment-group
+          value: canary
+      - template: rollout.yaml
+        equal:
+          path: spec.strategy.canary.stableMetadata.labels.deployment-group
+          value: stable

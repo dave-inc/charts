@@ -128,6 +128,18 @@ Kubernetes default of 30.
 A service that already defines `deploymentContainer.lifecycle` keeps its own hook, which then
 owns the whole drain and is not checked against the grace period.
 
+### Canary vs stable on logs (`/etc/podinfo/labels`)
+
+Every Pod gets a downward-API volume at `/etc/podinfo` whose `labels` file tracks the live
+`deployment-group` pod label (`canary` or `stable`). Argo Rollouts flips that label on
+already-running pods at promotion; kubelet updates the file so `@dave-inc/logger` and other
+in-process readers follow the flip. A `DEPLOYMENT_GROUP` env var would freeze at container
+start and stay wrong after the first promotion — do not add one.
+
+If a service already mounts a custom volume named `podinfo` (the pattern used to test this on
+`service-template-test-service` before it was built into the chart), drop that `customVolumes`
+entry when bumping to this version, or the duplicate name will fail to schedule.
+
 ### Rollouts wait a minute per wave
 
 `serviceGracefulRollout.minReadySeconds: 60` requires a new Pod to stay Ready for a minute

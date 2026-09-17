@@ -848,6 +848,11 @@ customVolumes:
   enabled: false
   # https://kubernetes.io/docs/concepts/storage/volumes/
   # Specify volumes and volumeMounts
+  #
+  # The chart always mounts a downward-API volume named `podinfo` at
+  # /etc/podinfo (labels file at /etc/podinfo/labels) so in-process readers
+  # can see the live canary/stable deployment-group. Do not reuse the name
+  # `podinfo` here.
   volumes: {}
   #   - name: volume-1
   #     emptyDir: {}

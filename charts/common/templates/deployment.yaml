@@ -1,4 +1,5 @@
-{{/* Any resource that defines a volume should be included in the list below */}}
+{{/* Any resource that defines a volume should be included in the list below.
+     `true` keeps the volumes block for the always-on podinfo downward-API mount. */}}
 {{- $hasVolumes := (or
 .Values.initContainer.enabled
 .Values.cloudsqlProxy.enabled
@@ -6,6 +7,7 @@
 .Values.existingConfigMapMount.enabled
 .Values.customConfig.enabled
 .Values.customVolumes.enabled
+true
 ) -}}
 {{- $sqlProxyVersion := include "common.cloudsqlProxyVersion" . -}}
 {{- $sqlinstanceConnectionName := include "common.instanceConnectionName" . -}}
@@ -334,6 +336,17 @@ spec:
             {{- end }}
           {{- if $hasVolumes }}{{/* begin volumeMounts */}}
           volumeMounts:
+            {{- /*
+            Live pod labels, including deployment-group. Env vars from
+            fieldRef freeze at container start; this file is refreshed by
+            kubelet when Argo flips canary → stable, which is what
+            @dave-inc/logger (and in-process readers like /health/canary)
+            use. Do not also define a customVolumes entry named podinfo —
+            duplicate volume names fail.
+            */}}
+            - name: podinfo
+              mountPath: /etc/podinfo
+              readOnly: true
           {{- if .Values.initContainer.enabled }}
             - name: tmp
               mountPath: /tmp
@@ -427,6 +440,12 @@ spec:
 
       {{- if $hasVolumes }}{{/* begin volumes */}}
       volumes:
+        - name: podinfo
+          downwardAPI:
+            items:
+              - path: labels
+                fieldRef:
+                  fieldPath: metadata.labels
       {{- if .Values.initContainer.enabled }}
         - name: tmp
           emptyDir: {}
