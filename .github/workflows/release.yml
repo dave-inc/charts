@@ -4,7 +4,16 @@ on:
   push:
     branches:
       - master
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      skip_existing:
+        type: boolean
+        default: false
+        description: >-
+          Passed through to chart-releaser's skip_existing option: skip
+          re-uploading a chart version that's already published, instead of
+          trying to recreate its GitHub Release and failing with a 422 from
+          GitHub's API.
 
 jobs:
   release:
@@ -25,8 +34,8 @@ jobs:
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
       - name: Run chart-releaser
-        uses: helm/chart-releaser-action@a3454e46a6f5ac4811069a381e646961dda2e1bf # v1.4.0
+        uses: helm/chart-releaser-action@a0d2dc62c5e491af8ef6ba64a2e02bcf3fb33aa1 # v1.7.0
         with:
-          charts_repo_url: https://dave-inc.github.io/charts
+          skip_existing: ${{ inputs.skip_existing }}
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
