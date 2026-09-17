@@ -148,6 +148,15 @@ fail before it reaches every replica, which applies to a pubsub consumer or task
 as much as to anything serving traffic. That is a deliberate per-service choice rather than a
 default.
 
+This applies equally to the Argo Rollouts `Rollout` (rollout.yaml) when canary is enabled, but
+it needs its own line to do so: `workloadRef` only copies the referenced Deployment's
+`.spec.template` (so `terminationGracePeriodSeconds` and the preStop hook already carry over),
+not sibling `Rollout.spec` fields like `minReadySeconds`. Without it, the Rollout's own
+canary/stable Pods would default to `minReadySeconds: 0` regardless of what the Deployment is
+set to -- exactly the gap staging testing on `bei-test-service` traced a run of 503s to: a Pod
+whose endpoint hadn't yet attached to (or detached from) its NEG could count as Available the
+instant it passed readiness.
+
 ### Canary-enabled services get a replica floor of 2
 
 `autoscaling.minReplicas` is now unset rather than `1`, which lets the chart tell a
