@@ -27,6 +27,20 @@ spec:
 {{- if not (or .Values.autoscaling.enabled .Values.kedaScaling.enabled) }}
   replicas: {{ .Values.replicaCount }}
 {{- end }}
+  {{- /*
+  workloadRef only copies the referenced Deployment's .spec.template (hence its
+  terminationGracePeriodSeconds/preStop already apply here) - minReadySeconds is a
+  sibling field on the Rollout's own spec, not part of that template, so it is not
+  inherited and must be set here too. Without it this defaults to 0, which is the
+  exact gap staging testing on bei-test-service found: a Pod whose endpoint hasn't
+  yet been attached to its NEG (or detached from an old one) can still count as
+  Available the instant it passes readiness, serving 503s until the LB catches up.
+  See deployment.yaml's own minReadySeconds for the non-canary equivalent.
+  */}}
+  {{- $minReadySeconds := include "common.gracefulRolloutValue" (dict "ctx" . "field" "minReadySeconds") }}
+  {{- if gt ($minReadySeconds | default 0 | int) 0 }}
+  minReadySeconds: {{ $minReadySeconds }}
+  {{- end }}
   revisionHistoryLimit: 5
   rollbackWindow:
     revisions: 2
