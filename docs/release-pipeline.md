@@ -93,7 +93,7 @@ npx release-please release-pr --token="$(gh auth token)" --repo-url=OWNER/REPO \
 not on it. Self-hosted org runners are, and must not be attached to this public
 repo.
 
-The `release-please`, schema-push, and PR-comment jobs therefore start with
+The `release-please`, schema-push, PR-comment, and `lint-pr-title` jobs therefore start with
 `twingate/github-action` and `secrets.TWINGATE_SERVICE_KEY`, the same step the
 old chart-releaser job used. That sends `github.com` through a Connector whose
 egress IP is already allow-listed. Without it, authenticated API calls from this
