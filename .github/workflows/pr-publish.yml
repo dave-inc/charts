@@ -32,6 +32,11 @@ jobs:
       id-token: write
       pull-requests: write
     steps:
+      - name: Connect to Twingate
+        uses: twingate/github-action@a8e6c2471f32650531a4683f45e485a2e97e048c # v1.5
+        with:
+          service-key: ${{ secrets.TWINGATE_SERVICE_KEY }}
+
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

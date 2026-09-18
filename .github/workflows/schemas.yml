@@ -22,6 +22,11 @@ jobs:
   bundle:
     runs-on: ubuntu-latest
     steps:
+      - name: Connect to Twingate
+        uses: twingate/github-action@a8e6c2471f32650531a4683f45e485a2e97e048c # v1.5
+        with:
+          service-key: ${{ secrets.TWINGATE_SERVICE_KEY }}
+
       # No token, and credentials are not left in .git/config. `make schemas`
       # runs `npx` against whatever this branch pins; that must not see a write
       # token.

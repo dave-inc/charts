@@ -47,6 +47,14 @@ jobs:
       paths_released: ${{ steps.release.outputs.paths_released }}
       release_sha: ${{ steps.released.outputs.sha }}
     steps:
+      # Dave's org IP allow list does not include GitHub-hosted runner IPs.
+      # This service key sends github.com through a Connector whose egress is
+      # allow-listed. Same action and pin as the old chart-releaser job.
+      - name: Connect to Twingate
+        uses: twingate/github-action@a8e6c2471f32650531a4683f45e485a2e97e048c # v1.5
+        with:
+          service-key: ${{ secrets.TWINGATE_SERVICE_KEY }}
+
       # Minted per run and revoked when the job ends, so no long-lived credential
       # is stored on the repo. `continue-on-error` falls back to GITHUB_TOKEN
       # below when the app is not installed or its secrets are absent.
@@ -84,11 +92,15 @@ jobs:
         id: released
         if: steps.release.outputs.releases_created == 'true'
         env:
-          RELEASE_SHA: ${{ steps.release.outputs[format('{0}--sha', fromJSON(steps.release.outputs.paths_released)[0])] }}
+          RELEASE_OUTPUTS: ${{ toJSON(steps.release.outputs) }}
           GH_TOKEN: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          sha="$RELEASE_SHA"
+          path=$(jq -r '(.paths_released // "[]") | if type == "string" then fromjson else . end | .[0] // empty' <<<"$RELEASE_OUTPUTS")
+          sha=""
+          if [ -n "$path" ]; then
+            sha=$(jq -r --arg k "${path}--sha" '.[$k] // empty' <<<"$RELEASE_OUTPUTS")
+          fi
           if [ -z "$sha" ]; then
             echo "::warning::release-please did not output a sha; using master HEAD"
             sha=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/master" --jq .object.sha)
