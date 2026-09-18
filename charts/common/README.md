@@ -7,6 +7,19 @@ Configuration reference lives in [values.yaml](./values.yaml), which is commente
 place. This file covers only what changes between versions and what you have to do about
 it.
 
+## Upgrading to 1.0.0
+
+`1.0.0` starts the SemVer 2.0.0 contract for this chart. Templates and values are
+unchanged from `0.12.3`.
+
+New versions publish only to
+`oci://us-docker.pkg.dev/artifact-storage-5748/helm-charts`.
+`https://dave-inc.github.io/charts` is a frozen archive and will not get `1.0.0`.
+
+Keep pinning Pages `0.12.3` until the dave-inc/sre consume work switches the
+repository field. The policy 90-day major window does not start until a pin can
+move.
+
 ## Upgrading to 0.12.0
 
 This release changes shutdown and rollout timing for services, so a Pod that previously
