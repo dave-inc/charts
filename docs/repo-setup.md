@@ -18,6 +18,10 @@ The reasoning behind each setting is in
 [release-pipeline.md](release-pipeline.md#repository-settings-this-depends-on).
 This page is the checklist.
 
+`TWINGATE_SERVICE_KEY` must stay as a repository secret. The pipeline runs on
+`ubuntu-latest`, and the org IP allow list will reject `GITHUB_TOKEN` API calls
+unless Twingate is connected first. That secret already exists on this repo.
+
 ## 1. Squash merging only
 
 Current state is the GitHub default: all three merge methods enabled, squash title
