@@ -93,17 +93,16 @@ jobs:
         if: steps.release.outputs.releases_created == 'true'
         env:
           RELEASE_OUTPUTS: ${{ toJSON(steps.release.outputs) }}
-          GH_TOKEN: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          path=$(jq -r '(.paths_released // "[]") | if type == "string" then fromjson else . end | .[0] // empty' <<<"$RELEASE_OUTPUTS")
+          path=$(jq -r 'try ((.paths_released // "[]") | if type == "string" then fromjson else . end) catch [] | .[0] // empty' <<<"$RELEASE_OUTPUTS")
           sha=""
           if [ -n "$path" ]; then
             sha=$(jq -r --arg k "${path}--sha" '.[$k] // empty' <<<"$RELEASE_OUTPUTS")
           fi
           if [ -z "$sha" ]; then
-            echo "::warning::release-please did not output a sha; using master HEAD"
-            sha=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/master" --jq .object.sha)
+            echo "::error::release-please created a release but did not output a sha; not packaging master HEAD"
+            exit 1
           fi
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
 
