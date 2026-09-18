@@ -92,7 +92,7 @@ chart moves on its own PR, or use a non-releasing type like `chore`.
 
 We no longer cut betas. Nothing publishes a `-beta.N` version any more: pushes
 to master only publish what a release PR releases, and dispatching the release
-workflow against a branch does nothing, because release-please always targets
+workflow against a branch does nothing, because the release job only runs on
 master.
 
 Beta versions already published stay published, so anything pinning one keeps
@@ -122,7 +122,8 @@ A service Chart.yaml that depends on `common` (or any other chart here) resolves
 that dependency from the registry, not from a branch. Each PR publishes changed
 charts to `oci://us-docker.pkg.dev/artifact-storage-5748/helm-charts-pr` at
 `<chartversion>-pr<PR>.<run_id>`. The workflow comments the exact versions on
-the PR.
+the PR. Fork PRs skip this publish; use `file://` or git `targetRevision`
+instead.
 
 ```yaml
 dependencies:

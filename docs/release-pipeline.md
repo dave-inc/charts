@@ -216,8 +216,8 @@ rather than by a check someone can forget:
 - Committing a `-beta.N` version to master no longer publishes it, because a push
   to master only publishes what a release PR released.
 - Dispatching this workflow against a feature branch no longer publishes it,
-  because release-please always targets master, so `releases_created` is false
-  and the publish job is skipped. This is how the `plat-1724` betas were cut.
+  because the release job only runs on `refs/heads/master`. This is how the
+  `plat-1724` betas were cut.
 
 Already published betas are untouched, so anything pinning one keeps resolving.
 They also cannot confuse a stable release: release-please anchors on the manifest
@@ -295,7 +295,7 @@ push to master releases nothing, so `releases_created` is false and `publish` is
 skipped entirely. The gap is permanent until someone acts.
 
 The fix is to re-run the `publish` job on the original workflow run, from the
-Actions tab. It replays with the same `paths_released`.
+Actions tab. It replays with the same `paths_released` and `release_sha`.
 
 The `helm show chart` check after each push exists to make this loud rather than
 something discovered by a consumer weeks later.

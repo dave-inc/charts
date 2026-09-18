@@ -20,7 +20,12 @@ jobs:
   # to helm-charts-pr. Trigger is pull_request only, so the GitHub OIDC sub is
   # repo:dave-inc/charts:pull_request. That is the only principal that can write
   # this repo. Do not set environment:. Do not set service_account.
+  #
+  # Fork PRs share that WIF principal, and GitHub downgrades GITHUB_TOKEN to
+  # read-only on them, so the version comment 403s after a successful push.
+  # Skip the job rather than publish without a comment or fail red.
   publish:
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     permissions:
       contents: read

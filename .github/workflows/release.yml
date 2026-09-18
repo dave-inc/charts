@@ -30,7 +30,14 @@ jobs:
   # Opening the PR fails with "GitHub Actions is not permitted to create or
   # approve pull requests" unless either the repo enables that setting or this
   # runs as something other than GITHUB_TOKEN. See docs/repo-setup.md.
+  #
+  # workflow_dispatch can target any branch. The action is pinned to master,
+  # so a feature-branch dispatch would still create GitHub Releases while
+  # publish authenticates as that branch and 403s on WIF. Later master runs
+  # then see the Releases and skip the push. Limit the job so those
+  # dispatches really do nothing.
   release-please:
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -38,6 +45,7 @@ jobs:
     outputs:
       releases_created: ${{ steps.release.outputs.releases_created }}
       paths_released: ${{ steps.release.outputs.paths_released }}
+      release_sha: ${{ steps.released.outputs.sha }}
     steps:
       # Minted per run and revoked when the job ends, so no long-lived credential
       # is stored on the repo. `continue-on-error` falls back to GITHUB_TOKEN
@@ -65,8 +73,27 @@ jobs:
         id: release
         with:
           token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+          target-branch: master
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+      # The action evaluates master at runtime, not the event SHA. A queued
+      # run with cancel-in-progress: false can therefore tag a newer commit
+      # and, without this, package the older push. Take the sha it tagged.
+      - name: Capture released commit
+        id: released
+        if: steps.release.outputs.releases_created == 'true'
+        env:
+          RELEASE_SHA: ${{ steps.release.outputs[format('{0}--sha', fromJSON(steps.release.outputs.paths_released)[0])] }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          sha="$RELEASE_SHA"
+          if [ -z "$sha" ]; then
+            echo "::warning::release-please did not output a sha; using master HEAD"
+            sha=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/master" --jq .object.sha)
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
 
       # Queues the release PR to merge itself once its checks pass and it has the
       # approval master's branch protection requires. This does not skip that
@@ -96,7 +123,7 @@ jobs:
   #
   # Auth is direct WIF against gha-provider-staging-daveinc. Do not set
   # service_account. Do not set environment: on this job; that changes the
-  # GitHub OIDC sub and prod IAM will 403. Trigger is push to master only, so
+  # GitHub OIDC sub and prod IAM will 403. The job only runs on master, so
   # the expected sub is repo:dave-inc/charts:ref:refs/heads/master.
   #
   # Blocked on SRE-7517 applying helm-charts in artifact-storage-5748.
@@ -111,6 +138,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ needs.release-please.outputs.release_sha }}
           persist-credentials: false
 
       - name: Set up Helm
