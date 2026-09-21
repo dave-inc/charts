@@ -7,6 +7,14 @@ Configuration reference lives in [values.yaml](./values.yaml), which is commente
 place. This file covers only what changes between versions and what you have to do about
 it.
 
+## Upgrading to 0.13.0
+
+Templates and values are unchanged from `0.12.3`. This is the first `common`
+version published to
+`oci://us-docker.pkg.dev/artifact-storage-5748/helm-charts`.
+`https://dave-inc.github.io/charts` is a frozen archive and will not get
+`0.13.0`.
+
 ## Upgrading to 0.12.0
 
 This release changes shutdown and rollout timing for services, so a Pod that previously
