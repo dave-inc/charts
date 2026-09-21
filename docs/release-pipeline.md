@@ -23,10 +23,11 @@ writes that chart's `CHANGELOG.md`, and records the new version in
 tag and the GitHub Release, using the per-release changelog as the release body.
 
 The `publish` job runs only when the first job actually released something. It
-packages those charts and pushes each one to
-`oci://us-docker.pkg.dev/artifact-storage-5748/helm-charts`. It does not write
-`index.yaml` on `gh-pages`. Versions already on GitHub Pages stay there; nothing
-new is added.
+packages those charts, pushes each one to
+`oci://us-docker.pkg.dev/artifact-storage-5748/helm-charts`, and attaches the
+same `.tgz` to the GitHub Release. Kyverno Scan in `dave-inc/sre` still
+downloads that asset. It does not write `index.yaml` on `gh-pages`. Versions
+already on GitHub Pages stay there; nothing new is added.
 
 Auth is direct Workload Identity Federation against
 `gha-provider-staging-daveinc` in `internal-1-4825`. There is no service
@@ -93,7 +94,7 @@ npx release-please release-pr --token="$(gh auth token)" --repo-url=OWNER/REPO \
 not on it. Self-hosted org runners are, and must not be attached to this public
 repo.
 
-The `release-please`, schema-push, PR-comment, and `lint-pr-title` jobs therefore start with
+The `release-please`, `publish`, schema-push, PR-comment, and `lint-pr-title` jobs therefore start with
 `twingate/github-action` and `secrets.TWINGATE_SERVICE_KEY`, the same step the
 old chart-releaser job used. That sends `github.com` through a Connector whose
 egress IP is already allow-listed. Without it, authenticated API calls from this
@@ -312,7 +313,9 @@ The fix is to re-run the `publish` job on the original workflow run, from the
 Actions tab. It replays with the same `paths_released` and `release_sha`.
 
 The `helm show chart` check after each push exists to make this loud rather than
-something discovered by a consumer weeks later.
+something discovered by a consumer weeks later. `gh release upload --clobber`
+reattaches the `.tgz` on that same re-run, which is what unblocks Kyverno Scan
+if the Release was created with an empty asset list.
 
 Consumers that still pin a version only on GitHub Pages are unaffected. A
 `Chart.yaml` that bumps to a version that exists only in OCI, but leaves the

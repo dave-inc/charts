@@ -55,13 +55,14 @@ charts releases both.
    it. Nothing is published before then, so merging to `master` is safe.
 4. Merging the release PR lands the version bump on `master`. release-please then
    tags `job-0.3.2` and creates the GitHub Release, using the changelog it wrote
-   as the release notes. The publish job packages the chart and pushes it to
-   `oci://us-docker.pkg.dev/artifact-storage-5748/helm-charts`. GitHub Pages is not
-   updated.
+   as the release notes. The publish job packages the chart, pushes it to
+   `oci://us-docker.pkg.dev/artifact-storage-5748/helm-charts`, and attaches the
+   `.tgz` to the GitHub Release. GitHub Pages is not updated.
 
-New versions exist only as OCI. `https://dave-inc.github.io/charts` is a frozen
-archive of versions already there. A bot writes the version bump instead of you,
-and the GitHub Release notes are the changelog rather than the chart description.
+New versions exist as OCI and as a GitHub Release asset.
+`https://dave-inc.github.io/charts` is a frozen archive of versions already
+there. A bot writes the version bump instead of you, and the GitHub Release
+notes are the changelog rather than the chart description.
 
 ### The release PR and SOC-CI
 
