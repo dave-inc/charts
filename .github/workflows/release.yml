@@ -140,8 +140,8 @@ jobs:
   # the expected sub is repo:dave-inc/charts:ref:refs/heads/master.
   #
   # gh release upload talks to github.com, so this job needs Twingate the same
-  # way release-please does. The DevX app token can attach assets to a Release
-  # the app created; GITHUB_TOKEN is the fallback.
+  # way release-please does. GITHUB_TOKEN with contents: write is enough to
+  # attach assets to a Release in this repo.
   #
   # Blocked on SRE-7517 applying helm-charts in artifact-storage-5748.
   publish:
@@ -205,19 +205,10 @@ jobs:
       - name: Configure docker for Artifact Registry
         run: gcloud auth configure-docker us-docker.pkg.dev --quiet
 
-      - name: Mint an app token
-        id: app-token
-        continue-on-error: true
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
-        with:
-          app-id: ${{ secrets.DEVX_GH_APP_ID }}
-          private-key: ${{ secrets.DEVX_GH_APP_S_KEY }}
-          permission-contents: write
-
       - name: Package and push released charts
         env:
           PATHS_RELEASED: ${{ needs.release-please.outputs.paths_released }}
-          GH_TOKEN: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           mkdir -p .release-packages
