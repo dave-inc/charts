@@ -129,5 +129,5 @@ to be published to test a branch.
    version bump and changelog. Get approvals from #sre-support on that PR.
 3. Merge the release PR. release-please tags and creates the GitHub Release with
    the changelog as its notes. The publish job pushes the chart to
-   `oci://us-docker.pkg.dev/artifact-storage-5748/helm-charts`. New versions are
-   not written to GitHub Pages.
+   `oci://us-docker.pkg.dev/artifact-storage-5748/helm-charts` and attaches the
+   `.tgz` to the GitHub Release. New versions are not written to GitHub Pages.

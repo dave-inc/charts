@@ -25,7 +25,8 @@ jobs:
   #
   # When that PR is merged, this same job creates the git tag and the GitHub
   # Release, with the per-release changelog as the release body. The publish job
-  # below then pushes each packaged chart to Artifact Registry.
+  # below then pushes each packaged chart to Artifact Registry and attaches the
+  # `.tgz` to that GitHub Release.
   #
   # Opening the PR fails with "GitHub Actions is not permitted to create or
   # approve pull requests" unless either the repo enables that setting or this
@@ -128,14 +129,19 @@ jobs:
             echo "::warning::Could not arm auto-merge on #$PR. Is allow_auto_merge enabled? See docs/repo-setup.md."
           fi
 
-  # Packages the charts release-please just released and pushes them to
-  # Artifact Registry as OCI. GitHub Pages / chart-releaser are not written.
-  # Historical index.yaml stays as an archive; new versions are OCI only.
+  # Packages the charts release-please just released, pushes them to Artifact
+  # Registry as OCI, and attaches each `.tgz` to the GitHub Release. Kyverno Scan
+  # in dave-inc/sre still downloads that asset. GitHub Pages / chart-releaser
+  # are not written. Historical index.yaml stays as an archive.
   #
   # Auth is direct WIF against gha-provider-staging-daveinc. Do not set
   # service_account. Do not set environment: on this job; that changes the
   # GitHub OIDC sub and prod IAM will 403. The job only runs on master, so
   # the expected sub is repo:dave-inc/charts:ref:refs/heads/master.
+  #
+  # gh release upload talks to github.com, so this job needs Twingate the same
+  # way release-please does. The DevX app token can attach assets to a Release
+  # the app created; GITHUB_TOKEN is the fallback.
   #
   # Blocked on SRE-7517 applying helm-charts in artifact-storage-5748.
   publish:
@@ -143,9 +149,14 @@ jobs:
     if: needs.release-please.outputs.releases_created == 'true'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       id-token: write
     steps:
+      - name: Connect to Twingate
+        uses: twingate/github-action@a8e6c2471f32650531a4683f45e485a2e97e048c # v1.5
+        with:
+          service-key: ${{ secrets.TWINGATE_SERVICE_KEY }}
+
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -194,9 +205,19 @@ jobs:
       - name: Configure docker for Artifact Registry
         run: gcloud auth configure-docker us-docker.pkg.dev --quiet
 
+      - name: Mint an app token
+        id: app-token
+        continue-on-error: true
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.DEVX_GH_APP_ID }}
+          private-key: ${{ secrets.DEVX_GH_APP_S_KEY }}
+          permission-contents: write
+
       - name: Package and push released charts
         env:
           PATHS_RELEASED: ${{ needs.release-please.outputs.paths_released }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           mkdir -p .release-packages
@@ -213,8 +234,10 @@ jobs:
           for pkg in .release-packages/*.tgz; do
             name=$(helm show chart "$pkg" | yq -r '.name')
             version=$(helm show chart "$pkg" | yq -r '.version')
+            tag="${name}-${version}"
             echo "::group::push $name $version"
             helm push "$pkg" "$HELM_OCI_REGISTRY"
+            gh release upload "$tag" "$pkg" --clobber --repo "$GITHUB_REPOSITORY"
             if ! helm show chart "${HELM_OCI_REGISTRY}/${name}" --version "$version" >/dev/null; then
               echo "::error::$name $version is missing from $HELM_OCI_REGISTRY"
               missing=1
