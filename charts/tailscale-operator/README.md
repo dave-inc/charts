@@ -1,5 +1,15 @@
 # tailscale-operator
 
+## Upgrading to 1.0.0
+
+`1.0.0` starts the SemVer 2.0.0 contract for this chart. Templates and values are
+unchanged from `0.1.4`.
+
+New versions publish only to
+`oci://us-docker.pkg.dev/artifact-storage-5748/helm-charts`.
+`https://dave-inc.github.io/charts` is a frozen archive and will not get
+`1.0.0`.
+
 This chart is a wrapper around the upstream [Tailscale Kubernetes
 operator](https://pkgs.tailscale.com/helmcharts) (`1.102.3`), pulled in as a
 real versioned dependency rather than forked. It exists to layer on the
