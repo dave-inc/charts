@@ -40,6 +40,43 @@ wave ordering here as reducing, not eliminating, the risk of a one-time migratio
 watch the real traffic/health signals live during it, or stage it as two changes, rather
 than relying on the chart alone.
 
+### Old infra being removed needs `PruneLast`, not a sync-wave
+
+Sync-wave only controls resources this chart still renders. A tier being *removed* — like
+the reverse-proxy/canary-Deployment architecture this chart moved off of onto Argo Rollouts —
+has no manifest for Argo CD to read a wave from once it drops out of the chart, so it prunes
+using whatever wave was last live on it. A resource that was never annotated (true of every
+one of those old reverse-proxy/canary-Deployment resources) defaults to wave `"0"`, which
+lands *before* the HTTPRoute (`"2"`), Rollout (`"3"`), and autoscaler (`"4"`) above ever
+reconcile — the old infra would be torn down before the new path is even up, not after.
+
+There is no chart-side fix for this: stamping a later wave onto a resource that is being
+deleted in the same release that removes it doesn't work, because Argo CD would need that
+wave to already be live on the object, from a prior sync, before the resource disappears from
+the manifest.
+
+The fix is the Application's own `syncPolicy`, not this chart:
+
+```yaml
+syncPolicy:
+  syncOptions:
+    - PruneLast=true
+```
+
+`PruneLast=true` defers every prune in the sync to an implicit final wave, run only after
+every other wave has applied *and gone healthy* — old infra last, exactly as intended, with
+no dependency on a wave ever having been set on it before. Set this on the Application (or
+ApplicationSet template) for any service upgrading through this migration; this chart cannot
+set it for you, since the Application resource lives outside this repo.
+
+Two things to know before relying on it:
+
+- It's an Application-wide setting, not scoped to this one migration — it defers *every*
+  future prune on that Application the same way, which is normally what you want anyway.
+- If any wave never goes healthy (a stuck Rollout, a misconfigured HPA), the prune never
+  runs. Old and new infra both stay live, at double the cost, until someone intervenes — the
+  safe failure mode, but worth knowing about operationally rather than being surprised by it.
+
 ## Opting a deployment out of canary
 
 `global.canary.enabled` is a single toggle at the umbrella-chart level, driving every
@@ -57,6 +94,12 @@ This release changes shutdown and rollout timing for services, so a Pod that pre
 terminated in about thirty seconds now takes up to a minute, and rollouts are deliberately
 slower. Nothing needs to be set to adopt it: bumping the dependency version is enough, and
 the sections below exist for the cases where the defaults do not suit a particular service.
+
+If this upgrade is also the one moving a service off the old reverse-proxy/canary-Deployment
+architecture onto Argo Rollouts, set `syncPolicy.syncOptions: [PruneLast=true]` on that
+service's Application before or alongside the bump — see "Old infra being removed needs
+`PruneLast`, not a sync-wave" above. Without it, the old infra is torn down before the new
+Rollout/HTTPRoute path is confirmed healthy, not after.
 
 The timing now lives at two levels. `serviceGracefulRollout` holds the values for a release
 that is actually in a traffic path, and the top-level `.Values.*` fields are the fallback for
