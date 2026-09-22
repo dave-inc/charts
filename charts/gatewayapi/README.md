@@ -4,6 +4,13 @@ This chart is meant to replace the `ingress` entry in the `common` chart.
 It uses [Gateway API](https://gateway-api.sigs.k8s.io/) resources to define
 routing rules and health checks for services in the cluster.
 
+## Upgrading to 3.0.0
+
+Templates and values are unchanged from `2.11.0`. This version publishes to
+`oci://us-docker.pkg.dev/artifact-storage-5748/helm-charts`.
+`https://dave-inc.github.io/charts` is a frozen archive and will not get
+`3.0.0`.
+
 ## Usage
 
 The following is an example of how to define a route and health check for a

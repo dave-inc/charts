@@ -6,6 +6,13 @@ to the sibling [`gatewayapi`](../gatewayapi) chart, which owns the
 `HTTPRoute` and `HealthCheckPolicy` resources that bind to these Gateways
 via `parentRefs`.
 
+## Upgrading to 3.0.0
+
+Templates and values are unchanged from `2.3.0`. This version publishes to
+`oci://us-docker.pkg.dev/artifact-storage-5748/helm-charts`.
+`https://dave-inc.github.io/charts` is a frozen archive and will not get
+`3.0.0`.
+
 ## Usage
 
 The following is an example of how to define a Gateway with a single HTTPS
