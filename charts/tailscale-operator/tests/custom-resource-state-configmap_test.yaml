@@ -1,0 +1,65 @@
+suite: Custom Resource State ConfigMap
+templates:
+  - custom-resource-state-configmap.yaml
+tests:
+  - it: renders nothing by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: treats a null customResourceState value as unset
+    set:
+      customResourceState: null
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: lives in the release namespace
+    release:
+      namespace: tailscale
+    set:
+      customResourceState: {}
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - equal:
+          path: metadata.name
+          value: custom-resource-state-exporter
+      - equal:
+          path: metadata.namespace
+          value: tailscale
+
+  - it: watches Connector and PeerRelay and emits status plus replicas
+    set:
+      customResourceState: {}
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "kind: Connector"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "kind: PeerRelay"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "metricNamePrefix: kube_tailscale_connector"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "metricNamePrefix: kube_tailscale_peerrelay"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "is_app_connector: \\[status, isAppConnector\\]"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "is_exit_node: \\[status, isExitNode\\]"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "name: is_app_connector"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "name: is_exit_node"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "device_info"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "endpoint_info"

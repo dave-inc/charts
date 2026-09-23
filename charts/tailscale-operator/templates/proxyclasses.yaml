@@ -1,0 +1,56 @@
+{{- range $name, $pc := .Values.proxyClasses }}
+---
+# Applied after the operator/CRDs (default sync-wave) so the ProxyClass CRD
+# already exists when this is applied.
+#
+# ProxyClass is cluster-scoped (github.com/tailscale/tailscale
+# cmd/k8s-operator/deploy/crds/tailscale.com_proxyclasses.yaml), and its
+# name below is the raw proxyClasses map key, not prefixed by release or
+# namespace -- same rationale as Connector above: one release per cluster,
+# and connectors[].proxyClass must match this key exactly, so scoping it
+# would mean rewriting that reference too for no risk this deployment
+# model actually has.
+apiVersion: tailscale.com/v1alpha1
+kind: ProxyClass
+metadata:
+  name: {{ $name }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  {{- if $pc.metrics }}
+  metrics:
+    {{- toYaml $pc.metrics | nindent 4 }}
+  {{- end }}
+  statefulSet:
+    pod:
+      labels:
+        proxy-class: {{ $name }}
+      {{- if $pc.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- range $pc.topologySpreadConstraints }}
+        {{- if hasKey . "labelSelector" }}
+        {{- fail (printf "proxyClasses[%s].topologySpreadConstraints: labelSelector is set automatically and must not be overridden" $name) }}
+        {{- end }}
+        - labelSelector:
+            matchLabels:
+              proxy-class: {{ $name }}
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      {{- end }}
+      {{- if or $pc.resources $pc.env }}
+      tailscaleContainer:
+        {{- if $pc.resources }}
+        resources:
+          {{- toYaml $pc.resources | nindent 10 }}
+        {{- end }}
+        {{- if $pc.env }}
+        {{- range $pc.env }}
+        {{- if hasKey . "valueFrom" }}
+        {{- fail (printf "proxyClasses[%s].env: valueFrom is not supported by the ProxyClass CRD (name/value only); it would be silently pruned" $name) }}
+        {{- end }}
+        {{- end }}
+        env:
+          {{- toYaml $pc.env | nindent 10 }}
+        {{- end }}
+      {{- end }}
+{{- end }}

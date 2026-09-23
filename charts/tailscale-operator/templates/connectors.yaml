@@ -1,0 +1,79 @@
+{{- range .Values.connectors }}
+{{- if not .name }}
+{{- fail "connectors[]: name is required" }}
+{{- end }}
+{{- if not .tags }}
+{{- fail (printf "connectors[%s]: tags is required" .name) }}
+{{- end }}
+{{- if and (hasKey . "appConnector") (or (eq (toString .exitNode) "true") (hasKey . "subnetRouter")) }}
+{{- fail (printf "connectors[%s]: appConnector is mutually exclusive with exitNode and subnetRouter" .name) }}
+{{- end }}
+{{- if not (or (hasKey . "appConnector") (eq (toString .exitNode) "true") (hasKey . "subnetRouter")) }}
+{{- fail (printf "connectors[%s]: must set one of exitNode, subnetRouter, or appConnector" .name) }}
+{{- end }}
+{{- if and (hasKey . "replicas") (le (int .replicas) 0) }}
+{{- fail (printf "connectors[%s]: replicas must be greater than 0 (the operator silently ignores 0 at v1.102.3 and runs 1 replica anyway)" .name) }}
+{{- end }}
+{{- if and (hasKey . "hostname") (hasKey . "hostnamePrefix") }}
+{{- fail (printf "connectors[%s]: hostname and hostnamePrefix are mutually exclusive" .name) }}
+{{- end }}
+{{- if and (hasKey . "hostname") (gt (int (.replicas | default 1)) 1) }}
+{{- fail (printf "connectors[%s]: hostname cannot be set when replicas is greater than 1; use hostnamePrefix instead" .name) }}
+{{- end }}
+{{- if and (hasKey . "hostnamePrefix") (le (int (.replicas | default 1)) 1) }}
+{{- fail (printf "connectors[%s]: hostnamePrefix cannot be set when replicas is 1 or unset; use hostname instead" .name) }}
+{{- end }}
+{{- if hasKey . "subnetRouter" }}
+{{- $sr := .subnetRouter | default dict }}
+{{- if not $sr.advertiseRoutes }}
+{{- fail (printf "connectors[%s]: subnetRouter.advertiseRoutes is required" .name) }}
+{{- end }}
+{{- end }}
+---
+# Applied after the operator/CRDs (default sync-wave) so the Connector CRD
+# already exists when this is applied.
+#
+# Connector is cluster-scoped (github.com/tailscale/tailscale
+# cmd/k8s-operator/deploy/crds/tailscale.com_connectors.yaml), and its name
+# below is the raw connectors[].name, not prefixed by release or namespace.
+# That's intentional: this chart is deployed as exactly one release per
+# cluster (see README.md#usage), so there's no other release's Connectors
+# to collide with. Prefixing would also require threading the prefix
+# through connectors[].proxyClass -> proxyClasses map keys without
+# affecting the tailnet hostname/hostnamePrefix default (which also reuses
+# .name), for a risk this deployment model doesn't have.
+apiVersion: tailscale.com/v1alpha1
+kind: Connector
+metadata:
+  name: {{ .name }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  {{- if gt (int (.replicas | default 1)) 1 }}
+  replicas: {{ .replicas }}
+  hostnamePrefix: {{ .hostnamePrefix | default .name }}
+  {{- else }}
+  {{- if hasKey . "replicas" }}
+  replicas: {{ .replicas }}
+  {{- end }}
+  hostname: {{ .hostname | default .name }}
+  {{- end }}
+  tags:
+    {{- toYaml .tags | nindent 4 }}
+  {{- if .proxyClass }}
+  {{- if not (hasKey ($.Values.proxyClasses | default dict) .proxyClass) }}
+  {{- fail (printf "connectors[%s]: proxyClass %q does not match a key in proxyClasses" .name .proxyClass) }}
+  {{- end }}
+  proxyClass: {{ .proxyClass }}
+  {{- end }}
+  {{- if hasKey . "appConnector" }}
+  appConnector:
+    {{- toYaml .appConnector | nindent 4 }}
+  {{- else }}
+  exitNode: {{ .exitNode | default false }}
+  {{- if hasKey . "subnetRouter" }}
+  subnetRouter:
+    {{- toYaml .subnetRouter | nindent 4 }}
+  {{- end }}
+  {{- end }}
+{{- end }}

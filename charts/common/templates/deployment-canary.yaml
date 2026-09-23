@@ -30,7 +30,12 @@ metadata:
     run: {{ include "common.name" . }}
     {{- include "common.labels" . | nindent 4 }}
 spec:
-{{- if not .Values.autoscaling.enabled }}
+{{- /* Matches deployment.yaml's own gate: once kedaScaling is enabled, the ScaledObject's
+KEDA-managed HPA owns replicas via the scale subresource. Omitting kedaScaling.enabled here
+left Helm rendering a static `replicas:` on every sync - with ArgoCD's selfHeal: true, that
+would fight the ScaledObject, snapping the canary back to this static count on every sync
+regardless of what KEDA had scaled it to. */}}
+{{- if not (or .Values.autoscaling.enabled .Values.kedaScaling.enabled) }}
   replicas: {{ $canaryReplicas }}
 {{- end }}
   selector:
