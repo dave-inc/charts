@@ -267,10 +267,6 @@
                                 "type": "string",
                                 "const": "Service"
                               },
-                              "canary": {
-                                "type": "boolean",
-                                "description": "Shorthand: expands this single entry into a stable+canary backendRef pair named \"<name>-stable\"/\"<name>-canary\" (matching what the `common` chart derives by default for the same base name when its own canary.enabled is true)."
-                              },
                               "canaryWeight": {
                                 "type": "integer",
                                 "minimum": 0,
