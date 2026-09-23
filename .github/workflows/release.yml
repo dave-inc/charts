@@ -4,16 +4,7 @@ on:
   push:
     branches:
       - master
-  workflow_dispatch:
-    inputs:
-      skip_existing:
-        type: boolean
-        default: false
-        description: >-
-          Passed through to chart-releaser's skip_existing option: skip
-          re-uploading a chart version that's already published, instead of
-          trying to recreate its GitHub Release and failing with a 422 from
-          GitHub's API.
+  workflow_dispatch: {}
 
 concurrency:
   group: release-${{ github.ref }}
