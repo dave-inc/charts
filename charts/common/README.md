@@ -1,11 +1,242 @@
 # common
 
-The shared application chart. It renders the Deployment, Service, HPA and, when canary
-is enabled, the canary and reverse proxy tiers that sit alongside them.
+The shared application chart. It renders the Deployment, Service and HPA, and, when
+canary is enabled, a Rollout (Argo Rollouts) that references the Deployment via
+`workloadRef` instead of duplicating it.
 
 Configuration reference lives in [values.yaml](./values.yaml), which is commented in
 place. This file covers only what changes between versions and what you have to do about
 it.
+
+## Argo CD order for canary rollouts
+
+Every Service this chart creates — the plain `Service` (`service.yaml`), the Cloud Armor
+`Service` (`service-cloudarmor.yaml`), and, when canary is enabled, the stable and canary
+Services (`service-stable.yaml`/`service-canary.yaml`) — applies in sync wave `"-1"`, ahead
+of everything else. That protects a service migrating off a now-removed tier (its
+Deployment, Service, etc. pruned in the same sync, as happened when this chart moved off a
+separate reverse-proxy/canary-Deployment architecture onto Argo Rollouts): the Service's
+selector change needs to reach the API server, and the load balancer or kube-proxy needs to
+start discovering the new endpoints, before that prune happens. Without an explicit wave, a
+Service defaults to `"0"` — the same wave as an unannotated pruned resource — with no
+ordering between the two. Set `service.annotations["argocd.argoproj.io/sync-wave"]` to
+override the plain Service's wave; the others don't expose an override today.
+
+After that, the Gateway API chart applies its `HTTPRoute` in wave `"2"` (needing both
+Rollouts-managed Services to already exist, which wave `"-1"` guarantees). The Rollout is
+in wave `"3"`, allowing its Gateway API traffic-routing plugin to update the existing route,
+and an HPA, VPA, or KEDA `ScaledObject` targeting that Rollout is in wave `"4"`. The
+referenced Deployment remains in the default wave `"0"`.
+
+This breaks the resource cycle as one direction: Services → HTTPRoute → Rollout →
+autoscaler. If a canary HTTPRoute overrides its default sync-wave, keep it below the
+Rollout's wave or override the Rollout and autoscaler waves together.
+
+A sync-wave only orders when Argo CD *applies* each resource — it does not wait for the
+load balancer's health checks or NEG registration to actually converge, and it can't make a
+tier's own removal (e.g. deleting a reverse proxy that was the sole thing routing traffic
+for both internal and external callers) atomic with the new path taking over. Treat the
+wave ordering here as reducing, not eliminating, the risk of a one-time migration like that;
+watch the real traffic/health signals live during it, or stage it as two changes, rather
+than relying on the chart alone.
+
+### Old infra being removed needs `PruneLast`, not a sync-wave
+
+Sync-wave only controls resources this chart still renders. A tier being *removed* — like
+the reverse-proxy/canary-Deployment architecture this chart moved off of onto Argo Rollouts —
+has no manifest for Argo CD to read a wave from once it drops out of the chart, so it prunes
+using whatever wave was last live on it. A resource that was never annotated (true of every
+one of those old reverse-proxy/canary-Deployment resources) defaults to wave `"0"`, which
+lands *before* the HTTPRoute (`"2"`), Rollout (`"3"`), and autoscaler (`"4"`) above ever
+reconcile — the old infra would be torn down before the new path is even up, not after.
+
+There is no chart-side fix for this: stamping a later wave onto a resource that is being
+deleted in the same release that removes it doesn't work, because Argo CD would need that
+wave to already be live on the object, from a prior sync, before the resource disappears from
+the manifest.
+
+The fix is the Application's own `syncPolicy`, not this chart:
+
+```yaml
+syncPolicy:
+  syncOptions:
+    - PruneLast=true
+```
+
+`PruneLast=true` defers every prune in the sync to an implicit final wave, run only after
+every other wave has applied *and gone healthy* — old infra last, exactly as intended, with
+no dependency on a wave ever having been set on it before. Set this on the Application (or
+ApplicationSet template) for any service upgrading through this migration; this chart cannot
+set it for you, since the Application resource lives outside this repo.
+
+Two things to know before relying on it:
+
+- It's an Application-wide setting, not scoped to this one migration — it defers *every*
+  future prune on that Application the same way, which is normally what you want anyway.
+- If any wave never goes healthy (a stuck Rollout, a misconfigured HPA), the prune never
+  runs. Old and new infra both stay live, at double the cost, until someone intervenes — the
+  safe failure mode, but worth knowing about operationally rather than being surprised by it.
+
+## Opting a deployment out of canary
+
+`global.canary.enabled` is a single toggle at the umbrella-chart level, driving every
+service deployed alongside it into canary together. Set this chart's own
+`canary.enabled: false` to opt one service out regardless of that toggle: it always
+renders a plain Deployment with a static `replicaCount`, never a Rollout, and no
+canary/stable Services. Use this for a service pinned to an exact replica count by an
+invariant a transient extra canary Pod would violate. There is no matching override in
+the other direction — enabling canary here alone still leaves the `gatewayapi` chart's
+backendRef expansion off, so the Rollout would have no traffic split to plug into.
+
+## Upgrading to 2.0.0
+
+This release changes shutdown and rollout timing for services, so a Pod that previously
+terminated in about thirty seconds now takes up to a minute, and rollouts are deliberately
+slower. Nothing needs to be set to adopt it: bumping the dependency version is enough, and
+the sections below exist for the cases where the defaults do not suit a particular service.
+
+If this upgrade is also the one moving a service off the old reverse-proxy/canary-Deployment
+architecture onto Argo Rollouts, set `syncPolicy.syncOptions: [PruneLast=true]` on that
+service's Application before or alongside the bump — see "Old infra being removed needs
+`PruneLast`, not a sync-wave" above. Without it, the old infra is torn down before the new
+Rollout/HTTPRoute path is confirmed healthy, not after.
+
+The timing now lives at two levels. `serviceGracefulRollout` holds the values for a release
+that is actually in a traffic path, and the top-level `.Values.*` fields are the fallback for
+everything else. A workload with no Service — a pubsub consumer, a task handler — keeps its
+old behaviour.
+
+| Value | Before | Top level | `serviceGracefulRollout` |
+|---|---|---|---|
+| `terminationGracePeriodSeconds` | `31` | `31` | `60` |
+| `minReadySeconds` | `0` | `0` | `60` |
+| `preStopSleepSeconds` | did not exist | `0` | `20` |
+| `autoscaling.minReplicas` | `1` | `null`, computed as 2 with canary enabled and 1 without | — |
+| `kubeVersion` | `>=1.27.0-0` | `>=1.30.0-0` | — |
+
+### Your cluster must be on 1.30 or newer
+
+The application containers now drain using the native `preStop` sleep action, which is
+enabled by default from 1.30 and stable from 1.34. Below 1.30 the API server prunes the
+field and the container gets no drain at all, so the chart refuses to install instead.
+Helm reports this at install time as a `chart requires kubeVersion` error.
+
+### The new timing arrives through `serviceGracefulRollout`
+
+`serviceGracefulRollout` carries `minReadySeconds`, `preStopSleepSeconds` and
+`terminationGracePeriodSeconds` for a release that is in a traffic path, shadowing the
+top-level defaults that everything else uses. It applies only when both `service.enabled` and
+`serviceGracefulRollout.enabled` are true, and both default to true.
+
+```yaml
+serviceGracefulRollout:
+  enabled: true
+  minReadySeconds: 60
+  preStopSleepSeconds: 20
+  terminationGracePeriodSeconds: 60
+```
+
+So a service picks up the new timing with no configuration, while a workload with no Service
+falls back to the top level and is unaffected. That split is the point of the block: the two
+kinds of workload no longer share one default, and a service can be timed against the load
+balancer in front of it without slowing down everything else.
+
+The precedence, most specific first, is:
+
+1. `serviceGracefulRollout.*` — when `service.enabled` and its own `enabled` are true
+2. top-level `.Values.*` — the default for everything else
+
+The block feeds the Deployment and the Cloud SQL proxy's derived wait, so both move together.
+Override a single field to keep the rest, or set `serviceGracefulRollout.enabled: false` to put
+a service back on the top-level defaults entirely.
+
+### Services now stay in the traffic path before shutting down
+
+`serviceGracefulRollout.preStopSleepSeconds` renders a `preStop` sleep on the application
+container. It exists because a Pod keeps receiving requests after termination begins: removal
+from a Google load balancer lags the Pod being killed, measured at around twelve seconds in
+staging. `terminationGracePeriodSeconds` cannot do this on its own, since it caps how long
+shutdown may take rather than holding the Pod open.
+
+The two values are related and validated together. A `preStop` sleep that is greater than or
+equal to the grace period fails the render rather than letting a Pod be SIGKILLed part-way
+through draining.
+
+Set `serviceGracefulRollout.preStopSleepSeconds: 0` to opt out — the top-level
+`preStopSleepSeconds` is already `0` and is not the field to change here. Note that
+`terminationGracePeriodSeconds: 0` is **not** an opt out at either level: it means a grace
+period of literally zero seconds and an immediate SIGKILL, and it does not fall back to the
+Kubernetes default of 30.
+
+A service that already defines `deploymentContainer.lifecycle` keeps its own hook, which then
+owns the whole drain and is not checked against the grace period.
+
+### Rollouts wait a minute per wave
+
+`serviceGracefulRollout.minReadySeconds: 60` requires a new Pod to stay Ready for a minute
+before it counts as Available and the rollout retires an old one. It covers the gap between a
+Pod being Ready and the data plane knowing about it, which is worst behind container-native
+load balancing: GKE marks the `load-balancer-neg-ready` gate True before the NEG is attached
+to a health-checked backend service, and Google recommends 60 or higher there.
+
+With the default 25% surge and unavailable, a rollout moves in roughly four waves whatever the
+replica count, so expect about four minutes of added rollout time, largely independent of how
+large the service is. Plan for it in an emergency rollback, which is where it is felt most.
+
+Set `serviceGracefulRollout.minReadySeconds: 0` to opt out.
+
+The top-level `minReadySeconds` stays `0`, so nothing without a Service is slowed down. It is
+still worth setting there for a different reason: the delay also gives a bad revision time to
+fail before it reaches every replica, which applies to a pubsub consumer or task handler just
+as much as to anything serving traffic. That is a deliberate per-service choice rather than a
+default.
+
+This applies equally to the Argo Rollouts `Rollout` (rollout.yaml) when canary is enabled, but
+it needs its own line to do so: `workloadRef` only copies the referenced Deployment's
+`.spec.template` (so `terminationGracePeriodSeconds` and the preStop hook already carry over),
+not sibling `Rollout.spec` fields like `minReadySeconds`. Without it, the Rollout's own
+canary/stable Pods would default to `minReadySeconds: 0` regardless of what the Deployment is
+set to -- exactly the gap staging testing on `bei-test-service` traced a run of 503s to: a Pod
+whose endpoint hadn't yet attached to (or detached from) its NEG could count as Available the
+instant it passed readiness.
+
+### Canary-enabled services get a replica floor of 2
+
+`autoscaling.minReplicas` is now unset rather than `1`, which lets the chart tell a
+deliberate value from an inherited one. With canary enabled it computes 2, because canary
+puts a second ReplicaSet in the traffic path during a rollout and a tier at one Pod has no
+headroom while that Pod is replaced. Without canary it stays 1, so single-Pod services are
+unaffected.
+
+Setting `autoscaling.minReplicas` explicitly always wins, including setting it back to
+`1`. The default is capped at `maxReplicas`, so a deliberately pinned single-replica
+service still renders a valid HPA.
+
+### The Cloud SQL proxy now tracks the grace period
+
+If `cloudsqlProxy.enabled` is set, the sidecar's `preStop` hook no longer waits for a
+hardcoded 30 seconds. It waits the effective `terminationGracePeriodSeconds` minus one —
+the `serviceGracefulRollout` value when that applies, otherwise the top level — so a service
+sleeps 59 seconds rather than 30, while a workload with no Service derives 30 from the
+top-level 31 and is unchanged.
+
+This keeps a pairing that already existed but was easy to miss. The application reaches
+its database through the proxy, so the proxy has to outlive the application's entire
+shutdown, not just its `preStop` sleep. The old literal 30 was really the old default
+grace period of 31 minus one; raising the grace period to 60 without changing it would
+have left the application draining for its last 30 seconds with no database. Deriving the
+value keeps the two aligned whatever the grace period is set to, and it fixes services
+that already pin a longer grace period, which have been exposed to a smaller version of
+this gap all along.
+
+The visible cost is that deleting a service's Pod now takes about a minute rather than about
+thirty seconds, since a Pod is not gone until every container exits. Pods evict in parallel, so a
+node drain takes roughly that long in total rather than per Pod.
+
+Setting `cloudsqlProxy.lifecycle` overrides the hook and makes its timing your
+responsibility. The longer-term fix is running the proxy as a native sidecar, which
+Kubernetes terminates only after the main containers exit, removing the need to coordinate
+two timers at all.
 
 ## Upgrading to 1.0.0
 
