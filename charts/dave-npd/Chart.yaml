@@ -2,10 +2,10 @@ apiVersion: v2
 name: dave-npd
 description: Dave's Node Problem Detector
 type: application
-version: 0.3.0
+version: 1.0.0
 appVersion: 0.1.0
 dependencies:
-- name: node-problem-detector
-  version: 2.3.13
-  repository: https://charts.deliveryhero.io
-  alias: npd
+  - name: node-problem-detector
+    version: 2.3.13
+    repository: https://charts.deliveryhero.io
+    alias: npd
