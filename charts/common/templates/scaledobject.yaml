@@ -26,12 +26,16 @@ metadata:
   name: {{ include "common.name" . }}
   labels:
     {{- include "common.labels" . | nindent 4 }}
+  {{- if .Values.kedaScaling.migrating }}
   annotations:
-    # Syncs before the Deployment (default wave 0). Testing whether giving the ScaledObject
-    # (and its keda-hpa-* HPA) a head start avoids a transient reset of spec.replicas to the
-    # API server's default of 1 when a consumer first migrates off a static replicaCount -
-    # see gke-devel-1 migration rehearsal notes for the live finding this addresses.
+    # Opt-in via kedaScaling.migrating, only for the sync that moves an existing Deployment off
+    # a static replicaCount. Syncing before the Deployment (default wave 0) gives the
+    # ScaledObject (and its keda-hpa-* HPA) a head start, avoiding a transient reset of
+    # spec.replicas to the API server's default of 1 when that field is dropped - see gke-devel-1
+    # migration rehearsal notes. Not the default: on a brand-new workload the Deployment does not
+    # exist yet, so the ScaledObject goes Degraded in wave -1 and Argo CD never reaches wave 0.
     argocd.argoproj.io/sync-wave: "-1"
+  {{- end }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1

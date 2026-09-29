@@ -27,9 +27,11 @@ metadata:
   name: {{ include "common.canaryName" . }}
   labels:
     {{- include "common.labels" . | nindent 4 }}
+  {{- if .Values.kedaScaling.migrating }}
   annotations:
-    # See scaledobject.yaml - same sync-wave head-start test.
+    # See scaledobject.yaml - same opt-in sync-wave head start, only while migrating.
     argocd.argoproj.io/sync-wave: "-1"
+  {{- end }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
