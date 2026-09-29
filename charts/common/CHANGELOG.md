@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/dave-inc/charts/compare/common-1.0.0...common-1.1.0) (2026-09-29)
+
+
+### Features
+
+* **common:** make KEDA ScaledObject sync-wave opt-in [SRE-7633] ([#345](https://github.com/dave-inc/charts/issues/345)) ([a764594](https://github.com/dave-inc/charts/commit/a76459458d2a0db4694def5373bf0daf79f34065))
+
 ## [1.0.0](https://github.com/dave-inc/charts/compare/common-0.13.0...common-1.0.0) (2026-09-22)
 
 
