@@ -1,0 +1,72 @@
+suite: global.migrate defers the canary backendRef expansion on HTTPRoute
+templates:
+  - httproute.yaml
+set:
+  enabled: true
+  routes.items:
+    - name: test-api
+      spec:
+        hostnames:
+          - test-api.daveapi.io
+        parentRefs:
+          - name: shared-gw-0
+        rules:
+          - backendRefs:
+              - name: test-api
+                port: 80
+tests:
+  - it: expands to the stable+canary pair when global.canary.enabled is true and migrate is unset
+    set:
+      global.canary.enabled: true
+    asserts:
+      - lengthEqual:
+          path: spec.rules[0].backendRefs
+          count: 2
+      - equal:
+          path: spec.rules[0].backendRefs[0].name
+          value: test-api-stable
+      - equal:
+          path: spec.rules[0].backendRefs[1].name
+          value: test-api-canary
+      - equal:
+          path: metadata.annotations["charts.dave.com/argo-rollouts-managed-weights"]
+          value: "true"
+
+  - it: stays on the plain backendRef when global.migrate is true, even though canary is enabled
+    set:
+      global.canary.enabled: true
+      global.migrate: true
+    asserts:
+      - lengthEqual:
+          path: spec.rules[0].backendRefs
+          count: 1
+      - equal:
+          path: spec.rules[0].backendRefs[0].name
+          value: test-api
+      - notExists:
+          path: metadata.annotations["charts.dave.com/argo-rollouts-managed-weights"]
+
+  - it: behaves the same as unset when global.migrate is explicitly false
+    set:
+      global.canary.enabled: true
+      global.migrate: false
+    asserts:
+      - lengthEqual:
+          path: spec.rules[0].backendRefs
+          count: 2
+      - equal:
+          path: spec.rules[0].backendRefs[0].name
+          value: test-api-stable
+
+  - it: has no effect when canary is not enabled at all
+    set:
+      global.migrate: true
+    asserts:
+      - lengthEqual:
+          path: spec.rules[0].backendRefs
+          count: 1
+      - equal:
+          path: spec.rules[0].backendRefs[0].name
+          value: test-api
+      - notExists:
+          path: metadata.annotations["charts.dave.com/argo-rollouts-managed-weights"]

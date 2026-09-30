@@ -27,6 +27,33 @@ metadata:
   own buffer after the Services it targets (see values.yaml), rather than
   trading that buffer away to unblock the Rollout.
   */}}
+  {{- /*
+  global.migrate holds this route on its current (non-canary) backendRef
+  shape even though canary is enabled everywhere else in the release. A
+  Rollout's first-ever revision always promotes immediately -- Argo Rollouts
+  skips canary steps when there's no prior stable revision to compare against
+  (see charts/common/templates/rollout.yaml) -- so on the same sync that
+  first creates a service's Rollout, its "-stable"/"-canary" Services can sit
+  at the wrong replica count for minutes while the Deployment's real capacity
+  is torn down out from under them (workloadRef.scaleDown). Since this
+  chart's global values are shared with every `common` chart instance in the
+  same release, canary cannot be enabled for those without this route
+  reacting in the same sync -- unless this flag holds it back.
+  Safe to leave the Rollout otherwise fully canary-enabled while this is set:
+  a first-revision Rollout goes straight to fully-promoted, and in that state
+  Argo Rollouts calls the gatewayAPI plugin's RemoveManagedRoutes (not
+  SetWeight) each reconcile, which is a no-op for a route not using header
+  routing -- it never touches backendRefs, so it can't fail on a route that
+  doesn't have the "-stable"/"-canary" pair yet.
+  Remove this once the Rollout is confirmed fully promoted at real replica
+  count and its Services' backends are confirmed healthy (e.g. `kubectl argo
+  rollouts get rollout`, `gcloud compute backend-services get-health`), to
+  make the real traffic cutover land on already-warm backends instead of
+  racing their startup.
+  */}}
+  {{- if dig "migrate" false (default dict $.Values.global) }}
+  {{- $canaryEnabled = false }}
+  {{- end }}
   {{- if or $userAnnotations $defaultAnnotations $canaryEnabled }}
   annotations:
     {{- range $k, $v := $defaultAnnotations }}
@@ -75,9 +102,11 @@ spec:
         -- the same umbrella-level toggle the `common` chart's
         `common.canaryEnabled` helper reads (see
         charts/common/templates/_helpers.tpl) -- so the same boolean never
-        needs to be set again here per backendRef.
+        needs to be set again here per backendRef. Reuses $canaryEnabled
+        (computed above, in metadata) rather than re-deriving the raw global
+        value, so global.migrate holding this route back is honored here too.
         */}}
-        {{- if (dig "canary" "enabled" false (default dict $.Values.global)) }}
+        {{- if $canaryEnabled }}
         {{- /*
         Every backendRef expands into the stable+canary pair Argo Rollouts'
         Gateway API traffic router plugin expects, so a canary route doesn't
