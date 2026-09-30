@@ -1,0 +1,57 @@
+suite: KEDA ScaledObject sync-wave
+templates:
+  - scaledobject.yaml
+values:
+  - ./fixtures/minimal-values.yaml
+set:
+  kedaScaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 2
+    triggers:
+      - type: prometheus
+        metadata:
+          serverAddress: https://example.invalid
+          query: up
+          threshold: "5"
+tests:
+  - it: omits the sync-wave by default so a new Deployment can be created in the same sync
+    template: scaledobject.yaml
+    asserts:
+      - isKind:
+          of: ScaledObject
+      - notExists:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+
+  - it: syncs the ScaledObject in wave -1 while migrating
+    template: scaledobject.yaml
+    set:
+      kedaScaling.migrating: true
+    asserts:
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+          value: "-1"
+
+  - it: targets the Rollout at wave 4 when canary is enabled, regardless of kedaScaling.migrating
+    template: scaledobject.yaml
+    set:
+      canary.enabled: true
+      global.canary.enabled: true
+    asserts:
+      - equal:
+          path: spec.scaleTargetRef.kind
+          value: Rollout
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+          value: "4"
+
+  - it: still targets wave 4 with canary enabled even if kedaScaling.migrating is also set
+    template: scaledobject.yaml
+    set:
+      canary.enabled: true
+      global.canary.enabled: true
+      kedaScaling.migrating: true
+    asserts:
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+          value: "4"
