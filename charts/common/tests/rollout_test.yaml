@@ -207,3 +207,58 @@ tests:
       - template: service-canary.yaml
         isKind:
           of: Service
+
+  - it: withholds the zero-config gatewayAPI trafficRouting while global.migrate is true, but still wires canaryService/stableService and creates the stable/canary Services
+    # Argo Rollouts' gatewayAPI plugin calls SetWeight on every reconcile, not only
+    # while actively progressing -- RemoveManagedRoutes-only branches fall through to
+    # an unconditional SetWeight call afterward rather than returning early. SetWeight
+    # hard-errors when the target HTTPRoute lacks the "-stable"/"-canary" pair, which
+    # is exactly what global.migrate holding that route back (see the `gatewayapi`
+    # chart's README) produces -- rendering this anyway would abort the Rollout's
+    # reconcile on every single attempt, never letting it reach shouldFullPromote.
+    # canaryService/stableService are unaffected: Argo Rollouts manages their
+    # selectors independent of trafficRouting, so the Services still warm up normally,
+    # which is the entire point of global.migrate existing. See common.migrating's
+    # doc comment in _helpers.tpl.
+    set:
+      service.enabled: true
+      global.migrate: true
+    asserts:
+      - template: rollout.yaml
+        equal:
+          path: spec.strategy.canary.canaryService
+          value: test-app-canary
+      - template: rollout.yaml
+        equal:
+          path: spec.strategy.canary.stableService
+          value: test-app-stable
+      - template: rollout.yaml
+        notExists:
+          path: spec.strategy.canary.trafficRouting
+      - template: service-stable.yaml
+        isKind:
+          of: Service
+      - template: service-canary.yaml
+        isKind:
+          of: Service
+
+  - it: still honors an explicit canary.trafficRouting override even while global.migrate is true
+    # An explicit override is the caller's own choice of traffic router, potentially
+    # pointed at a resource global.migrate (a gatewayapi-chart-specific concern) knows
+    # nothing about -- global.migrate only withholds this chart's own zero-config
+    # gatewayAPI default, never a caller's explicit choice.
+    set:
+      service.enabled: true
+      global.migrate: true
+      canary.trafficRouting:
+        plugins:
+          custom:
+            foo: bar
+    asserts:
+      - template: rollout.yaml
+        equal:
+          path: spec.strategy.canary.trafficRouting
+          value:
+            plugins:
+              custom:
+                foo: bar

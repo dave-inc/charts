@@ -68,7 +68,7 @@ spec:
       {{- if .Values.canary.trafficRouting }}
       trafficRouting:
         {{- toYaml .Values.canary.trafficRouting | nindent 8 }}
-      {{- else if (include "common.canaryTrafficRoutingEnabled" .) }}
+      {{- else if and (include "common.canaryTrafficRoutingEnabled" .) (not (include "common.migrating" .)) }}
       {{- /*
       Zero-config default: an HTTPRoute named after this app (the same
       `common.name` convention canary/stable Services already use) is assumed
@@ -82,6 +82,13 @@ spec:
       resolves true -- see its doc comment in _helpers.tpl for the full
       resolution order, including why cloudArmor.enabled (a public-facing
       deployment) also disables this default today.
+
+      Also withheld while common.migrating (global.migrate) is true: that flag means
+      the `gatewayapi` chart is deliberately holding this HTTPRoute on its current
+      backendRef shape, without the "-stable"/"-canary" pair this plugin expects. See
+      common.migrating's doc comment in _helpers.tpl for why rendering this anyway
+      would hard-fail the Rollout's reconcile on every attempt, not just transiently.
+      canaryService/stableService above are unaffected -- they still warm up normally.
 
       namespace is required here even though the HTTPRoute lives in this same
       Release's namespace: the gatewayAPI plugin does not default an empty
