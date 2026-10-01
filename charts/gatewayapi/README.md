@@ -324,6 +324,22 @@ get-health`), remove `global.migrate` in a follow-up commit. This route then
 expands onto backends that are already warm instead of racing their
 startup.
 
+**The `common` chart must agree `global.migrate` is set, not just this chart.** Argo
+Rollouts' gatewayAPI plugin calls `SetWeight` on every reconcile of a canary-enabled
+Rollout — not only while actively progressing through steps — and `SetWeight`
+hard-errors when the target HTTPRoute lacks the `-stable`/`-canary` backendRef pair,
+which is exactly what `global.migrate` holding this route back produces. If the
+`common` chart's Rollout still configures its zero-config `trafficRouting` against this
+route while that's true, every single reconcile fails before the Rollout ever reaches
+the health check that would let it promote — a permanent deadlock, not the transient
+race this flag is meant to avoid. The `common` chart reads the same `global.migrate`
+flag (see `common.migrating` in its `_helpers.tpl`) and withholds its own
+`trafficRouting` auto-configuration while it's set, for exactly this reason — it keeps
+`canaryService`/`stableService` wired (so the Services still warm up) but renders no
+`trafficRouting` block at all. Since both charts read the same `global` value in one
+release, setting `global.migrate: true` once covers both sides automatically; this is
+only a concern if something overrides it per-chart.
+
 ## Further configuration
 
 This document only covers the most common use cases. For a full list of
