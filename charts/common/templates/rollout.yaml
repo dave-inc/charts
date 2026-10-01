@@ -24,7 +24,25 @@ spec:
   common.workloadKind) when canary is enabled, so skip replicas here the
   same way deployment.yaml would.
   */}}
-{{- if not (or .Values.autoscaling.enabled .Values.kedaScaling.enabled) }}
+{{- if not (kindIs "invalid" .Values.canary.initialReplicas) }}
+  {{- /*
+  canary.initialReplicas is the one exception to the rule above: it renders
+  replicas here even though autoscaling/kedaScaling is enabled. On this
+  Rollout's first-ever revision there is no prior stable revision to canary
+  against, so Argo Rollouts skips canary steps entirely and promotes as soon
+  as its *current* replicas count is Ready -- and workloadRef.scaleDown then
+  retires the old Deployment's real capacity in the same instant. Left
+  omitted (the normal case below), that current count is whatever the HPA
+  has last reconciled onto this Rollout, which on a brand-new object is
+  Kubernetes' own implicit default of 1 -- not this service's real
+  steady-state size -- until the HPA's own reconcile loop catches up.
+  Set this to the service's actual current replica count for the one sync
+  that first turns canary on, so the Rollout starts at real capacity
+  instead of racing the HPA; remove it once confirmed (e.g. `kubectl argo
+  rollouts get rollout`) to hand replica count back to the HPA for good.
+  */}}
+  replicas: {{ .Values.canary.initialReplicas }}
+{{- else if not (or .Values.autoscaling.enabled .Values.kedaScaling.enabled) }}
   replicas: {{ .Values.replicaCount }}
 {{- end }}
   {{- /*
@@ -68,7 +86,7 @@ spec:
       {{- if .Values.canary.trafficRouting }}
       trafficRouting:
         {{- toYaml .Values.canary.trafficRouting | nindent 8 }}
-      {{- else if and (include "common.canaryTrafficRoutingEnabled" .) (not (include "common.migrating" .)) }}
+      {{- else if (include "common.canaryTrafficRoutingEnabled" .) }}
       {{- /*
       Zero-config default: an HTTPRoute named after this app (the same
       `common.name` convention canary/stable Services already use) is assumed
@@ -82,13 +100,6 @@ spec:
       resolves true -- see its doc comment in _helpers.tpl for the full
       resolution order, including why cloudArmor.enabled (a public-facing
       deployment) also disables this default today.
-
-      Also withheld while common.migrating (global.migrate) is true: that flag means
-      the `gatewayapi` chart is deliberately holding this HTTPRoute on its current
-      backendRef shape, without the "-stable"/"-canary" pair this plugin expects. See
-      common.migrating's doc comment in _helpers.tpl for why rendering this anyway
-      would hard-fail the Rollout's reconcile on every attempt, not just transiently.
-      canaryService/stableService above are unaffected -- they still warm up normally.
 
       namespace is required here even though the HTTPRoute lives in this same
       Release's namespace: the gatewayAPI plugin does not default an empty
