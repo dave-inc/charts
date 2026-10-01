@@ -129,33 +129,6 @@ true
 {{- end }}
 
 {{/*
-Whether this app is mid-migration onto the `gatewayapi` chart's canary backendRef
-expansion. Reads `global.migrate`, the same flag the `gatewayapi` chart's
-`charts/gatewayapi/templates/httproute.yaml` reads to hold an HTTPRoute on its current,
-non-canary backendRef shape even while canary is enabled -- see that template's doc
-comment for the full reasoning.
-
-Used by rollout.yaml to withhold the Rollout's own `trafficRouting` auto-configuration
-while this is true. Argo Rollouts' gatewayAPI plugin calls SetWeight on *every*
-reconcile of a canary-enabled Rollout, not only while actively progressing through
-steps -- RemoveManagedRoutes-only branches in its reconcileTrafficRouting fall through
-to an unconditional SetWeight call afterward, they do not return early. SetWeight hard
-errors when the target HTTPRoute lacks the "-stable"/"-canary" backendRef pair, which is
-exactly what global.migrate holding that route back produces. Without this check, that
-error fires on literally the first reconcile and every one after, aborting
-rolloutCanary() before it ever reaches shouldFullPromote/promoteStable -- the Rollout
-can never mark itself healthy. canaryService/stableService (and the Services they name)
-are unaffected by this and keep rendering while migrating: Argo Rollouts manages their
-selectors independent of trafficRouting, so they still warm up normally, which is the
-entire point of global.migrate existing.
-
-Emits "true" when migrating, "" otherwise -- safe to use directly as an `if` condition.
-*/}}
-{{- define "common.migrating" -}}
-{{- if dig "migrate" false (default dict .Values.global) }}true{{ end -}}
-{{- end }}
-
-{{/*
 Workload API version. Rollout (Argo Rollouts) when canary is enabled, otherwise Deployment.
 */}}
 {{- define "common.workloadApiVersion" -}}

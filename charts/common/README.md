@@ -77,6 +77,41 @@ Two things to know before relying on it:
   runs. Old and new infra both stay live, at double the cost, until someone intervenes — the
   safe failure mode, but worth knowing about operationally rather than being surprised by it.
 
+### Turning on canary for an autoscaled service needs `canary.initialReplicas` too
+
+A Rollout's first-ever revision always promotes immediately: there is no prior stable
+revision to canary against, so Argo Rollouts skips canary steps entirely and marks itself
+healthy as soon as its *current* `replicas` count is Ready — then `canary.scaleDown`
+(`onsuccess` by default) retires the old Deployment's real capacity in that same instant.
+
+That current count is a problem specifically when `autoscaling.enabled` (or
+`kedaScaling.enabled`) is also true. This chart omits `replicas` on the Rollout in that case,
+deferring to the HPA/`ScaledObject` — correct for steady state, but on a brand-new Rollout
+object, an omitted `replicas` is Kubernetes' own implicit default of `1`, not this service's
+real steady-state size, until the HPA's own reconcile loop catches up and patches it. The
+Rollout can promote — and the old Deployment's pods can be torn down — while the new
+ReplicaSet still has only one pod. This isn't theoretical: it's the confirmed root cause of a
+live incident, including a recurrence on a routine post-migration update (not just the
+original cutover), traced directly through Argo Rollouts' and Argo CD's own source — both
+treat a missing `spec.replicas` as `1` when deciding whether the Rollout is healthy.
+
+Set `canary.initialReplicas` to the service's actual current replica count for the one sync
+that first turns `canary.enabled` on for an autoscaled or KEDA-scaled service:
+
+```yaml
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+canary:
+  initialReplicas: 5  # whatever this service is actually running right now
+```
+
+This overrides the usual omission, so the Rollout starts life at real capacity instead of
+racing the HPA. Once confirmed fully promoted at that replica count (`kubectl argo rollouts
+get rollout`), remove `canary.initialReplicas` in a follow-up commit to hand replica count
+back to the HPA/`ScaledObject` for good.
+
 ## Opting a deployment out of canary
 
 `global.canary.enabled` is a single toggle at the umbrella-chart level, driving every

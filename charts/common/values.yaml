@@ -282,6 +282,24 @@ canary:
   # Rollout .spec.workloadRef.scaleDown
   # https://argo-rollouts.readthedocs.io/en/stable/migrating/#workloadref-field
   scaleDown: "onsuccess"
+  # Explicit replicas for the Rollout's first-ever reconcile, overriding the
+  # usual rule that replicas is omitted whenever autoscaling.enabled or
+  # kedaScaling.enabled (left to the HPA/ScaledObject). Unset by default.
+  #
+  # A first-ever Rollout always promotes immediately -- there's no prior
+  # stable revision to canary against, so Argo Rollouts skips canary steps
+  # and marks itself healthy as soon as its *current* replicas count is
+  # Ready, then scaleDown above retires the old Deployment's real capacity in
+  # the same instant. Omitted, that current count is whatever the HPA has
+  # reconciled onto this Rollout -- on a brand-new object, Kubernetes'
+  # implicit default of 1, not this service's real steady-state size, until
+  # the HPA's own reconcile loop catches up. Set this to the service's actual
+  # current replica count for the one sync that first turns canary.enabled
+  # on for an autoscaled service, so the Rollout starts at real capacity
+  # instead of racing the HPA; remove it (back to unset) once confirmed
+  # healthy at that count, to hand replicas back to the HPA for good.
+  #
+  # initialReplicas:
   # Canary steps, passed as-is to Rollout .spec.strategy.canary.steps
   # https://argo-rollouts.readthedocs.io/en/stable/features/canary/#canary-steps
   steps:
