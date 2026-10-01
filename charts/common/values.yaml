@@ -396,6 +396,7 @@ canary:
     # autoscaling.metrics' behavior above of falling back to the top-level list).
     kedaScaling:
       enabled: false
+      migrating: false   # same as the top-level kedaScaling.migrating, for this tier's own migration sync
       # minReplicas and maxReplicas behave exactly as documented above for autoscaling.
       # minReplicas:
       # maxReplicas:
@@ -569,6 +570,11 @@ hpaBehavior:
 
 kedaScaling:
   enabled: false
+  # Set true only in the PR that moves an existing Deployment off a static replicaCount (also
+  # covers the canary tier), then remove it. It puts the ScaledObject in Argo CD sync-wave -1 so
+  # KEDA owns replicas before the Deployment drops spec.replicas. Leave false for new workloads:
+  # their Deployment does not exist yet, and wave -1 would block the sync from ever creating it.
+  migrating: false
   minReplicas: ~
   maxReplicas: ~
   pollingInterval: ~   # seconds; when unset, the ScaledObject omits this field and KEDA uses its own default (30s). GCP Managed Prometheus has its own ingestion lag on top of whatever value is set.

@@ -1,6 +1,6 @@
 {
   "charts/cloudsql-proxy": "1.0.0",
-  "charts/common": "1.0.0",
+  "charts/common": "1.1.0",
   "charts/dave-npd": "1.0.0",
   "charts/gateway-bundle": "3.0.0",
   "charts/gatewayapi": "3.0.0",
