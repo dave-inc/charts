@@ -319,6 +319,30 @@ canary:
     - pause: {}
   maxSurge: "25%"
   maxUnavailable: 0
+  # Delay, in seconds, before Argo Rollouts scales down the previous
+  # ReplicaSet's Pods after this Rollout considers traffic fully shifted to
+  # the new one. Only honored when trafficRouting is configured (the default
+  # here). Passed as-is to Rollout .spec.strategy.canary.scaleDownDelaySeconds
+  # https://argo-rollouts.readthedocs.io/en/stable/features/canary/#traffic-management
+  #
+  # Argo Rollouts' control plane treats an HTTPRoute weight patch as taking
+  # effect the instant it's applied; GKE's managed Envoy proxies take real
+  # time to actually propagate that change, and a retiring Pod's endpoint
+  # takes time to detach from its NEG. Without a long enough delay here, the
+  # old ReplicaSet's Pods can be torn down before every proxy instance (or
+  # the NEG) has caught up -- a request that lands on a proxy still running
+  # the stale weight gets routed to a cluster with zero remaining endpoints,
+  # producing a brief "no healthy upstream" 503 right as canary reaches
+  # 100%. Confirmed live on service-template-test-service.
+  #
+  # 60, not Argo Rollouts' own built-in default of 30 (DefaultScaleDownDelaySeconds
+  # in utils/defaults/defaults.go) -- that default is what was already in effect
+  # when the 503s above were observed, so it isn't long enough on its own. 60
+  # matches serviceGracefulRollout's minReadySeconds, the teardown side's
+  # counterpart covering the equivalent gap on the build-up side (see
+  # rollout.yaml) -- a reasonable starting point, not yet independently proven
+  # at this number; watch the next canary-to-100% step after raising it.
+  scaleDownDelaySeconds: 60
   # This chart always creates canary/stable Services named
   # "<name>-canary"/"<name>-stable" whenever canary is enabled (see
   # service-canary.yaml/service-stable.yaml) -- not configurable, so the
