@@ -83,7 +83,19 @@ spec:
       {{- end }}
       maxSurge: {{ .Values.canary.maxSurge | quote }}
       maxUnavailable: {{ .Values.canary.maxUnavailable }}
-      {{- if not (kindIs "invalid" .Values.canary.scaleDownDelaySeconds) }}
+      {{- /*
+      Argo Rollouts' own validation rejects scaleDownDelaySeconds outright
+      ("Canary scaleDownDelaySeconds can only be used with traffic routing")
+      whenever trafficRouting isn't actually present below -- which, during the
+      canary.initialReplicas warm-up window (global.canary.enabled still
+      false), it deliberately isn't. Must gate on the exact same condition
+      that decides whether the trafficRouting block below renders, not just
+      "is a value set" -- confirmed live on service-template-test-service,
+      where omitting this check degraded the Rollout (InvalidSpec) during
+      that window.
+      */}}
+      {{- $trafficRoutingWillRender := or .Values.canary.trafficRouting (and (include "common.canaryTrafficRoutingEnabled" .) (dig "canary" "enabled" false (default dict .Values.global))) }}
+      {{- if and $trafficRoutingWillRender (not (kindIs "invalid" .Values.canary.scaleDownDelaySeconds)) }}
       scaleDownDelaySeconds: {{ .Values.canary.scaleDownDelaySeconds | int }}
       {{- end }}
       {{- if .Values.canary.trafficRouting }}
