@@ -95,8 +95,11 @@ live incident, including a recurrence on a routine post-migration update (not ju
 original cutover), traced directly through Argo Rollouts' and Argo CD's own source — both
 treat a missing `spec.replicas` as `1` when deciding whether the Rollout is healthy.
 
-Set `canary.initialReplicas` to the service's actual current replica count for the one sync
-that first turns `canary.enabled` on for an autoscaled or KEDA-scaled service:
+`canary.initialReplicas` fixes this, and it's deliberately more than just a replica-count
+override: **setting it is on its own enough to turn canary on for this service**, independent
+of `global.canary.enabled`. There's no legitimate reason to ever set this value except to
+stage a migration onto canary ahead of the real cutover, so the chart treats setting it as
+that signal — there's no state where you'd want it set but the Rollout left off:
 
 ```yaml
 autoscaling:
@@ -107,10 +110,26 @@ canary:
   initialReplicas: 5  # whatever this service is actually running right now
 ```
 
-This overrides the usual omission, so the Rollout starts life at real capacity instead of
-racing the HPA. Once confirmed fully promoted at that replica count (`kubectl argo rollouts
-get rollout`), remove `canary.initialReplicas` in a follow-up commit to hand replica count
-back to the HPA/`ScaledObject` for good.
+With only this set — `global.canary.enabled` still untouched — the Rollout and its
+`-stable`/`-canary` Services are created at real capacity and start warming up for real:
+GCP attaches their NEGs and runs its own health checks, all before any real traffic depends
+on them. This is the piece sync-wave ordering alone can't provide, because a sync-wave only
+orders *when Argo CD applies* a resource, not when the load balancer finishes converging on
+it. The Rollout's `trafficRouting` stays off during this window — it still waits for the
+real `global.canary.enabled`, specifically so it never tries to manage weights on a
+`gatewayapi` HTTPRoute that hasn't expanded its backendRefs yet (see that chart's own
+canary section for why that combination hard-errors every reconcile otherwise).
+
+Migrating an autoscaled service onto canary is then two steps instead of one:
+
+1. Set `canary.initialReplicas` to the service's actual current replica count. Wait,
+   confirm fully promoted at that count and the Services' backends are healthy
+   (`kubectl argo rollouts get rollout`, `gcloud compute backend-services get-health`).
+2. Flip `global.canary.enabled: true`. This both completes the cutover on this chart's side
+   (arms `trafficRouting`) and is the same flag the `gatewayapi` chart reads to expand its
+   HTTPRoute — so the real traffic switch lands on backends that are already warm, not
+   ones racing their own startup. Remove `canary.initialReplicas` in a follow-up commit
+   once confirmed healthy, to hand replica count back to the HPA/`ScaledObject` for good.
 
 ## Opting a deployment out of canary
 
