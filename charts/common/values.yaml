@@ -321,9 +321,16 @@ canary:
   maxUnavailable: 0
   # Delay, in seconds, before Argo Rollouts scales down the previous
   # ReplicaSet's Pods after this Rollout considers traffic fully shifted to
-  # the new one. Only honored when trafficRouting is configured (the default
-  # here). Passed as-is to Rollout .spec.strategy.canary.scaleDownDelaySeconds
+  # the new one. Passed as-is to Rollout .spec.strategy.canary.scaleDownDelaySeconds
   # https://argo-rollouts.readthedocs.io/en/stable/features/canary/#traffic-management
+  #
+  # Only rendered in rollout.yaml when trafficRouting will actually be
+  # present on the same Rollout -- Argo Rollouts' own validation rejects the
+  # whole spec outright ("Canary scaleDownDelaySeconds can only be used with
+  # traffic routing") otherwise, which is exactly the state canary.initialReplicas'
+  # warm-up window (global.canary.enabled still false) leaves the Rollout in. A
+  # value set here is still silently withheld during that window rather than
+  # breaking the Rollout; it takes effect once trafficRouting arms alongside it.
   #
   # Argo Rollouts' control plane treats an HTTPRoute weight patch as taking
   # effect the instant it's applied; GKE's managed Envoy proxies take real

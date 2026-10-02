@@ -55,6 +55,14 @@ tests:
         notExists:
           path: spec.strategy.canary.trafficRouting
 
+  - it: also omits scaleDownDelaySeconds while global.canary.enabled is still unset, even with initialReplicas set - Argo Rollouts' own validation rejects the Rollout outright ("Canary scaleDownDelaySeconds can only be used with traffic routing") if this ever renders without trafficRouting, as happened live on service-template-test-service
+    set:
+      canary.initialReplicas: 5
+    asserts:
+      - template: rollout.yaml
+        notExists:
+          path: spec.strategy.canary.scaleDownDelaySeconds
+
   - it: arms the zero-config trafficRouting once global.canary.enabled is also set
     set:
       canary.initialReplicas: 5
@@ -68,6 +76,16 @@ tests:
               argoproj-labs/gatewayAPI:
                 httpRoute: test-app
                 namespace: NAMESPACE
+
+  - it: scaleDownDelaySeconds joins trafficRouting once global.canary.enabled is also set
+    set:
+      canary.initialReplicas: 5
+      global.canary.enabled: true
+    asserts:
+      - template: rollout.yaml
+        equal:
+          path: spec.strategy.canary.scaleDownDelaySeconds
+          value: 60
 
   - it: still honors an explicit canary.trafficRouting override while only initialReplicas is set
     set:
