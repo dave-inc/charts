@@ -83,6 +83,9 @@ spec:
       {{- end }}
       maxSurge: {{ .Values.canary.maxSurge | quote }}
       maxUnavailable: {{ .Values.canary.maxUnavailable }}
+      {{- if not (kindIs "invalid" .Values.canary.scaleDownDelaySeconds) }}
+      scaleDownDelaySeconds: {{ .Values.canary.scaleDownDelaySeconds | int }}
+      {{- end }}
       {{- if .Values.canary.trafficRouting }}
       trafficRouting:
         {{- toYaml .Values.canary.trafficRouting | nindent 8 }}
