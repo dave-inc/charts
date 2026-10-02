@@ -110,8 +110,7 @@ deploymentContainer:
 # serviceGracefulRollout.terminationGracePeriodSeconds instead, and that is where the
 # reasoning for a longer budget lives.
 #
-# Applies to the control and canary Deployments. The reverse proxy inherits the effective
-# value unless canary.reverseProxy.terminationGracePeriodSeconds is set.
+# Applies to the Deployment, whether or not canary is enabled.
 terminationGracePeriodSeconds: 31
 
 # Seconds a Pod keeps serving after termination begins, before its process is asked to
@@ -129,10 +128,9 @@ terminationGracePeriodSeconds: 31
 # and still needs a window. It must stay below terminationGracePeriodSeconds, or the
 # render fails rather than let the Pod be SIGKILLed part-way through draining.
 #
-# Rendered as a preStop sleep on the control and canary application containers, unless
+# Rendered as a preStop sleep on the application container, unless
 # deploymentContainer.lifecycle is set, which takes precedence and is then responsible
-# for its own drain. The reverse proxy sleeps for the same duration before quitting
-# nginx, unless canary.reverseProxy.preStopSleepSeconds is set.
+# for its own drain. Set 0 to opt out.
 preStopSleepSeconds: 0
 
 image:
@@ -197,13 +195,11 @@ service:
 #
 # Precedence, most specific first:
 #
-#   1. canary.reverseProxy.*    the per-tier override, reverse proxy only
-#   2. serviceGracefulRollout.* this block, when it applies
-#   3. top-level .Values.*      the default for everything else
+#   1. serviceGracefulRollout.* this block, when it applies
+#   2. top-level .Values.*      the default for everything else
 #
-# The block feeds the control and canary Deployments, the reverse proxy's base timing and
-# the Cloud SQL proxy's derived wait, so all of them move together. Set enabled: false to
-# put a service back on the top-level defaults.
+# The block feeds the Deployment and the Cloud SQL proxy's derived wait, so both move
+# together. Set enabled: false to put a service back on the top-level defaults.
 serviceGracefulRollout:
   enabled: true
 
@@ -253,178 +249,141 @@ serviceGracefulRollout:
   # until the last moment, so the proxy has to outlive the whole of this budget.
   terminationGracePeriodSeconds: 60
 
+# Argo Rollouts canary deployment. Requires the Argo Rollouts controller
+# (https://argo-rollouts.readthedocs.io) installed in the target cluster.
+# When enabled, a Rollout (argoproj.io/v1alpha1) is created alongside the
+# regular apps/v1 Deployment, referencing it via workloadRef instead of
+# duplicating its pod template, per
+# https://argo-rollouts.readthedocs.io/en/stable/migrating/. HPA/VPA/KEDA
+# scaleTargetRef then points at the Rollout instead of the Deployment.
 canary:
-  enabled: false
-  weight: 0
-  deploymentContainer:
-    command: []
-    args: []
-    # Optional: override probes for canary only (same structure as deploymentContainer).
-    # If unset, canary uses the main deployment's liveness/readiness/startup probes.
-    # livenessProbe: {}
-    # customLivenessProbe: {}
-    # readinessProbe: {}
-    # customReadinessProbe: {}
-    # startupProbe: {}
-    # customStartupProbe: {}
-  resources: {}
-  service:
-    annotations:
-      canary: {}
-      control: {}
-
-  # Overrides the top-level podDisruptionBudget for the canary tier only.
-  # Leave enabled unset to inherit the top-level enabled value. Leave both
-  # minAvailable and maxUnavailable unset to inherit the top-level budget.
-  # If either budget field is set, the other is not inherited: minAvailable
-  # and maxUnavailable are mutually exclusive, so a partial override cannot
-  # be merged with the parent. Use maxUnavailable: 0 to disallow all voluntary disruption;
-  # use minAvailable: "100%" for the same effect.
+  # Whether canary is on is normally controlled entirely by
+  # `global.canary.enabled` (not set here) -- a single toggle at the
+  # umbrella-chart level (see sre/charts/<service>/*/values.yaml in the
+  # deployment repo) that drives both this chart and the `gatewayapi`
+  # chart's stable+canary backendRef expansion, so the same boolean never
+  # needs to be set in two places.
   #
-  # podDisruptionBudget:
-  #   enabled: true
-  #   minAvailable:
-  #   maxUnavailable:
-
-  # Implementation specific configurations for canary deployment
-  reverseProxy:
-    # Overrides the top-level podDisruptionBudget for the reverse proxy only.
-    # Leave enabled unset to inherit the top-level enabled value. Leave both
-    # minAvailable and maxUnavailable unset to inherit the top-level budget.
-    # If either budget field is set, the other is not inherited: minAvailable
-    # and maxUnavailable are mutually exclusive, so a partial override cannot
-    # be merged with the parent. Use maxUnavailable: 0 to disallow all voluntary disruption;
-    # use minAvailable: "100%" for the same effect.
-    #
-    # podDisruptionBudget:
-    #   enabled: true
-    #   minAvailable:
-    #   maxUnavailable:
-
-    # Overrides the effective minReadySeconds for the reverse proxy only, where
-    # effective means serviceGracefulRollout when it applies and the top level
-    # otherwise. The rproxy is the tier fronted by the NEG, so it often warrants a
-    # longer delay than the application Deployments. Leave unset to inherit;
-    # setting 0 here explicitly opts the rproxy out of a non-zero inherited value.
-    # minReadySeconds:
-    # Overrides the effective terminationGracePeriodSeconds for the reverse proxy
-    # only, serviceGracefulRollout when it applies and the top level otherwise.
-    # Being the tier fronted by the NEG, it is the one that keeps serving while its
-    # endpoint is detached, so it may warrant longer than the application
-    # Deployments. Leave unset to inherit.
-    #
-    # Unlike minReadySeconds above, this field is always rendered, so 0 is not an
-    # opt out: it sets a grace period of literally 0 seconds, which SIGKILLs the
-    # Pod immediately with no drain at all. It does not fall back to the
-    # Kubernetes default of 30. Reaching 0 also means setting preStopSleepSeconds
-    # to 0, since a preStop sleep may not outlast the grace period.
-    # terminationGracePeriodSeconds:
-    # Overrides the effective preStopSleepSeconds for the reverse proxy only,
-    # serviceGracefulRollout when it applies and the top level otherwise. The
-    # rproxy sleeps this long before quitting nginx, so it stays in the traffic
-    # path until the load balancer has detached its endpoint. Leave unset to
-    # inherit; setting 0 here quits nginx immediately with no drain window.
-    # preStopSleepSeconds:
-    # WARNING: enabling this will cause every request to be logged. That is a lot of logs.
-    enableAccessLogs: false
-    # Minimum number of upstreams to duplicate; the actual count: max(.Values.canary.reverseProxy.minUpstreams, .Values.autoscaling.maxReplicas)
-    minUpstreams: 10
-    # Timeouts for the reverse proxy. These defaults are intended for web services. If you would like to use canary for something
-    # like a GCP task handler you would need to increase these limits
-    send_timeout: 30s
-    proxy_connect_timeout: 5s
-    proxy_send_timeout: 30s
-    proxy_read_timeout: 30s
-    livenessProbe:
-      initialDelaySeconds: 1
-      failureThreshold: 3
-      # The probe will be checked every 10 seconds.
-      periodSeconds: 10
-      # Number of times the probe is allowed to fail before the transition
-      # from healthy to failure state.
-      # If periodSeconds = 60, 5 tries will result in five minutes of
-      # checks. The proxy starts to refresh a certificate five minutes
-      # before its expiration. If those five minutes lapse without a
-      # successful refresh, the liveness probe will fail and the pod will be
-      # restarted.
-      successThreshold: 1
-      # The probe will fail if it does not respond in 10 seconds
-      timeoutSeconds: 10
-    readinessProbe:
-      initialDelaySeconds: 1
-      failureThreshold: 3
-      # The probe will be checked every 10 seconds.
-      periodSeconds: 10
-      # Number of times the probe is allowed to fail before the transition
-      # from healthy to failure state.
-      # If periodSeconds = 60, 5 tries will result in five minutes of
-      # checks. The proxy starts to refresh a certificate five minutes
-      # before its expiration. If those five minutes lapse without a
-      # successful refresh, the liveness probe will fail and the pod will be
-      # restarted.
-      successThreshold: 1
-      # The probe will fail if it does not respond in 10 seconds
-      timeoutSeconds: 10
-    startupProbe:
-      initialDelaySeconds: 1
-      failureThreshold: 60
-      periodSeconds: 1
-      successThreshold: 1
-      timeoutSeconds: 10
-    image:
-      repository: nginx
-      tag: 1.27.4
-    # Number of reverse proxy Pods, used only when autoscaling below is disabled.
-    # Leave unset to inherit the top-level replicaCount.
-    # replicaCount:
-    autoscaling:
-      enabled: true
-      metrics: []
-      # minReplicas and maxReplicas are inherited from .Values.autoscaling unless
-      # set here. The inherited minimum is floored at 2, since the reverse proxy is
-      # the tier fronted by the NEG and a single replica is a single endpoint: a
-      # rollout or a zone move then leaves the load balancer with nothing to route
-      # to. The floor never exceeds maxReplicas, so a service that deliberately
-      # pins itself to one replica is left alone. Setting minReplicas here wins
-      # outright over both the floor and the inherited value, including 1.
-      # minReplicas:
-      # maxReplicas:
-    # KEDA equivalent of the autoscaling block above - independent of both it and the
-    # top-level kedaScaling.enabled, so the rproxy tier can migrate to KEDA on its own
-    # schedule. Only takes effect once enabled: true; triggers always come from the
-    # top-level kedaScaling.triggers (no rproxy-specific trigger override, matching
-    # autoscaling.metrics' behavior above of falling back to the top-level list).
-    kedaScaling:
-      enabled: false
-      migrating: false   # same as the top-level kedaScaling.migrating, for this tier's own migration sync
-      # minReplicas and maxReplicas behave exactly as documented above for autoscaling.
-      # minReplicas:
-      # maxReplicas:
-      # hpaName overrides the rproxy tier's generated HPA name - see the top-level
-      # kedaScaling.hpaName comment above for why this exists.
-      # hpaName:
-    resources:
-      requests:
-        cpu: 100m
-        memory: 256Mi
-      limits:
-        memory: 256Mi
-
-  # Number of canary Pods, used only when .Values.autoscaling is disabled.
-  # Leave unset to inherit the top-level replicaCount.
-  # replicaCount:
-
-  # HPA settings for canary deployment. ".Values.autoscaling" values are used to confiugre HPA.
-  # minReplicas and/or maxReplicas can be overriten for canary with this configuration. Does not support overriding any other values.
-  # autoscaling:
-  #  minReplicas: 1 (defaults to .Values.autoscaling.minReplicas)
-  #  maxReplicas: 10 (defaults to .Values.autoscaling.maxReplicas)
-  #  hpaName: overrides the canary tier's generated HPA name - see the top-level
-  #    kedaScaling.hpaName comment above for why this exists (KEDA path only).
-  # percentage of traffic that should be sent to canary. (100 - weight) is sent to non-canary deployment.
-  # weight: 5
-  # image:
-  #  tag: ""
+  # Set this to `false` to opt this service out of canary altogether,
+  # regardless of the umbrella toggle or initialReplicas below: it always
+  # renders a plain Deployment (never a Rollout), with a static `replicaCount`
+  # and no canary/stable Services. Use this for a service that must never run
+  # extra canary Pods alongside its stable ones, e.g. one pinned to an exact
+  # replica count by an invariant a transient canary Pod would violate.
+  # enabled:
+  # What the Rollout does to the referenced Deployment once its own
+  # ReplicaSet is healthy: "never" leaves it running at full size,
+  # "onsuccess" scales it to 0 once, "progressively" scales it down in step
+  # with the Rollout scaling up. Passed as-is to
+  # Rollout .spec.workloadRef.scaleDown
+  # https://argo-rollouts.readthedocs.io/en/stable/migrating/#workloadref-field
+  scaleDown: "onsuccess"
+  # Explicit replicas for the Rollout's first-ever reconcile, overriding the
+  # usual rule that replicas is omitted whenever autoscaling.enabled or
+  # kedaScaling.enabled (left to the HPA/ScaledObject). Unset by default.
+  #
+  # Setting this is also, on its own, enough to force canary on for this
+  # service -- the Rollout and its "-stable"/"-canary" Services get created --
+  # independent of `global.canary.enabled`, which is otherwise the only
+  # thing that turns canary on (see common.canaryEnabled in _helpers.tpl).
+  # The only legitimate reason to ever set this value is staging a migration
+  # onto canary ahead of the real cutover, so setting it already means that's
+  # what's happening: there's no state where you'd want this set but canary
+  # left off. It's still safe to set ahead of flipping global.canary.enabled
+  # -- the Rollout's trafficRouting (the part that would actually touch the
+  # `gatewayapi` chart's HTTPRoute) still waits for the real
+  # global.canary.enabled regardless of this value, so the Rollout and its
+  # Services can exist and warm up (real replica count, NEGs attached, GCP
+  # health checks passing) before anything routes real traffic to them.
+  #
+  # A first-ever Rollout always promotes immediately -- there's no prior
+  # stable revision to canary against, so Argo Rollouts skips canary steps
+  # and marks itself healthy as soon as its *current* replicas count is
+  # Ready, then scaleDown above retires the old Deployment's real capacity in
+  # the same instant. Omitted, that current count is whatever the HPA has
+  # reconciled onto this Rollout -- on a brand-new object, Kubernetes'
+  # implicit default of 1, not this service's real steady-state size, until
+  # the HPA's own reconcile loop catches up. Set this to the service's actual
+  # current replica count to stage a migration onto canary for an autoscaled
+  # service, so the Rollout starts at real capacity instead of racing the
+  # HPA; remove it (back to unset) once global.canary.enabled is flipped and
+  # confirmed healthy at that count, to hand replicas back to the HPA for
+  # good.
+  #
+  # initialReplicas:
+  # Canary steps, passed as-is to Rollout .spec.strategy.canary.steps
+  # https://argo-rollouts.readthedocs.io/en/stable/features/canary/#canary-steps
+  steps:
+    - pause: {}
+    - setWeight: 20
+    - pause: {}
+  maxSurge: "25%"
+  maxUnavailable: 0
+  # Delay, in seconds, before Argo Rollouts scales down the previous
+  # ReplicaSet's Pods after this Rollout considers traffic fully shifted to
+  # the new one. Passed as-is to Rollout .spec.strategy.canary.scaleDownDelaySeconds
+  # https://argo-rollouts.readthedocs.io/en/stable/features/canary/#traffic-management
+  #
+  # Only rendered in rollout.yaml when trafficRouting will actually be
+  # present on the same Rollout -- Argo Rollouts' own validation rejects the
+  # whole spec outright ("Canary scaleDownDelaySeconds can only be used with
+  # traffic routing") otherwise, which is exactly the state canary.initialReplicas'
+  # warm-up window (global.canary.enabled still false) leaves the Rollout in. A
+  # value set here is still silently withheld during that window rather than
+  # breaking the Rollout; it takes effect once trafficRouting arms alongside it.
+  #
+  # Argo Rollouts' control plane treats an HTTPRoute weight patch as taking
+  # effect the instant it's applied; GKE's managed Envoy proxies take real
+  # time to actually propagate that change, and a retiring Pod's endpoint
+  # takes time to detach from its NEG. Without a long enough delay here, the
+  # old ReplicaSet's Pods can be torn down before every proxy instance (or
+  # the NEG) has caught up -- a request that lands on a proxy still running
+  # the stale weight gets routed to a cluster with zero remaining endpoints,
+  # producing a brief "no healthy upstream" 503 right as canary reaches
+  # 100%. Confirmed live on service-template-test-service.
+  #
+  # 60, not Argo Rollouts' own built-in default of 30 (DefaultScaleDownDelaySeconds
+  # in utils/defaults/defaults.go) -- that default is what was already in effect
+  # when the 503s above were observed, so it isn't long enough on its own. 60
+  # matches serviceGracefulRollout's minReadySeconds, the teardown side's
+  # counterpart covering the equivalent gap on the build-up side (see
+  # rollout.yaml) -- a reasonable starting point, not yet independently proven
+  # at this number; watch the next canary-to-100% step after raising it.
+  scaleDownDelaySeconds: 60
+  # This chart always creates canary/stable Services named
+  # "<name>-canary"/"<name>-stable" whenever canary is enabled (see
+  # service-canary.yaml/service-stable.yaml) -- not configurable, so the
+  # `gatewayapi` chart's stable+canary backendRef expansion can always
+  # derive the same two names from the app name alone, with nothing to keep
+  # in sync between the two charts. Argo Rollouts manages the pod selector on
+  # these Services itself; the chart only needs to create them with the same
+  # base selector as the main service.
+  #
+  # Traffic routing config, passed as-is to .spec.strategy.canary.trafficRouting.
+  # Left at {} (the default), the chart auto-configures the argoproj-labs/gatewayAPI
+  # plugin (baked into the argo-rollouts controller image, see the `argo-rollouts`
+  # chart) to manage an HTTPRoute named after this app -- the same "<name>-canary"/
+  # "<name>-stable" convention the chart's own canary/stable Services use (see
+  # service-canary.yaml/service-stable.yaml), matching how the `gatewayapi` chart
+  # expands every backendRef into that same pair whenever `global.canary.enabled`
+  # is true. See charts/gatewayapi/examples/canary.yaml. No manual wiring needed.
+  #
+  # Override this to use a different traffic router (nginx, istio, alb, smi) or to
+  # point at a differently-named/namespaced HTTPRoute, e.g.:
+  #
+  # trafficRouting:
+  #   plugins:
+  #     argoproj-labs/gatewayAPI:
+  #       httpRoute: <name of the HTTPRoute created by the gatewayapi chart>
+  #       namespace: <namespace of that HTTPRoute, if not this Rollout's own>
+  #
+  # Set this to `false` instead to disable traffic routing entirely and fall back
+  # to basic weighted-replica canary, which needs no service mesh, ingress
+  # controller, or HTTPRoute at all.
+  trafficRouting: {}
+  # Optional background analysis config, passed as-is to .spec.strategy.canary.analysis
+  # https://argo-rollouts.readthedocs.io/en/stable/features/analysis/
+  analysis: {}
 
 ingress:
   enabled: false
@@ -469,7 +428,7 @@ ingress:
   #      ## The name is optional, If not set, a name is generated using host
   #        name: ""
   #        staticIpName: ""
-  #        csmStaticIpName: "" # Only used if canary.enabled is true. Optional, If not set, a name is generated using Release.Name with "-csm" suffix. This is a resource in GCP.
+  #        csmStaticIpName: "" # Optional, If not set, a name is generated using Release.Name with "-csm" suffix. This is a resource in GCP.
   #        annotations: {}
   #       ## kubernetes.io/ingress.class: (nginx-internal or nginx-public)
   #       ## kubernetes.io/tls-acme: "true"
@@ -548,18 +507,21 @@ strategy:
 # serviceGracefulRollout.minReadySeconds instead, which defaults to 60 and carries the
 # separate, load-balancer-shaped reason for the delay.
 #
-# Applies to the control and canary Deployments. The reverse proxy inherits the effective
-# value unless canary.reverseProxy.minReadySeconds is set.
+# The cost is near constant rather than proportional to size: with the surge and
+# unavailable above, a rollout moves in roughly four waves whatever the replica count,
+# so this adds about four minutes, felt most in an emergency rollback. Must stay below
+# progressDeadlineSeconds (600 by default) or the rollout is marked failed, which leaves
+# room for those four waves unless the container is also slow to start.
+#
+# Applies to the Deployment, whether or not canary is enabled. Set 0 to opt out.
 minReadySeconds: 0
 
 autoscaling:
   enabled: false
   # Null means the chart computes it: 2 when canary is enabled, otherwise 1. Canary puts
-  # a second Deployment in the traffic path, and a tier at one Pod has no headroom while
-  # that Pod is replaced. It is left null rather than given a literal so the chart can
-  # tell a deliberate value from an inherited one; set it to override, including to 1.
-  # The reverse proxy keeps its own floor of 2 and its own
-  # canary.reverseProxy.autoscaling.minReplicas override.
+  # a second ReplicaSet in the traffic path during a rollout, and a tier at one Pod has no
+  # headroom while that Pod is replaced. It is left null rather than given a literal so the
+  # chart can tell a deliberate value from an inherited one; set it to override, including to 1.
   minReplicas: null
   maxReplicas: 100
   metrics: []
@@ -582,7 +544,7 @@ kedaScaling:
     enabled: false
     failureThreshold: 3
     replicas: ~          # defaults to minReplicas/kedaScaling.minReplicas above
-  hpaName: ~           # KEDA derives the ScaledObject's HPA as keda-hpa-<ScaledObject name>, which must be <= 63 chars; set this to override just the generated HPA's name (<= 63 chars) when a long service name would otherwise exceed that limit. Same override exists for the canary/rproxy tiers as canary.autoscaling.hpaName / canary.reverseProxy.kedaScaling.hpaName.
+  hpaName: ~           # KEDA derives the ScaledObject's HPA as keda-hpa-<ScaledObject name>, which must be <= 63 chars; set this to override just the generated HPA's name (<= 63 chars) when a long service name would otherwise exceed that limit.
   triggers: []
 # Example — Pub/Sub trigger (replaces type: External HPA metric):
 #
@@ -674,7 +636,7 @@ affinity: {}
 apm:
   enabled: false
   otlp: false
-  # If datadogEnvironment is not defined we use variable environment long with a suffix of "-canary" if canary is enabled as default
+  # If datadogEnvironment is not defined we use variable environment as default
   datadogEnvironment: ""
   # Optional override DD_SERVICE_NAME to a custon name instead of common.name
   datadogServiceName: ""

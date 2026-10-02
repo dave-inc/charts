@@ -183,17 +183,30 @@ setting `""` and thereby detaching its policy. Set `securityPolicy` per item.
 
 Every `HTTPRoute`, `HealthCheckPolicy` and `GCPBackendPolicy` this chart renders
 is annotated with `argocd.argoproj.io/sync-wave: "2"` by default. All three
-attach to a `Service` (via `targetRef` / `backendRefs`), and those Services are
-created at `argocd.argoproj.io/sync-wave: "1"` by the `common` / `cloudarmor`
-charts. Defaulting these resources to wave `"2"` guarantees Argo CD reconciles
-the target Service first, so a route or policy never reconciles ahead of the
-backend it binds to (which would fail to bind or briefly mark the backend
-unhealthy).
+attach to a `Service` (via `targetRef` / `backendRefs`). Ordinary `common` /
+`cloudarmor` Services are in the implicit default wave `"0"`; the `common`
+chart's canary and stable Services are in wave `"1"`. Defaulting these
+resources to wave `"2"` still guarantees Argo CD reconciles every target
+Service well before the route or policy, giving the Service's GCP-side
+NEG/backend real wall-clock time to register so a route never reconciles ahead
+of the backend it binds to (which would briefly mark that backend unhealthy
+until the NEG catches up).
 
 The default is overridable — per item via its `metadata.annotations` (setting
 `argocd.argoproj.io/sync-wave` there wins over the chart default), and
 chart-wide by changing `<resource>.default.metadata.annotations` in your values
 (e.g. `routes.default.metadata.annotations`).
+
+When canary is enabled, this `HTTPRoute` is also load-bearing for the Rollout's
+own health: Argo Rollouts' Gateway API traffic-routing plugin (see
+`charts/common/templates/rollout.yaml`) has to patch this route's weights for
+the Rollout to ever go healthy. Rather than pull the route earlier (and give up
+its buffer after the Services it targets), the `common` chart instead gives the
+Rollout — and, since its `scaleTargetRef` follows it, the HPA/VPA/KEDA
+`ScaledObject` — a later sync-wave than this route's default `"2"`, so the
+dependency runs one direction only: Services → route → Rollout → autoscaler.
+See `charts/common/templates/rollout.yaml` and `charts/common/README.md` for
+the wave assignments on that side.
 
 ### Full spec control
 
@@ -209,6 +222,91 @@ routes:
         # Entire spec is yours — no defaults applied
         ...
 ```
+
+### Canary rollouts via Argo Rollouts' Gateway API plugin
+
+Turn on `canary.enabled` in the `common` chart for the same app (or the
+shared `global.canary.enabled` toggle both charts read) — no extra
+configuration is needed on the `backendRefs` entry itself:
+
+```yaml
+routes:
+  items:
+    - name: example-service
+      spec:
+        hostnames:
+          - example-service.trydave.com
+        parentRefs:
+          - name: default
+        rules:
+          - backendRefs:
+              - name: example-service
+                port: 80
+```
+
+Whenever `global.canary.enabled` is true, every `backendRefs` entry in every
+route expands automatically into a stable+canary pair named
+`example-service-stable`/`example-service-canary` — the same
+`"<name>-stable"/"<name>-canary"` convention the `common` chart always uses
+for its canary/stable Services, as long as both charts are given the same
+base app name. Initial weights default to all traffic on stable, none on
+canary (override via `weight`/`canaryWeight` on the same entry if you need
+something else).
+
+Argo Rollouts' `argoproj-labs/gatewayAPI` traffic router plugin then mutates
+these two backendRefs' `weight` fields in place as the rollout progresses
+through its canary steps — the defaults above are only the starting point.
+The route's `name` must match the `httpRoute` value configured under the
+Rollout's `strategy.canary.trafficRouting.plugins["argoproj-labs/gatewayAPI"]`
+(passed through as-is via the `common` chart's `canary.trafficRouting`).
+See [examples/canary.yaml](./examples/canary.yaml) for a full example.
+
+> **Note:** when `global.canary.enabled` is true, this chart adds the
+> `charts.dave.com/argo-rollouts-managed-weights: "true"` annotation to every
+> rendered `HTTPRoute`. Configure the shared Argo CD `Application` or
+> `ApplicationSet` template with the following rule once. It ignores backend
+> weights only on routes carrying that canary signal; ordinary HTTPRoutes
+> remain fully diffed. `RespectIgnoreDifferences=true` is required as well:
+> without it, Argo CD hides the diff but a later sync can still apply Helm's
+> initial `1`/`0` weights and fight the rollout.
+>
+> ```yaml
+> spec:
+>   ignoreDifferences:
+>     - group: gateway.networking.k8s.io
+>       kind: HTTPRoute
+>       jqPathExpressions:
+>         - >-
+>           select(.metadata.annotations."charts.dave.com/argo-rollouts-managed-weights" == "true")
+>           | .spec.rules[]?.backendRefs[]?.weight
+>   syncPolicy:
+>     syncOptions:
+>       - RespectIgnoreDifferences=true
+> ```
+>
+> This ignores only the controller-owned weights, so Argo CD continues to
+> detect drift in the route's hosts, matches, backend names, ports, and every
+> other field. Put the equivalent configuration in the `template.spec` when
+> the Application is generated by an `ApplicationSet`.
+
+#### Migrating an existing service onto canary
+
+Turning on `global.canary.enabled` for a service that has never run a
+Rollout before creates its `-stable`/`-canary` Services and expands this
+route's backendRefs onto them in the very same sync. That's a problem
+specifically on that first sync: Argo Rollouts always promotes a brand-new
+Rollout immediately — there's no prior stable revision to canary against, so
+it skips canary steps entirely and marks itself healthy as soon as its
+current replica count is Ready (see `charts/common/templates/rollout.yaml`
+and `charts/common/README.md`'s "Argo CD order" section). If that replica
+count doesn't reflect real steady-state demand (e.g. an HPA hasn't
+reconciled against the new Rollout yet), this route can start sending real
+traffic at the same moment the old capacity is being retired underneath it.
+
+See `charts/common/README.md`'s "Turning on canary for an autoscaled service
+needs `canary.initialReplicas` too" section — the fix lives on the `common`
+chart's side (seed the Rollout with its real replica count so it can't
+promote prematurely), not here. This chart has no corresponding setting.
 
 ## Further configuration
 

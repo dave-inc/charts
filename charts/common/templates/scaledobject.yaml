@@ -24,10 +24,12 @@ apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
   name: {{ include "common.name" . }}
-  labels:
-    {{- include "common.labels" . | nindent 4 }}
-  {{- if .Values.kedaScaling.migrating }}
+  {{- if or (include "common.canaryEnabled" .) .Values.kedaScaling.migrating }}
   annotations:
+  {{- if (include "common.canaryEnabled" .) }}
+    # With canary enabled this target is a Rollout, applied in wave 3.
+    argocd.argoproj.io/sync-wave: "4"
+  {{- else }}
     # Opt-in via kedaScaling.migrating, only for the sync that moves an existing Deployment off
     # a static replicaCount. Syncing before the Deployment (default wave 0) gives the
     # ScaledObject (and its keda-hpa-* HPA) a head start, avoiding a transient reset of
@@ -36,10 +38,13 @@ metadata:
     # exist yet, so the ScaledObject goes Degraded in wave -1 and Argo CD never reaches wave 0.
     argocd.argoproj.io/sync-wave: "-1"
   {{- end }}
+  {{- end }}
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
+    apiVersion: {{ include "common.workloadApiVersion" . }}
+    kind: {{ include "common.workloadKind" . }}
     name: {{ include "common.name" . }}
   minReplicaCount: {{ $minReplicas }}
   maxReplicaCount: {{ $maxReplicas }}
