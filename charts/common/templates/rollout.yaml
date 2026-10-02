@@ -86,7 +86,7 @@ spec:
       {{- if .Values.canary.trafficRouting }}
       trafficRouting:
         {{- toYaml .Values.canary.trafficRouting | nindent 8 }}
-      {{- else if (include "common.canaryTrafficRoutingEnabled" .) }}
+      {{- else if and (include "common.canaryTrafficRoutingEnabled" .) (dig "canary" "enabled" false (default dict .Values.global)) }}
       {{- /*
       Zero-config default: an HTTPRoute named after this app (the same
       `common.name` convention canary/stable Services already use) is assumed
@@ -99,7 +99,18 @@ spec:
       This default only renders when common.canaryTrafficRoutingEnabled
       resolves true -- see its doc comment in _helpers.tpl for the full
       resolution order, including why cloudArmor.enabled (a public-facing
-      deployment) also disables this default today.
+      deployment) also disables this default today -- AND when the raw
+      global.canary.enabled is true, deliberately checked again here instead
+      of trusting common.canaryEnabled alone. canary.initialReplicas can force
+      common.canaryEnabled true on its own, specifically so the Rollout and
+      its Services can exist and warm up before global.canary.enabled flips
+      (see common.canaryEnabled's doc comment in _helpers.tpl). If this block
+      used that same already-forced result, the Rollout would try to manage
+      weights on a `gatewayapi` HTTPRoute that hasn't expanded its
+      backendRefs yet, which hard-errors every reconcile -- the exact
+      deadlock this chart hit before. canaryService/stableService above are
+      unaffected by this extra check, so the Services still warm up normally
+      either way.
 
       namespace is required here even though the HTTPRoute lives in this same
       Release's namespace: the gatewayAPI plugin does not default an empty

@@ -50,21 +50,35 @@ Whether canary is enabled. Driven by `global.canary.enabled` -- the umbrella
 chart's single toggle that also drives the `gatewayapi` chart's stable+canary
 backendRef expansion (see charts/gatewayapi/templates/httproute.yaml) -- unless
 this chart's own `canary.enabled` is explicitly set to `false`, which always
-wins.
+wins, or `canary.initialReplicas` is set, which forces it on independent of
+the umbrella toggle (see below).
 
-That opt-out exists for services that must never run a Rollout at all, e.g. a
-fixed-replica deployment where even a transient extra canary Pod would
+The `false` opt-out exists for services that must never run a Rollout at all,
+e.g. a fixed-replica deployment where even a transient extra canary Pod would
 violate an invariant the service depends on: `canary.enabled: false` drops
 this service out of every wave's canary rollout regardless of the umbrella
-toggle, with no need to coordinate an exception at that level. There is no
-matching override to force canary on independent of the umbrella toggle --
-enabling it here alone would still leave the `gatewayapi` chart's backendRef
-expansion off, so the Rollout would have no traffic split to plug into.
+toggle, with no need to coordinate an exception at that level.
+
+`canary.initialReplicas` forcing canary on is the one exception to "no
+override to force canary on independent of the umbrella toggle": its only
+legitimate reason to be set at all is staging a migration onto canary ahead of
+the real cutover (see its own doc comment in values.yaml), so setting it
+already means the Rollout and this chart's "-stable"/"-canary" Services should
+exist now, before `global.canary.enabled` flips. That's safe specifically
+because rollout.yaml's `trafficRouting` auto-configuration still checks the
+raw `global.canary.enabled` rather than this helper's result -- so the Rollout
+can exist and its Services can warm up without the Rollout ever trying to
+manage weights on a `gatewayapi` HTTPRoute that hasn't expanded its
+backendRefs yet. Forcing canaryEnabled here alone, without that separate
+check, would reopen the exact SetWeight-against-a-mismatched-route deadlock
+this chart hit before (see git history on this file and rollout.yaml).
 
 Emits "true" when enabled, "" otherwise -- safe to use directly as an `if` condition.
 */}}
 {{- define "common.canaryEnabled" -}}
 {{- if eq .Values.canary.enabled false -}}
+{{- else if not (kindIs "invalid" .Values.canary.initialReplicas) -}}
+true
 {{- else if (dig "canary" "enabled" false (default dict .Values.global)) }}true{{ end -}}
 {{- end }}
 
