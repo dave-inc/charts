@@ -90,30 +90,36 @@ spec:
 
         The canary backendRef is the only thing actually added when canary
         turns on, and adding a new weighted cluster to an existing route
-        doesn't carry the same risk: it starts at its default weight of 0 (see
-        values.yaml), so no traffic is ever directed at it before it's ready,
-        and the canary Service/NEG it points at was already created and
-        health-checked well before cutover by canary.initialReplicas (see the
-        common chart's doc comment on that field) -- so it isn't a cold
-        backend being introduced for the first time at the exact moment real
-        traffic needs it.
+        doesn't carry the same risk: it starts at weight 0 (hardcoded, not
+        configurable -- see below), so no traffic is ever directed at it
+        before it's ready, and the canary Service/NEG it points at was
+        already created and health-checked well before cutover by
+        canary.initialReplicas (see the common chart's doc comment on that
+        field) -- so it isn't a cold backend being introduced for the first
+        time at the exact moment real traffic needs it.
+
+        Neither weight is user-configurable. Once canary is on, Argo
+        Rollouts' Gateway API traffic router plugin owns both backendRefs'
+        `weight` fields outright, live-patching them as the rollout
+        progresses through canary.steps (see rollout.yaml) -- a static value
+        from Helm would only ever reflect day-zero, not the actual ongoing
+        state, and inviting a hand-configured starting weight besides 1/0
+        has no legitimate use: canary must start at 0 (anything else routes
+        real traffic to an unpromoted canary from the first sync), and 1 is
+        the only sane value stable can start at since it's the sole backend
+        whenever canary's off.
         */}}
         - group: {{ .group | default $.Values.routes.default.spec.rule.backendRef.group | quote }}
           kind: {{ .kind | default $.Values.routes.default.spec.rule.backendRef.kind }}
           name: {{ .name }}
           port: {{ .port }}
-          {{- /*
-          `default` treats 0 as empty, which would silently replace an
-          explicit `weight: 0` (the common starting point for a canary
-          backendRef) with the default weight. Check for the key instead.
-          */}}
-          weight: {{ if hasKey . "weight" }}{{ .weight }}{{ else }}{{ $.Values.routes.default.spec.rule.backendRef.weight }}{{ end }}
+          weight: 1
         {{- if $canaryEnabled }}
         - group: {{ .group | default $.Values.routes.default.spec.rule.backendRef.group | quote }}
           kind: {{ .kind | default $.Values.routes.default.spec.rule.backendRef.kind }}
           name: {{ .name }}-canary
           port: {{ .port }}
-          weight: {{ if hasKey . "canaryWeight" }}{{ .canaryWeight }}{{ else }}{{ $.Values.routes.default.spec.rule.backendRef.canaryWeight }}{{ end }}
+          weight: 0
         {{- end }}
         {{- end }}
       {{- end }}
