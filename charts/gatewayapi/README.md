@@ -251,9 +251,10 @@ chart always uses for its canary Service, as long as both charts are given
 the same base app name. The original entry's own name never changes: it's
 the app's plain Service, which the `common` chart points `stableService` at
 too rather than a separate `-stable` Service, so this backendRef's identity
-is the same before, during, and after canary ever turns on. Initial weights
-default to all traffic on the original entry, none on canary (override via
-`weight`/`canaryWeight` on the same entry if you need something else).
+is the same before, during, and after canary ever turns on. Weights are
+hardcoded, not configurable — all traffic on the original entry (weight `1`),
+none on canary (weight `0`) — since Argo Rollouts owns both fields outright
+once canary is on anyway (see below).
 
 Argo Rollouts' `argoproj-labs/gatewayAPI` traffic router plugin then mutates
 the canary backendRef's `weight` field in place as the rollout progresses

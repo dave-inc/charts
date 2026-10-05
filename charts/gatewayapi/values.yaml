@@ -186,13 +186,11 @@ routes:
         backendRef:
           group: ""
           kind: Service
-          weight: 1
-          # Default weight for the canary half of the pair every backendRef
-          # expands into when `global.canary.enabled` is true (see below) --
-          # 0 so a freshly-created route sends no traffic to the canary
-          # Service until Argo Rollouts' Gateway API plugin takes over and
-          # starts mutating this weight as the rollout progresses.
-          canaryWeight: 0
+          # No weight/canaryWeight here -- not configurable. See
+          # templates/httproute.yaml's doc comment on the backendRefs loop
+          # for why: both are hardcoded (1 for the original backendRef, 0 for
+          # canary), and once canary is on, Argo Rollouts owns both fields
+          # outright via live patches anyway.
         match:
           path:
             type: PathPrefix
@@ -236,11 +234,6 @@ routes:
 #        - backendRefs:
 #            - name: example-service
 #              port: 80
-#              # Optional overrides -- defaults are 1 (stable) and 0 (canary),
-#              # which is functionally identical (100% of traffic to stable)
-#              # since weight is relative between the two backendRefs.
-#              # weight: 100
-#              # canaryWeight: 0
 
 ## Elaborated route example, no defaults:
 #  - name: main

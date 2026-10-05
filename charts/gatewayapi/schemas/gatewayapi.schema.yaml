@@ -213,25 +213,12 @@ $defs:
                         type: integer
                         minimum: 1
                         maximum: 65535
-                      weight:
-                        type: integer
-                        # Matches the Gateway API spec's bounds on BackendRef.weight.
-                        minimum: 0
-                        maximum: 1000000
                       group:
                         type: string
                         const: ""
                       kind:
                         type: string
                         const: Service
-                      canaryWeight:
-                        type: integer
-                        # Only meaningful when global.canary.enabled is true --
-                        # the weight of the "<name>-canary" half of the pair
-                        # every backendRef expands into in that case (see
-                        # charts/gatewayapi/templates/httproute.yaml).
-                        minimum: 0
-                        maximum: 1000000
                     required:
                       - name
                       - port
@@ -409,14 +396,6 @@ $defs:
                   kind:
                     type: string
                     const: Service
-                  weight:
-                    type: integer
-                    minimum: 0
-                    maximum: 1000000
-                  canaryWeight:
-                    type: integer
-                    minimum: 0
-                    maximum: 1000000
                 additionalProperties: false
               match:
                 type: object
