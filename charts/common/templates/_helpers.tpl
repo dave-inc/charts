@@ -63,8 +63,9 @@ toggle, with no need to coordinate an exception at that level.
 override to force canary on independent of the umbrella toggle": its only
 legitimate reason to be set at all is staging a migration onto canary ahead of
 the real cutover (see its own doc comment in values.yaml), so setting it
-already means the Rollout and this chart's "-stable"/"-canary" Services should
-exist now, before `global.canary.enabled` flips. That's safe specifically
+already means the Rollout and its canary Service should exist now (the plain
+Service already exists regardless, and doubles as stableService), before
+`global.canary.enabled` flips. That's safe specifically
 because rollout.yaml's `trafficRouting` auto-configuration still checks the
 raw `global.canary.enabled` rather than this helper's result -- so the Rollout
 can exist and its Services can warm up without the Rollout ever trying to
@@ -84,11 +85,14 @@ true
 
 {{/*
 Whether canaryService/stableService should be set on the Rollout
-(rollout.yaml) and the stable/canary Services should exist at all
-(service-stable.yaml, service-canary.yaml). Without this, those Services and
-Rollout fields would be orphaned: Argo Rollouts only reads/manages them for
-traffic-routing-based canary, and falls back to scaling ReplicaSet sizes
-directly (no Service involved at all) once trafficRouting isn't active.
+(rollout.yaml) and the canary Service should exist at all (service-canary.yaml).
+Without this, those Rollout fields and that Service would be orphaned: Argo
+Rollouts only reads/manages them for traffic-routing-based canary, and falls
+back to scaling ReplicaSet sizes directly (no Service involved at all) once
+trafficRouting isn't active. The plain Service (service.yaml) isn't gated by
+this at all -- it exists whenever service.enabled is true, canary or not,
+since it doubles as stableService once canary is on (see
+common.stableServiceName below).
 
 This does NOT gate whether the Rollout's trafficRouting block itself renders
 -- an explicit canary.trafficRouting always renders as-is regardless of this
@@ -158,18 +162,36 @@ Workload kind. Rollout (Argo Rollouts) when canary is enabled, otherwise Deploym
 
 {{/*
 Canary/stable Service names Argo Rollouts manages the pod selector on when
-canary.enabled (see rollout.yaml, service-canary.yaml, service-stable.yaml).
-Always "<common.name>-canary"/"<common.name>-stable" -- not configurable, so
-anything that needs to reference this app's canary pair by name (e.g. a
-gatewayapi HTTPRoute's `canary: true` backendRef shorthand) can always derive
-it from the app name alone.
+canary.enabled (see rollout.yaml, service-canary.yaml). canaryServiceName is
+always "<common.name>-canary" -- not configurable, so anything that needs to
+reference this app's canary Service by name (e.g. a gatewayapi HTTPRoute's
+`canary: true` backendRef shorthand) can always derive it from the app name
+alone.
+
+stableServiceName is just common.name -- the plain Service (service.yaml),
+which already exists unconditionally regardless of canary.enabled, doubles as
+the Rollout's stableService target. There used to be a separate
+"<name>-stable" Service here, functionally identical to the plain one (same
+selector, same port) -- deleting it isn't just a redundancy cleanup. Reusing
+the plain Service means its identity in a gatewayapi HTTPRoute's backendRefs
+never changes across the canary lifecycle: it's the same backendRef before,
+during, and after canary.enabled flips. The old separate-Service design
+required that backendRef to be renamed from "<name>" to "<name>-stable" at
+the exact moment canary turned on -- a backend-SET change, not just a weight
+change, which GKE Gateway's regional Envoy data plane does not apply
+atomically across its proxies. That caused a real outage on
+service-template-test-service: three requests got a synthetic 503 with no
+backend assigned at all (~80us latency, no backend_name in the GCP LB
+request logs) in the few seconds between the old route and the new one
+taking over. Keeping the same identity throughout removes that failure mode
+outright -- see httproute.yaml's own comment on the backendRefs loop.
 */}}
 {{- define "common.canaryServiceName" -}}
 {{- printf "%s-canary" (include "common.name" .) -}}
 {{- end }}
 
 {{- define "common.stableServiceName" -}}
-{{- printf "%s-stable" (include "common.name" .) -}}
+{{- include "common.name" . -}}
 {{- end }}
 
 {{/*

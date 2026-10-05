@@ -283,8 +283,9 @@ canary:
   # kedaScaling.enabled (left to the HPA/ScaledObject). Unset by default.
   #
   # Setting this is also, on its own, enough to force canary on for this
-  # service -- the Rollout and its "-stable"/"-canary" Services get created --
-  # independent of `global.canary.enabled`, which is otherwise the only
+  # service -- the Rollout and its canary Service get created (the plain
+  # Service, reused as stable, already exists regardless) -- independent of
+  # `global.canary.enabled`, which is otherwise the only
   # thing that turns canary on (see common.canaryEnabled in _helpers.tpl).
   # The only legitimate reason to ever set this value is staging a migration
   # onto canary ahead of the real cutover, so setting it already means that's
@@ -293,8 +294,8 @@ canary:
   # -- the Rollout's trafficRouting (the part that would actually touch the
   # `gatewayapi` chart's HTTPRoute) still waits for the real
   # global.canary.enabled regardless of this value, so the Rollout and its
-  # Services can exist and warm up (real replica count, NEGs attached, GCP
-  # health checks passing) before anything routes real traffic to them.
+  # canary Service can exist and warm up (real replica count, NEGs attached,
+  # GCP health checks passing) before anything routes real traffic to them.
   #
   # A first-ever Rollout always promotes immediately -- there's no prior
   # stable revision to canary against, so Argo Rollouts skips canary steps
@@ -319,23 +320,24 @@ canary:
     - pause: {}
   maxSurge: "25%"
   maxUnavailable: 0
-  # This chart always creates canary/stable Services named
-  # "<name>-canary"/"<name>-stable" whenever canary is enabled (see
-  # service-canary.yaml/service-stable.yaml) -- not configurable, so the
-  # `gatewayapi` chart's stable+canary backendRef expansion can always
-  # derive the same two names from the app name alone, with nothing to keep
-  # in sync between the two charts. Argo Rollouts manages the pod selector on
-  # these Services itself; the chart only needs to create them with the same
-  # base selector as the main service.
+  # This chart always creates a canary Service named "<name>-canary"
+  # whenever canary is enabled (see service-canary.yaml) -- not configurable,
+  # so the `gatewayapi` chart's backendRef expansion can always derive it
+  # from the app name alone, with nothing to keep in sync between the two
+  # charts. The plain Service (service.yaml) is reused as stable rather than
+  # a separate "<name>-stable" one -- see common.stableServiceName in
+  # _helpers.tpl for why. Argo Rollouts manages the pod selector on both
+  # Services itself; the chart only needs to create them with the same base
+  # selector as the main service.
   #
   # Traffic routing config, passed as-is to .spec.strategy.canary.trafficRouting.
   # Left at {} (the default), the chart auto-configures the argoproj-labs/gatewayAPI
   # plugin (baked into the argo-rollouts controller image, see the `argo-rollouts`
-  # chart) to manage an HTTPRoute named after this app -- the same "<name>-canary"/
-  # "<name>-stable" convention the chart's own canary/stable Services use (see
-  # service-canary.yaml/service-stable.yaml), matching how the `gatewayapi` chart
-  # expands every backendRef into that same pair whenever `global.canary.enabled`
-  # is true. See charts/gatewayapi/examples/canary.yaml. No manual wiring needed.
+  # chart) to manage an HTTPRoute named after this app -- the same "<name>-canary"
+  # convention the chart's own canary Service uses (see service-canary.yaml),
+  # matching how the `gatewayapi` chart appends a backendRef with that same
+  # name whenever `global.canary.enabled` is true. See
+  # charts/gatewayapi/examples/canary.yaml. No manual wiring needed.
   #
   # Override this to use a different traffic router (nginx, istio, alb, smi) or to
   # point at a differently-named/namespaced HTTPRoute, e.g.:

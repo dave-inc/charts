@@ -1,3 +1,14 @@
+{{- /*
+Exists unconditionally (not gated on canary.enabled), because once canary is
+on, Argo Rollouts pins this same Service as its stableService target (see
+common.stableServiceName in _helpers.tpl) by patching its selector to the
+stable ReplicaSet's pod-template-hash -- it never gets a separate
+"<name>-stable" identity. Keeping one permanent identity here, rather than
+swapping to a differently-named Service at cutover, is what lets a gatewayapi
+HTTPRoute's backendRef for this Service stay unchanged across the whole
+canary lifecycle; see httproute.yaml's doc comment on its backendRefs loop
+for why that matters.
+*/}}
 {{- if .Values.service.enabled -}}
 apiVersion: v1
 kind: Service

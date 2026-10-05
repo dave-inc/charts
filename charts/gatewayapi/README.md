@@ -245,16 +245,18 @@ routes:
 ```
 
 Whenever `global.canary.enabled` is true, every `backendRefs` entry in every
-route expands automatically into a stable+canary pair named
-`example-service-stable`/`example-service-canary` — the same
-`"<name>-stable"/"<name>-canary"` convention the `common` chart always uses
-for its canary/stable Services, as long as both charts are given the same
-base app name. Initial weights default to all traffic on stable, none on
-canary (override via `weight`/`canaryWeight` on the same entry if you need
-something else).
+route gains an additional entry for the canary Service, named
+`example-service-canary` — the `"<name>-canary"` convention the `common`
+chart always uses for its canary Service, as long as both charts are given
+the same base app name. The original entry's own name never changes: it's
+the app's plain Service, which the `common` chart points `stableService` at
+too rather than a separate `-stable` Service, so this backendRef's identity
+is the same before, during, and after canary ever turns on. Initial weights
+default to all traffic on the original entry, none on canary (override via
+`weight`/`canaryWeight` on the same entry if you need something else).
 
 Argo Rollouts' `argoproj-labs/gatewayAPI` traffic router plugin then mutates
-these two backendRefs' `weight` fields in place as the rollout progresses
+the canary backendRef's `weight` field in place as the rollout progresses
 through its canary steps — the defaults above are only the starting point.
 The route's `name` must match the `httpRoute` value configured under the
 Rollout's `strategy.canary.trafficRouting.plugins["argoproj-labs/gatewayAPI"]`
@@ -292,16 +294,20 @@ See [examples/canary.yaml](./examples/canary.yaml) for a full example.
 #### Migrating an existing service onto canary
 
 Turning on `global.canary.enabled` for a service that has never run a
-Rollout before creates its `-stable`/`-canary` Services and expands this
-route's backendRefs onto them in the very same sync. That's a problem
-specifically on that first sync: Argo Rollouts always promotes a brand-new
-Rollout immediately — there's no prior stable revision to canary against, so
-it skips canary steps entirely and marks itself healthy as soon as its
-current replica count is Ready (see `charts/common/templates/rollout.yaml`
-and `charts/common/README.md`'s "Argo CD order" section). If that replica
-count doesn't reflect real steady-state demand (e.g. an HPA hasn't
-reconciled against the new Rollout yet), this route can start sending real
-traffic at the same moment the old capacity is being retired underneath it.
+Rollout before creates the Rollout and appends a backendRef for its canary
+Service onto this route in the very same sync (the original backendRef, the
+app's plain Service reused as stable, is untouched -- see
+`common.stableServiceName` in `charts/common/templates/_helpers.tpl` for why
+that identity never changes across the canary lifecycle). The remaining
+first-sync risk is about capacity, not route identity: Argo Rollouts always
+promotes a brand-new Rollout immediately — there's no prior stable revision
+to canary against, so it skips canary steps entirely and marks itself
+healthy as soon as its current replica count is Ready (see
+`charts/common/templates/rollout.yaml` and `charts/common/README.md`'s "Argo
+CD order" section). If that replica count doesn't reflect real steady-state
+demand (e.g. an HPA hasn't reconciled against the new Rollout yet), this
+route's canary backendRef can start sending real traffic at the same moment
+the old capacity is being retired underneath it.
 
 See `charts/common/README.md`'s "Turning on canary for an autoscaled service
 needs `canary.initialReplicas` too" section — the fix lives on the `common`

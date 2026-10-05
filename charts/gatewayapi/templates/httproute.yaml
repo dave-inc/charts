@@ -71,33 +71,33 @@ spec:
       backendRefs:
         {{- range .backendRefs }}
         {{- /*
-        Whether canary is on is controlled entirely by `global.canary.enabled`
-        -- the same umbrella-level toggle the `common` chart's
-        `common.canaryEnabled` helper reads (see
-        charts/common/templates/_helpers.tpl) -- so the same boolean never
-        needs to be set again here per backendRef.
+        The base/stable backendRef below always renders, unconditionally --
+        never gated on canary.enabled, never renamed. `name` here is the
+        app's base name, which the `common` chart's stableServiceName also
+        resolves to (see _helpers.tpl): the plain Service, not a separate
+        "<name>-stable" one. That's deliberate, not a simplification: this
+        backendRef must be the exact same route entry before, during, and
+        after canary.enabled flips, because GKE Gateway's regional Envoy data
+        plane does not apply a backend-SET change (removing one cluster
+        reference and replacing it with a differently-named one) atomically
+        across its proxies -- only a weight change on an already-known
+        cluster is safe to apply live. Renaming this entry to "<name>-stable"
+        at the same instant canary turned on used to cause exactly that: a
+        real outage on service-template-test-service, three requests getting
+        a synthetic 503 with no backend assigned at all (~80us latency, no
+        backend_name in the GCP LB request logs) in the gap between the old
+        route and the new one taking over.
+
+        The canary backendRef is the only thing actually added when canary
+        turns on, and adding a new weighted cluster to an existing route
+        doesn't carry the same risk: it starts at its default weight of 0 (see
+        values.yaml), so no traffic is ever directed at it before it's ready,
+        and the canary Service/NEG it points at was already created and
+        health-checked well before cutover by canary.initialReplicas (see the
+        common chart's doc comment on that field) -- so it isn't a cold
+        backend being introduced for the first time at the exact moment real
+        traffic needs it.
         */}}
-        {{- if (dig "canary" "enabled" false (default dict $.Values.global)) }}
-        {{- /*
-        Every backendRef expands into the stable+canary pair Argo Rollouts'
-        Gateway API traffic router plugin expects, so a canary route doesn't
-        require hand-typing both Service names and weights. `name` here is
-        the app's base name -- the expanded Service names below match what
-        the `common` chart derives by default for the same base name (see
-        `common.canaryServiceName`/`common.stableServiceName` in
-        charts/common/templates/_helpers.tpl): "<name>-stable"/"<name>-canary".
-        */}}
-        - group: {{ .group | default $.Values.routes.default.spec.rule.backendRef.group | quote }}
-          kind: {{ .kind | default $.Values.routes.default.spec.rule.backendRef.kind }}
-          name: {{ .name }}-stable
-          port: {{ .port }}
-          weight: {{ if hasKey . "weight" }}{{ .weight }}{{ else }}{{ $.Values.routes.default.spec.rule.backendRef.weight }}{{ end }}
-        - group: {{ .group | default $.Values.routes.default.spec.rule.backendRef.group | quote }}
-          kind: {{ .kind | default $.Values.routes.default.spec.rule.backendRef.kind }}
-          name: {{ .name }}-canary
-          port: {{ .port }}
-          weight: {{ if hasKey . "canaryWeight" }}{{ .canaryWeight }}{{ else }}{{ $.Values.routes.default.spec.rule.backendRef.canaryWeight }}{{ end }}
-        {{- else }}
         - group: {{ .group | default $.Values.routes.default.spec.rule.backendRef.group | quote }}
           kind: {{ .kind | default $.Values.routes.default.spec.rule.backendRef.kind }}
           name: {{ .name }}
@@ -108,6 +108,12 @@ spec:
           backendRef) with the default weight. Check for the key instead.
           */}}
           weight: {{ if hasKey . "weight" }}{{ .weight }}{{ else }}{{ $.Values.routes.default.spec.rule.backendRef.weight }}{{ end }}
+        {{- if $canaryEnabled }}
+        - group: {{ .group | default $.Values.routes.default.spec.rule.backendRef.group | quote }}
+          kind: {{ .kind | default $.Values.routes.default.spec.rule.backendRef.kind }}
+          name: {{ .name }}-canary
+          port: {{ .port }}
+          weight: {{ if hasKey . "canaryWeight" }}{{ .canaryWeight }}{{ else }}{{ $.Values.routes.default.spec.rule.backendRef.canaryWeight }}{{ end }}
         {{- end }}
         {{- end }}
       {{- end }}

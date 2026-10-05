@@ -219,11 +219,13 @@ routes:
 ## toggle set once at the umbrella-chart level and shared automatically with
 ## every subchart, including `common` -- see
 ## charts/common/templates/_helpers.tpl `common.canaryEnabled`), every
-## backendRef here expands into the stable+canary pair (named
-## "<name>-stable"/"<name>-canary") that the `common` chart always creates
-## in that case. Pointing a route at the same base `name` is all that's
-## needed -- no need to hand-type both Service names, and no per-backendRef
-## setting to turn on.
+## backendRef here gains an additional entry for the canary Service (named
+## "<name>-canary") that the `common` chart creates in that case. The
+## original backendRef's own name/identity (`<name>`, the app's plain
+## Service) never changes -- it's also what `common` chart points
+## stableService at, rather than a separate "<name>-stable" Service. Pointing
+## a route at the same base `name` is all that's needed -- no need to
+## hand-type both Service names, and no per-backendRef setting to turn on.
 #  - name: example-service
 #    spec:
 #      hostnames:

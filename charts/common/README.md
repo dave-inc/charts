@@ -10,10 +10,10 @@ it.
 
 ## Argo CD order for canary rollouts
 
-Every Service this chart creates — the plain `Service` (`service.yaml`), the Cloud Armor
-`Service` (`service-cloudarmor.yaml`), and, when canary is enabled, the stable and canary
-Services (`service-stable.yaml`/`service-canary.yaml`) — applies in sync wave `"-1"`, ahead
-of everything else. That protects a service migrating off a now-removed tier (its
+Every Service this chart creates — the plain `Service` (`service.yaml`, which doubles as
+`stableService` once canary is enabled), the Cloud Armor `Service` (`service-cloudarmor.yaml`),
+and, when canary is enabled, the canary Service (`service-canary.yaml`) — applies in sync
+wave `"-1"`, ahead of everything else. That protects a service migrating off a now-removed tier (its
 Deployment, Service, etc. pruned in the same sync, as happened when this chart moved off a
 separate reverse-proxy/canary-Deployment architecture onto Argo Rollouts): the Service's
 selector change needs to reach the API server, and the load balancer or kube-proxy needs to
@@ -110,8 +110,9 @@ canary:
   initialReplicas: 5  # whatever this service is actually running right now
 ```
 
-With only this set — `global.canary.enabled` still untouched — the Rollout and its
-`-stable`/`-canary` Services are created at real capacity and start warming up for real:
+With only this set — `global.canary.enabled` still untouched — the Rollout and its canary
+Service are created at real capacity and start warming up for real (the plain Service, which
+doubles as stable, already exists regardless):
 GCP attaches their NEGs and runs its own health checks, all before any real traffic depends
 on them. This is the piece sync-wave ordering alone can't provide, because a sync-wave only
 orders *when Argo CD applies* a resource, not when the load balancer finishes converging on

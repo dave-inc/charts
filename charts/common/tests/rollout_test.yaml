@@ -1,7 +1,7 @@
 suite: Rollout canary service/trafficRouting wiring
 templates:
   - rollout.yaml
-  - service-stable.yaml
+  - service.yaml
   - service-canary.yaml
 values:
   - ./fixtures/minimal-values.yaml
@@ -22,18 +22,18 @@ tests:
       - template: rollout.yaml
         equal:
           path: spec.strategy.canary.stableService
-          value: test-app-stable
-      - template: service-stable.yaml
+          value: test-app
+      - template: service.yaml
         isKind:
           of: Service
       - template: service-canary.yaml
         isKind:
           of: Service
-      # Wave -1, same as service.yaml/service-cloudarmor.yaml: ahead of the default
-      # wave (0) that a service migrating off a now-removed tier prunes that tier's
+      # Wave -1, same as service-cloudarmor.yaml: ahead of the default wave (0)
+      # that a service migrating off a now-removed tier prunes that tier's
       # resources in, and still ahead of the HTTPRoute (wave 2) that depends on
       # these Services existing.
-      - template: service-stable.yaml
+      - template: service.yaml
         equal:
           path: metadata.annotations["argocd.argoproj.io/sync-wave"]
           value: "-1"
@@ -102,7 +102,7 @@ tests:
       - template: rollout.yaml
         notExists:
           path: spec.strategy.canary.trafficRouting
-      - template: service-stable.yaml
+      - template: service.yaml
         hasDocuments:
           count: 0
       - template: service-canary.yaml
@@ -137,19 +137,22 @@ tests:
               argoproj-labs/gatewayAPI:
                 httpRoute: custom-route
                 namespace: custom-ns
-      - template: service-stable.yaml
+      - template: service.yaml
         hasDocuments:
           count: 0
       - template: service-canary.yaml
         hasDocuments:
           count: 0
 
-  - it: disables the zero-config gatewayAPI default -- omitting canaryService/stableService, trafficRouting, and the stable/canary Services -- when cloudArmor.enabled is true
+  - it: disables the zero-config gatewayAPI default -- omitting canaryService/stableService, trafficRouting, and the canary Service -- when cloudArmor.enabled is true
     # cloudArmor.enabled signals a public-facing deployment, and Gateway API
     # isn't set up to handle public-facing traffic yet -- see
     # common.canaryTrafficRoutingEnabled in _helpers.tpl for the incident
     # this guards against (an unrecognized trafficRouting.plugins field
     # silently blocking the entire sync for a service, not just the Rollout).
+    # The plain Service (service.yaml) still renders regardless -- it's
+    # unconditional on service.enabled alone now that it doubles as
+    # stableService, independent of whether traffic routing is armed.
     set:
       service.enabled: true
       cloudArmor:
@@ -181,9 +184,9 @@ tests:
       - template: rollout.yaml
         notExists:
           path: spec.strategy.canary.trafficRouting
-      - template: service-stable.yaml
-        hasDocuments:
-          count: 0
+      - template: service.yaml
+        isKind:
+          of: Service
       - template: service-canary.yaml
         hasDocuments:
           count: 0
@@ -222,7 +225,7 @@ tests:
       - template: rollout.yaml
         equal:
           path: spec.strategy.canary.stableService
-          value: test-app-stable
+          value: test-app
       - template: rollout.yaml
         equal:
           path: spec.strategy.canary.trafficRouting
@@ -230,7 +233,7 @@ tests:
             plugins:
               custom:
                 foo: bar
-      - template: service-stable.yaml
+      - template: service.yaml
         isKind:
           of: Service
       - template: service-canary.yaml
