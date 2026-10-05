@@ -205,8 +205,8 @@ its buffer after the Services it targets), the `common` chart instead gives the
 Rollout — and, since its `scaleTargetRef` follows it, the HPA/VPA/KEDA
 `ScaledObject` — a later sync-wave than this route's default `"2"`, so the
 dependency runs one direction only: Services → route → Rollout → autoscaler.
-See `charts/common/templates/rollout.yaml` and `charts/common/README.md` for
-the wave assignments on that side.
+See `charts/common/templates/rollout.yaml` and
+`charts/common/CANARY-ARGO-ROLLOUTS.md` for the wave assignments on that side.
 
 ### Full spec control
 
@@ -304,16 +304,17 @@ first-sync risk is about capacity, not route identity: Argo Rollouts always
 promotes a brand-new Rollout immediately — there's no prior stable revision
 to canary against, so it skips canary steps entirely and marks itself
 healthy as soon as its current replica count is Ready (see
-`charts/common/templates/rollout.yaml` and `charts/common/README.md`'s "Argo
-CD order" section). If that replica count doesn't reflect real steady-state
+`charts/common/templates/rollout.yaml` and `charts/common/CANARY-ARGO-ROLLOUTS.md`'s
+"Argo CD order" section). If that replica count doesn't reflect real steady-state
 demand (e.g. an HPA hasn't reconciled against the new Rollout yet), this
 route's canary backendRef can start sending real traffic at the same moment
 the old capacity is being retired underneath it.
 
-See `charts/common/README.md`'s "Turning on canary for an autoscaled service
-needs `canary.initialReplicas` too" section — the fix lives on the `common`
-chart's side (seed the Rollout with its real replica count so it can't
-promote prematurely), not here. This chart has no corresponding setting.
+See `charts/common/CANARY-ARGO-ROLLOUTS.md`'s "Turning on canary for an
+autoscaled service needs `canary.initialReplicas` too" section — the fix
+lives on the `common` chart's side (seed the Rollout with its real replica
+count so it can't promote prematurely), not here. This chart has no
+corresponding setting.
 
 ## Further configuration
 
