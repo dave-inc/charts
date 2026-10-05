@@ -77,7 +77,7 @@ tests:
                 httpRoute: test-app
                 namespace: NAMESPACE
 
-  - it: scaleDownDelaySeconds joins trafficRouting once global.canary.enabled is also set
+  - it: scaleDownDelaySeconds joins trafficRouting once global.canary.enabled is also set, computed as minReadySeconds + 10 (70, since minReadySeconds defaults to 60 here)
     set:
       canary.initialReplicas: 5
       global.canary.enabled: true
@@ -85,7 +85,7 @@ tests:
       - template: rollout.yaml
         equal:
           path: spec.strategy.canary.scaleDownDelaySeconds
-          value: 60
+          value: 70
 
   - it: still honors an explicit canary.trafficRouting override while only initialReplicas is set
     set:
