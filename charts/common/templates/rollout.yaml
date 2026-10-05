@@ -95,8 +95,16 @@ spec:
       that window.
       */}}
       {{- $trafficRoutingWillRender := or .Values.canary.trafficRouting (and (include "common.canaryTrafficRoutingEnabled" .) (dig "canary" "enabled" false (default dict .Values.global))) }}
-      {{- if and $trafficRoutingWillRender (not (kindIs "invalid" .Values.canary.scaleDownDelaySeconds)) }}
-      scaleDownDelaySeconds: {{ .Values.canary.scaleDownDelaySeconds | int }}
+      {{- if $trafficRoutingWillRender }}
+      {{- /*
+      Always computed as minReadySeconds + 10, not independently configurable:
+      both delays exist to cover the same GKE NEG/Envoy-propagation lag, just
+      on opposite sides (pod attach vs. detach), so the teardown side only
+      needs to outlast whatever the build-up side was already tuned to, with
+      no second number to keep in sync with it if minReadySeconds is ever
+      retuned.
+      */}}
+      scaleDownDelaySeconds: {{ add ($minReadySeconds | default 0 | int) 10 }}
       {{- end }}
       {{- if .Values.canary.trafficRouting }}
       trafficRouting:
