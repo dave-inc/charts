@@ -1,0 +1,88 @@
+suite: canary.migrate bridges off the pre-Rollout rproxy mechanism without downtime
+templates:
+  - service.yaml
+  - service-control.yaml
+  - service-canary.yaml
+  - deployment-rproxy.yaml
+  - deployment.yaml
+  - configmap-rproxy.yaml
+  - hpa-rproxy.yaml
+  - pdb-rproxy.yaml
+values:
+  - ./fixtures/minimal-values.yaml
+set:
+  service.enabled: true
+tests:
+  - it: defaults to false and changes nothing from the plain canary-off render -- rproxy stays dead code, selector stays specific
+    asserts:
+      - template: service.yaml
+        equal:
+          path: spec.selector
+          value:
+            app.kubernetes.io/name: test-app
+            app.kubernetes.io/instance: RELEASE-NAME
+      - template: deployment-rproxy.yaml
+        hasDocuments:
+          count: 0
+      - template: service-control.yaml
+        hasDocuments:
+          count: 0
+
+  - it: widens the main Service's selector to the shared application label and brings rproxy back when true
+    set:
+      canary.migrate: true
+      additionalLabels:
+        application: test-app-production
+    asserts:
+      - template: service.yaml
+        equal:
+          path: spec.selector
+          value:
+            application: test-app-production
+      - template: deployment-rproxy.yaml
+        isKind:
+          of: Deployment
+      - template: service-control.yaml
+        isKind:
+          of: Service
+      - template: configmap-rproxy.yaml
+        isKind:
+          of: ConfigMap
+
+  - it: the widened selector matches both the rproxy pod template and the plain Deployment pod template, by construction
+    set:
+      canary.migrate: true
+      additionalLabels:
+        application: test-app-production
+    asserts:
+      - template: deployment-rproxy.yaml
+        equal:
+          path: spec.template.metadata.labels.application
+          value: test-app-production
+      - template: deployment.yaml
+        equal:
+          path: spec.template.metadata.labels.application
+          value: test-app-production
+
+  - it: never renders an nginx upstream for a canary host that has no backing Service, since migrate forces weight to 0
+    set:
+      canary.migrate: true
+      additionalLabels:
+        application: test-app-production
+    asserts:
+      - template: configmap-rproxy.yaml
+        notMatchRegex:
+          path: data["dave.conf.template"]
+          pattern: "upstream canary"
+      - template: configmap-rproxy.yaml
+        notMatchRegex:
+          path: data["dave.conf.template"]
+          pattern: "\"canary\" canary"
+
+  - it: fails loudly instead of silently matching every pod when additionalLabels.application is missing
+    set:
+      canary.migrate: true
+    asserts:
+      - template: service.yaml
+        failedTemplate:
+          errorMessage: additionalLabels.application is required while canary.migrate is true

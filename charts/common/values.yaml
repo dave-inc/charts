@@ -257,6 +257,79 @@ serviceGracefulRollout:
 # https://argo-rollouts.readthedocs.io/en/stable/migrating/. HPA/VPA/KEDA
 # scaleTargetRef then points at the Rollout instead of the Deployment.
 canary:
+  # One-time bridge for a service moving off the pre-Rollout rproxy
+  # mechanism (reverseProxy below) without downtime. Unrelated to the
+  # enabled/initialReplicas Rollout settings below -- this is about safely
+  # retiring the *old* mechanism, not staging the new one.
+  #
+  # While true: the rproxy Deployment/Service/ConfigMap/HPA/PDB render again
+  # (normally dead code on this chart version) and the main Service's
+  # selector widens to match both rproxy's pods and this chart's own app
+  # pods at once (see service.yaml). Nothing is torn down by turning this on
+  # -- only app pods join what's already being routed to.
+  #
+  # The intended sequence, each its own merge, confirmed healthy before the
+  # next: (1) bump to this chart version with migrate: true set already --
+  # safe to combine, since the render is purely additive from whatever the
+  # old chart version was already doing; (2) once healthy, flip migrate:
+  # false -- deletes rproxy, which is now redundant, and narrows the
+  # selector back, which only drops the already-redundant rproxy pods from
+  # the match. Only after that should enabled/initialReplicas below be used
+  # to stage the real Rollout-based canary.
+  #
+  # Leave canary.weight at 0 for the entire time this is true -- it assumes
+  # no old-style canary experiment is running underneath it, just the
+  # stable/control path kept alive during the bridge.
+  migrate: false
+  weight: 0
+  service:
+    annotations:
+      control: {}
+  # Implementation-specific configuration for the bridged reverse proxy
+  # only. Irrelevant once migrate is false for good.
+  reverseProxy:
+    enableAccessLogs: false
+    minUpstreams: 10
+    send_timeout: 30s
+    proxy_connect_timeout: 5s
+    proxy_send_timeout: 30s
+    proxy_read_timeout: 30s
+    livenessProbe:
+      initialDelaySeconds: 1
+      failureThreshold: 3
+      periodSeconds: 10
+      successThreshold: 1
+      timeoutSeconds: 10
+    readinessProbe:
+      initialDelaySeconds: 1
+      failureThreshold: 3
+      periodSeconds: 10
+      successThreshold: 1
+      timeoutSeconds: 10
+    startupProbe:
+      initialDelaySeconds: 1
+      failureThreshold: 60
+      periodSeconds: 1
+      successThreshold: 1
+      timeoutSeconds: 10
+    image:
+      repository: nginx
+      tag: 1.27.4
+    # Number of reverse proxy Pods, used only when autoscaling below is disabled.
+    # Leave unset to inherit the top-level replicaCount.
+    # replicaCount:
+    autoscaling:
+      enabled: true
+      metrics: []
+      # minReplicas/maxReplicas inherited from .Values.autoscaling unless set here.
+      # minReplicas:
+      # maxReplicas:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 256Mi
   # Whether canary is on is normally controlled entirely by
   # `global.canary.enabled` (not set here) -- a single toggle at the
   # umbrella-chart level (see sre/charts/<service>/*/values.yaml in the
