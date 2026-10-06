@@ -20,7 +20,7 @@ metadata:
     reach the API server, and the LB start discovering the new endpoints,
     before that prune happens - both this Service and an unannotated pruned
     resource default to wave 0, with no ordering between them otherwise. See
-    charts/common/README.md's "Argo CD order" section. */}}
+    charts/common/CANARY-ARGO-ROLLOUTS.md's "Argo CD order" section. */}}
     {{- if not (hasKey (.Values.service.annotations | default dict) "argocd.argoproj.io/sync-wave") }}
     argocd.argoproj.io/sync-wave: "-1"
     {{- end }}

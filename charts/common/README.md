@@ -10,10 +10,9 @@ it.
 
 ## Migrating a service onto Argo Rollouts canary
 
-Sync-wave ordering, the `PruneLast` requirement for removing old infra (e.g. an old
-reverse-proxy/canary-Deployment architecture), and the staged `canary.initialReplicas`
-workflow for an autoscaled service all moved to their own doc:
-[CANARY-ARGO-ROLLOUTS.md](./CANARY-ARGO-ROLLOUTS.md).
+Sync-wave ordering, the `canary.migrate` bridge off an old reverse-proxy/canary-Deployment
+architecture, and the staged `canary.initialReplicas` workflow for an autoscaled service all
+moved to their own doc: [CANARY-ARGO-ROLLOUTS.md](./CANARY-ARGO-ROLLOUTS.md).
 
 ## Upgrading to 2.0.0
 
@@ -23,9 +22,9 @@ slower. Nothing needs to be set to adopt it: bumping the dependency version is e
 the sections below exist for the cases where the defaults do not suit a particular service.
 
 If this upgrade is also the one moving a service onto Argo Rollouts canary, see
-[CANARY-ARGO-ROLLOUTS.md](./CANARY-ARGO-ROLLOUTS.md) for the required Application-level
-`PruneLast` sync policy, the Rollout's own `minReadySeconds` gap, and the replica floor
-canary enforces.
+[CANARY-ARGO-ROLLOUTS.md](./CANARY-ARGO-ROLLOUTS.md) for the `canary.migrate` bridge off
+an old reverse-proxy/canary-Deployment architecture, the Rollout's own `minReadySeconds`
+gap, and the replica floor canary enforces.
 
 The timing now lives at two levels. `serviceGracefulRollout` holds the values for a release
 that is actually in a traffic path, and the top-level `.Values.*` fields are the fallback for
