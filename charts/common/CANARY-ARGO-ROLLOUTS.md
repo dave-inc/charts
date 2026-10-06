@@ -7,16 +7,117 @@ that keeps applying once it's running. See [values.yaml](./values.yaml) for
 the configuration reference and [README.md](./README.md) for everything else
 about this chart.
 
+## Moving a service off old-way (rproxy) canary onto Argo Rollouts canary with zero downtime
+
+### The one rule everything below follows
+
+Never let a single sync both **narrow** what a Service's selector matches and **delete**
+the pods that narrowing would drop, in the same step. Every step below either only
+*adds* to what's matched, or only removes something that's already redundant by the
+time it's removed. That's the entire trick — no step is a genuine cutover, just a
+sequence of additions and then cleanup of what's no longer needed.
+
+### Prerequisites
+
+- You only need this section if your service is on the existing canary-with-rproxy
+  setup (`canary.enabled: true` + `reverseProxy` already live). If it isn't, skip
+  straight to "Turning on canary for an autoscaled service needs `canary.initialReplicas`
+  too" below.
+- Know which tiers actually have live rproxy today (check for `canary.enabled: true`
+  + `reverseProxy` in each workload's values file — not every tier necessarily has it).
+- Know each autoscaled tier's real current replica count (`kubectl get deploy` or
+  the `autoscaling.minReplicas`/`maxReplicas` in values, if they're pinned equal).
+
+### Step 1 — bump chart version + `canary.migrate: true` (one PR)
+
+For every tier with live rproxy, add `migrate: true` alongside its existing
+`canary.enabled: true` block — don't remove anything yet. Combine this with the
+chart version bump in the same PR; it's safe because the render is purely additive:
+the Service's selector widens to the `application` label (shared by both the rproxy
+pods and the app's own pods), so app pods join what's already being routed to.
+Nothing is torn down. (The pre-existing `canary.enabled: true` left over from the
+old-way config does nothing on this chart line by itself — see Step 2.)
+
+Merge, then confirm: Argo app `Synced`/`Healthy`, rproxy pods still running, and the
+Service's live selector now shows the wide `application` label (not the narrow
+`app.kubernetes.io/name`/`instance` pair).
+
+### Step 2 — delete the old canary block, warm up the Rollout, and flip traffic (one PR)
+
+Once step 1 is confirmed healthy, do all three of these in the same PR — confirmed safe
+to combine and verified working end-to-end in production:
+
+1. Remove the whole `canary:` block (`enabled`, `migrate`, `reverseProxy`) from each
+   tier that had rproxy. This is safe because:
+   - `canary.enabled: true` left over does nothing on this chart line — only
+     `global.canary.enabled` or `canary.initialReplicas` can turn on the new mechanism,
+     and neither is set yet.
+   - `reverseProxy.*` is only read by templates gated on `migrate`, which is now gone.
+
+   This deletes rproxy/`-control` (now redundant — app pods already serve via the
+   widened selector) and narrows the main Service's selector back to its normal,
+   specific form.
+
+2. For **every autoscaled tier** (not just the ones that had rproxy — any tier under
+   the same chart that's autoscaled), add:
+
+   ```yaml
+   canary:
+     initialReplicas: <current real replica count>
+   ```
+
+   This forces the Rollout + canary Service into existence, independent of
+   `global.canary.enabled` — real capacity, NEGs attached, GCP health checks passing —
+   with zero live traffic, since the actual weight-shifting stays off until the raw
+   `global.canary.enabled` is also true. Get the replica count right: an omitted value
+   defaults the Rollout's first reconcile to Kubernetes' implicit `1`, not the tier's
+   real steady-state size, which is the confirmed root cause of a past live incident
+   (see "Turning on canary for an autoscaled service needs `canary.initialReplicas` too"
+   below).
+
+3. Add `production/values.yaml` (or wherever your umbrella chart's own default values
+   live):
+
+   ```yaml
+   global:
+     canary:
+       enabled: true
+   ```
+
+   This expands the `gatewayapi` chart's HTTPRoute into the stable/canary backendRef
+   pair and arms the Rollout's `trafficRouting`. Since (2) above renders in the same
+   sync, this isn't a cold start — it just starts routing a small, already-safe slice
+   of traffic per `canary.steps` (defaults to pausing indefinitely at the first step
+   until promoted).
+
+None of the three touches the other's inputs — deleting the old block only drops
+already-redundant rproxy pods from the main Service's selector, `canary.initialReplicas`
+only stands up new infra alongside it with no live traffic until `global.canary.enabled`
+is also true, and that flag is what (3) sets in the same sync — so there's no ordering
+dependency to stage across separate PRs.
+
+Merge, then confirm: no leftover `-rproxy`/`-control` resources, the main Service's
+selector back to its normal specific form, old plain Deployments show `0/0` (retired by
+`scaleDown: onsuccess` once their Rollout took over — expected, not a problem), and the
+Rollout shows full desired replica count and `Healthy`.
+
+### `OutOfSync` is expected when the chart first lands on Argo Rollouts
+
+Once a Rollout is managing a Service's selector and the HTTPRoute's backendRef
+weights (both land in step 2), Argo CD will show the Application as `OutOfSync` — it
+sees the controllers' live patches as drift from Helm's static rendered values. This
+is expected, not a sign that anything is broken. `syncPolicy.automated.selfHeal: false`
+only stops Argo CD from *proactively* reverting that drift between syncs — it does
+not stop a sync that happens anyway
+
 ## Opting a single deployment out of canary
 
 `global.canary.enabled` is a single toggle at the umbrella-chart level, driving every
-service deployed alongside it into canary together. Set this chart's own
-`canary.enabled: false` to opt one service out regardless of that toggle: it always
+deployment alongside it into canary together. Set this chart's own
+`canary.enabled: false` to opt one deployment out regardless of that toggle: it always
 renders a plain Deployment with a static `replicaCount`, never a Rollout, and no
-canary/stable Services. Use this for a service pinned to an exact replica count by an
-invariant a transient extra canary Pod would violate. There is no matching override in
-the other direction — enabling canary here alone still leaves the `gatewayapi` chart's
-backendRef expansion off, so the Rollout would have no traffic split to plug into.
+canary/stable Services. Use this for a deployment pinned to an exact replica count by an
+invariant a transient extra canary Pod would violate.
 
 ## Argo CD order for canary rollouts
 
@@ -49,43 +150,6 @@ for both internal and external callers) atomic with the new path taking over. Tr
 wave ordering here as reducing, not eliminating, the risk of a one-time migration like that;
 watch the real traffic/health signals live during it, or stage it as two changes, rather
 than relying on the chart alone.
-
-### Old infra being removed needs `PruneLast`, not a sync-wave
-
-Sync-wave only controls resources this chart still renders. A tier being *removed* — like
-the reverse-proxy/canary-Deployment architecture this chart moved off of onto Argo Rollouts —
-has no manifest for Argo CD to read a wave from once it drops out of the chart, so it prunes
-using whatever wave was last live on it. A resource that was never annotated (true of every
-one of those old reverse-proxy/canary-Deployment resources) defaults to wave `"0"`, which
-lands *before* the HTTPRoute (`"2"`), Rollout (`"3"`), and autoscaler (`"4"`) above ever
-reconcile — the old infra would be torn down before the new path is even up, not after.
-
-There is no chart-side fix for this: stamping a later wave onto a resource that is being
-deleted in the same release that removes it doesn't work, because Argo CD would need that
-wave to already be live on the object, from a prior sync, before the resource disappears from
-the manifest.
-
-The fix is the Application's own `syncPolicy`, not this chart:
-
-```yaml
-syncPolicy:
-  syncOptions:
-    - PruneLast=true
-```
-
-`PruneLast=true` defers every prune in the sync to an implicit final wave, run only after
-every other wave has applied *and gone healthy* — old infra last, exactly as intended, with
-no dependency on a wave ever having been set on it before. Set this on the Application (or
-ApplicationSet template) for any service upgrading through this migration; this chart cannot
-set it for you, since the Application resource lives outside this repo.
-
-Two things to know before relying on it:
-
-- It's an Application-wide setting, not scoped to this one migration — it defers *every*
-  future prune on that Application the same way, which is normally what you want anyway.
-- If any wave never goes healthy (a stuck Rollout, a misconfigured HPA), the prune never
-  runs. Old and new infra both stay live, at double the cost, until someone intervenes — the
-  safe failure mode, but worth knowing about operationally rather than being surprised by it.
 
 ### Turning on canary for an autoscaled service needs `canary.initialReplicas` too
 
@@ -120,19 +184,6 @@ canary:
   initialReplicas: 5  # whatever this service is actually running right now
 ```
 
-With only this set — `global.canary.enabled` still untouched — the Rollout and its canary
-Service are created at real capacity and start warming up for real (the plain Service, which
-doubles as stable, already exists regardless):
-GCP attaches their NEGs and runs its own health checks, all before any real traffic depends
-on them. This is the piece sync-wave ordering alone can't provide, because a sync-wave only
-orders *when Argo CD applies* a resource, not when the load balancer finishes converging on
-it. The Rollout's `trafficRouting` stays off during this window — it still waits for the
-real `global.canary.enabled`, specifically so it never tries to manage weights on a
-`gatewayapi` HTTPRoute that hasn't expanded its backendRefs yet (see that chart's own
-canary section for why that combination hard-errors every reconcile otherwise).
-
-Migrating an autoscaled service onto canary is then two steps instead of one:
-
 1. Set `canary.initialReplicas` to the service's actual current replica count. Wait,
    confirm fully promoted at that count and the Services' backends are healthy
    (`kubectl argo rollouts get rollout`, `gcloud compute backend-services get-health`).
@@ -146,7 +197,10 @@ Migrating an autoscaled service onto canary is then two steps instead of one:
 
 `serviceGracefulRollout.minReadySeconds` (see [README.md](./README.md)'s "Rollouts wait a
 minute per wave") applies equally to the Argo Rollouts `Rollout` (rollout.yaml) when canary
-is enabled, but it needs its own line to do so: `workloadRef` only copies the referenced
+is enabled — the Deployment and the Rollout both resolve it from the same
+`common.gracefulRolloutValue` helper call, with no separate `canary.minReadySeconds`
+override, so the two can't drift independently. But the Rollout still needs its own
+explicit line to pick that shared value up: `workloadRef` only copies the referenced
 Deployment's `.spec.template` (so `terminationGracePeriodSeconds` and the preStop hook
 already carry over), not sibling `Rollout.spec` fields like `minReadySeconds`. Without it,
 the Rollout's own canary/stable Pods would default to `minReadySeconds: 0` regardless of
