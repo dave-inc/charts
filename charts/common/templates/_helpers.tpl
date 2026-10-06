@@ -195,6 +195,24 @@ outright -- see httproute.yaml's own comment on the backendRefs loop.
 {{- end }}
 
 {{/*
+Pre-Rollout rproxy bridge names/selector, used only while canary.migrate is
+true (see service.yaml, deployment-rproxy.yaml, service-control.yaml). Not
+part of the normal canary path -- these exist solely to keep the old
+reverse-proxy mechanism alive during a one-time cutover off it.
+*/}}
+{{- define "common.controlName" -}}
+{{- printf "%s-control" (include "common.name" .) }}
+{{- end }}
+
+{{- define "common.reverseProxyName" -}}
+{{- printf "%s-rproxy" (include "common.name" .) }}
+{{- end }}
+
+{{- define "common.reverseProxySelectorLabels" -}}
+{{ include "common.selectorLabelsBuilder" (list . .Release.Name "-rproxy") }}
+{{- end }}
+
+{{/*
 Create the name of the service account to use
 */}}
 {{- define "common.serviceAccountName" -}}
@@ -514,7 +532,9 @@ spec:
       appProtocol: {{ . }}
       {{- end }}
   selector:
-  {{- if $root.Values.canary.enabled -}}
+  {{- if $root.Values.canary.migrate }}
+    application: {{ required "additionalLabels.application is required while canary.migrate is true" (dig "application" nil $root.Values.additionalLabels) }}
+  {{- else if $root.Values.canary.enabled -}}
     {{- include "common.reverseProxySelectorLabels" $root | nindent 4 }}
   {{- else}}
     {{- if not $root.Values.podSelectorLabelsOverride }}
