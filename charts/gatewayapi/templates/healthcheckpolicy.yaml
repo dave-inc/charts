@@ -36,9 +36,15 @@ spec:
 {{- else }}
   default:
     config:
+      {{- if $healthCheckPolicyDefinition.spec.default.config.httpHealthCheck }}
       httpHealthCheck:
         port: {{ $healthCheckPolicyDefinition.spec.default.config.httpHealthCheck.port }}
         requestPath: {{ $healthCheckPolicyDefinition.spec.default.config.httpHealthCheck.requestPath }}
+      {{- else if $healthCheckPolicyDefinition.spec.default.config.grpcHealthCheck }}
+      grpcHealthCheck:
+        port: {{ $healthCheckPolicyDefinition.spec.default.config.grpcHealthCheck.port }}
+        serviceName: {{ $healthCheckPolicyDefinition.spec.default.config.grpcHealthCheck.serviceName }}
+      {{- end }}
       type: {{ $healthCheckPolicyDefinition.spec.default.config.type | default $.Values.healthCheckPolicies.default.spec.default.config.type }}
     logConfig:
       enabled: {{ dig "logConfig" "enabled" $.Values.healthCheckPolicies.default.spec.default.logConfig.enabled $healthCheckPolicyDefinition.spec.default }}
