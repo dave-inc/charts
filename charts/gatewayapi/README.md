@@ -183,14 +183,15 @@ setting `""` and thereby detaching its policy. Set `securityPolicy` per item.
 
 Every `HTTPRoute`, `HealthCheckPolicy` and `GCPBackendPolicy` this chart renders
 is annotated with `argocd.argoproj.io/sync-wave: "2"` by default. All three
-attach to a `Service` (via `targetRef` / `backendRefs`). Ordinary `common` /
-`cloudarmor` Services are in the implicit default wave `"0"`; the `common`
-chart's canary and stable Services are in wave `"1"`. Defaulting these
-resources to wave `"2"` still guarantees Argo CD reconciles every target
-Service well before the route or policy, giving the Service's GCP-side
-NEG/backend real wall-clock time to register so a route never reconciles ahead
-of the backend it binds to (which would briefly mark that backend unhealthy
-until the NEG catches up).
+attach to a `Service` (via `targetRef` / `backendRefs`), and every Service the
+`common` / `cloudarmor` charts create — plain, Cloud Armor, and (once canary
+is enabled) the canary Service — is itself at wave `"-1"`, ahead of everything
+else (see `charts/common/CANARY-ARGO-ROLLOUTS.md`'s "Argo CD order" section for
+why). Defaulting these resources to wave `"2"` still guarantees Argo CD
+reconciles every target Service well before the route or policy, giving the
+Service's GCP-side NEG/backend real wall-clock time to register so a route
+never reconciles ahead of the backend it binds to (which would briefly mark
+that backend unhealthy until the NEG catches up).
 
 The default is overridable — per item via its `metadata.annotations` (setting
 `argocd.argoproj.io/sync-wave` there wins over the chart default), and
