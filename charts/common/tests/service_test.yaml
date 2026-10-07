@@ -1,0 +1,35 @@
+suite: plain Service sync-wave
+templates:
+  - service.yaml
+values:
+  - ./fixtures/minimal-values.yaml
+set:
+  service.enabled: true
+tests:
+  - it: defaults to sync-wave -1 so a selector change lands ahead of a same-wave prune
+    asserts:
+      - isKind:
+          of: Service
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+          value: "-1"
+
+  - it: honors an explicit sync-wave override in service.annotations
+    set:
+      service.annotations:
+        argocd.argoproj.io/sync-wave: "5"
+    asserts:
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+          value: "5"
+
+  - it: keeps other service.annotations alongside the default sync-wave
+    set:
+      service.annotations:
+        team: platform
+    asserts:
+      - equal:
+          path: metadata.annotations
+          value:
+            argocd.argoproj.io/sync-wave: "-1"
+            team: platform

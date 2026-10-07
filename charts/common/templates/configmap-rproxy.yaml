@@ -1,4 +1,4 @@
-{{- if .Values.canary.enabled -}}
+{{- if .Values.canary.migrate -}}
 {{- $canaryWeight := .Values.canary.weight }}
 {{- $minUpstreams := max .Values.canary.reverseProxy.minUpstreams .Values.autoscaling.maxReplicas }}
 apiVersion: v1
@@ -21,12 +21,21 @@ data:
     send_timeout {{ .Values.canary.reverseProxy.send_timeout | default "30s" }};
 
     # Upstream definitions
+    {{- /*
+    Only rendered when canaryWeight is nonzero: during a migrate bridge (see
+    the if-gate on this whole file), weight is always 0 and no "<name>-canary"
+    Service exists to back ${NGINX_CANARY_HOST} -- an nginx upstream resolves
+    its server directives once at config load, so an unconditional block here
+    would fail nginx startup entirely rather than just not routing anywhere.
+    */}}
+    {{- if ne (toString $canaryWeight) "0" }}
     upstream canary {
       {{- range $i := until (int $minUpstreams) }}
       server ${NGINX_CANARY_HOST} max_fails=0 fail_timeout=0;
       {{- end }}
     }
-    
+    {{- end }}
+
     upstream control {
       {{- range $i := until (int $minUpstreams) }}
       server ${NGINX_CONTROL_HOST} max_fails=0 fail_timeout=0;
@@ -46,7 +55,9 @@ data:
     
     # Map the X-Dave-Upstream-Group header to a variable
     map $http_x_dave_upstream_group $target_upstream {
+      {{- if ne (toString $canaryWeight) "0" }}
       "canary" canary;
+      {{- end }}
       "control" control;
       default backend;
     }

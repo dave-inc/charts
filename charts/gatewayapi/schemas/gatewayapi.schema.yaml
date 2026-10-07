@@ -198,10 +198,12 @@ $defs:
               properties:
                 backendRefs:
                   type: array
-                  # For the time being, we only support a single backend ref per rule,
-                  # so minItems and maxItems are both set to 1
+                  # Up to 2 backendRefs per rule: a single backend, or a
+                  # stable+canary pair for Argo Rollouts' Gateway API traffic
+                  # router plugin, which mutates the weight fields in place as
+                  # a rollout progresses.
                   minItems: 1
-                  maxItems: 1
+                  maxItems: 2
                   items:
                     type: object
                     properties:
@@ -211,11 +213,6 @@ $defs:
                         type: integer
                         minimum: 1
                         maximum: 65535
-                      weight:
-                        type: integer
-                        # For the time being, we only support a single backend ref per rule,
-                        # so weight must be 1
-                        const: 1
                       group:
                         type: string
                         const: ""
@@ -399,9 +396,6 @@ $defs:
                   kind:
                     type: string
                     const: Service
-                  weight:
-                    type: integer
-                    const: 1
                 additionalProperties: false
               match:
                 type: object

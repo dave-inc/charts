@@ -1,10 +1,29 @@
+{{- /*
+Exists unconditionally (not gated on canary.enabled), because once canary is
+on, Argo Rollouts pins this same Service as its stableService target (see
+common.stableServiceName in _helpers.tpl) by patching its selector to the
+stable ReplicaSet's pod-template-hash -- it never gets a separate
+"<name>-stable" identity. Keeping one permanent identity here, rather than
+swapping to a differently-named Service at cutover, is what lets a gatewayapi
+HTTPRoute's backendRef for this Service stay unchanged across the whole
+canary lifecycle; see httproute.yaml's doc comment on its backendRefs loop
+for why that matters.
+*/}}
 {{- if .Values.service.enabled -}}
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Values.service.name | default (include "common.name" .) }}
   annotations:
-    argocd.argoproj.io/sync-wave: "1"
+    {{- /* A selector change here (e.g. a service migrating off a now-removed
+    tier whose Deployment/Service/etc. get pruned in the same sync) needs to
+    reach the API server, and the LB start discovering the new endpoints,
+    before that prune happens - both this Service and an unannotated pruned
+    resource default to wave 0, with no ordering between them otherwise. See
+    charts/common/CANARY-ARGO-ROLLOUTS.md's "Argo CD order" section. */}}
+    {{- if not (hasKey (.Values.service.annotations | default dict) "argocd.argoproj.io/sync-wave") }}
+    argocd.argoproj.io/sync-wave: "-1"
+    {{- end }}
     {{- if .Values.service.annotations }}
     {{- toYaml .Values.service.annotations | nindent 4 }}
     {{- end }}
@@ -18,14 +37,27 @@ spec:
       protocol: TCP
       name: http
   selector:
-  {{- if .Values.canary.enabled -}}
-    {{- include "common.reverseProxySelectorLabels" . | nindent 4 }}
-  {{- else}}
-    {{- if not .Values.podSelectorLabelsOverride }}
+    {{- /*
+    canary.migrate is the one-time bridge off the pre-Rollout rproxy
+    mechanism: while true, this Service widens from its normal specific
+    selector to the broad "application" label that both the still-running
+    rproxy pods and this chart's own app pods already carry (see
+    additionalLabels on deployment.yaml/deployment-rproxy.yaml), so it
+    matches both at once instead of swapping from one to the other. That
+    keeps the NEG's endpoint set strictly additive during the bridge -
+    nothing is ever dropped from it until rproxy is deleted (migrate flips
+    back to false), at which point only the now-redundant rproxy endpoints
+    disappear and the app endpoints, already present and healthy, are
+    unaffected. Required instead of optional here (not `dig ... ""`)
+    because an empty selector value would still match real pods rather than
+    failing loudly, which is the wrong failure mode for a label this
+    load-bearing.
+    */}}
+    {{- if .Values.canary.migrate }}
+      application: {{ required "additionalLabels.application is required while canary.migrate is true" (dig "application" nil .Values.additionalLabels) }}
+    {{- else if not .Values.podSelectorLabelsOverride }}
       {{- include "common.selectorLabels" . | nindent 4 }}
-    {{- end }}
-    {{- if .Values.podSelectorLabelsOverride }}
+    {{- else }}
       {{- .Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
     {{- end }}
-  {{- end }}
 {{- end }}
