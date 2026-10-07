@@ -635,6 +635,11 @@
                                 "type": "integer",
                                 "minimum": 1,
                                 "maximum": 65535
+                              },
+                              "grpcServiceName": {
+                                "type": "string",
+                                "description": "Optional name of the gRPC service to health check. Omit to health check every service on the backend. Note the CRD field is `grpcServiceName`, not `serviceName`.",
+                                "minLength": 1
                               }
                             },
                             "required": [
@@ -643,6 +648,54 @@
                             "additionalProperties": false
                           }
                         },
+                        "oneOf": [
+                          {
+                            "required": [
+                              "httpHealthCheck"
+                            ]
+                          },
+                          {
+                            "required": [
+                              "grpcHealthCheck"
+                            ]
+                          }
+                        ],
+                        "allOf": [
+                          {
+                            "if": {
+                              "required": [
+                                "type"
+                              ],
+                              "properties": {
+                                "type": {
+                                  "const": "GRPC"
+                                }
+                              }
+                            },
+                            "then": {
+                              "required": [
+                                "grpcHealthCheck"
+                              ]
+                            }
+                          },
+                          {
+                            "if": {
+                              "required": [
+                                "type"
+                              ],
+                              "properties": {
+                                "type": {
+                                  "const": "HTTP"
+                                }
+                              }
+                            },
+                            "then": {
+                              "required": [
+                                "httpHealthCheck"
+                              ]
+                            }
+                          }
+                        ],
                         "additionalProperties": false
                       }
                     },
@@ -706,18 +759,6 @@
                         "config": {
                           "required": [
                             "type"
-                          ],
-                          "anyOf": [
-                            {
-                              "required": [
-                                "httpHealthCheck"
-                              ]
-                            },
-                            {
-                              "required": [
-                                "grpcHealthCheck"
-                              ]
-                            }
                           ]
                         }
                       }
@@ -733,14 +774,7 @@
                     "default": {
                       "required": [
                         "config"
-                      ],
-                      "properties": {
-                        "config": {
-                          "required": [
-                            "httpHealthCheck"
-                          ]
-                        }
-                      }
+                      ]
                     }
                   }
                 }
