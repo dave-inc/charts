@@ -30,6 +30,12 @@ and backend policies.
 - [section-name](./section-name.yaml): An example that pins the route to a
   specific Gateway listener via `parentRefs[].sectionName`, alongside an HTTP
   health check policy and a GCPBackendPolicy.
+- [grpc-healthcheck](./grpc-healthcheck.yaml): How to health check a gRPC
+  backend via `grpcHealthCheck` instead of `httpHealthCheck`. Shows that
+  `config.type` is derived (`GRPC`) rather than set by hand, that
+  `grpcServiceName` is optional, and documents the HTTP/2 (`appProtocol:
+  kubernetes.io/h2c`) requirement on the target Service that the chart cannot
+  validate.
 
 You can mix and match these configurations to create more complex routing
 rules and policies as needed. Each example is self-contained and can be
