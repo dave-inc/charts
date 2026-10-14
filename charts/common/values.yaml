@@ -185,6 +185,30 @@ service:
   # The name of the service is optional, If not set, a name is generated using Release.Name
   # name: ""
 
+  # Additional Services pointing at the same Pods as the one above, each named
+  # "<service name>-<suffix>". The reason to want one is a second front door that needs
+  # its own annotations -- a different load balancer, its own backend config -- without a
+  # second Deployment behind it. Left off, nothing but the Service above is rendered.
+  #
+  # Each item inherits type, port and annotations from the service above and may override
+  # any of them. Annotations are merged rather than replaced, so an item only has to name
+  # the keys it changes, and the base keys it does not mention still come through. The
+  # selector is never overridable: reaching the same Pods is the entire point, so a copy
+  # follows the base Service onto the reverse proxy under canary just as it does
+  # everywhere else.
+  #
+  # A suffix must be a valid DNS-1035 label, and "ca", "canary" and "control" are reserved
+  # because this chart already renders a Service under each of them. Both are enforced by
+  # values.schema.json. The two things a schema cannot see -- that suffixes are unique
+  # across the list, and that the joined name fits the 63 characters Kubernetes allows --
+  # fail while rendering instead. Nothing here is ever dropped quietly.
+  copies:
+    enabled: false
+    items:
+      - suffix: ca-pub-gw
+        type: ClusterIP
+        annotations: {}
+
 # Graceful-rollout timing for a release that is actually in a traffic path. These three
 # fields shadow their top-level counterparts, so a service can be timed against the load
 # balancer in front of it without moving the defaults that everything else uses.

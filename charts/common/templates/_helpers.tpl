@@ -360,3 +360,82 @@ spec:
       {{- include .selectorTemplate .root | nindent 6 }}
 {{- end }}
 {{- end }}
+
+{{/*
+Render one Service document.
+
+Both the base Service and every service.copies entry go through this, so a copy cannot
+drift from the thing it copies. The three fields a copy is allowed to override are passed
+in; everything else -- the sync-wave annotation, the labels, the target port and the
+selector -- is derived from the root context and is therefore identical across the base
+and all of its copies.
+
+The selector is deliberately not overridable. A copy exists to be another front door to
+the same Pods, so under canary it inherits the reverse proxy selector exactly as the base
+Service does.
+
+  root         the root context
+  name         metadata.name
+  type         spec.type
+  port         spec.ports[0].port
+  annotations  annotation map, already merged, may be empty
+*/}}
+{{- define "common.serviceObject" -}}
+{{- $root := .root -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .name }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    {{- if .annotations }}
+    {{- toYaml .annotations | nindent 4 }}
+    {{- end }}
+  labels:
+    {{- include "common.labels" $root | nindent 4 }}
+spec:
+  type: {{ .type }}
+  ports:
+    - port: {{ .port }}
+      targetPort: {{ $root.Values.deploymentContainer.port }}
+      protocol: TCP
+      name: http
+  selector:
+  {{- if $root.Values.canary.enabled -}}
+    {{- include "common.reverseProxySelectorLabels" $root | nindent 4 }}
+  {{- else}}
+    {{- if not $root.Values.podSelectorLabelsOverride }}
+      {{- include "common.selectorLabels" $root | nindent 4 }}
+    {{- end }}
+    {{- if $root.Values.podSelectorLabelsOverride }}
+      {{- $root.Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+
+{{/*
+Fail rather than render a Service that Kubernetes or the apply would reject.
+
+Only what values.schema.json cannot express lives here, and both checks are here for the
+same reason: they depend on something outside the item being validated. Uniqueness is a
+property of the list, not of any one entry, and the 63 character ceiling applies to
+"<service name>-<suffix>", which the schema never sees joined. Everything that is a
+property of one item -- suffix present, a valid DNS-1035 label, not one of the reserved
+suffixes, no unknown keys -- is enforced by the schema before rendering starts.
+
+Expects a dict of "name" and "items".
+*/}}
+{{- define "common.validateServiceCopies" -}}
+{{- $names := list -}}
+{{- range .items -}}
+{{- $names = append $names (printf "%s-%s" $.name .suffix) -}}
+{{- end -}}
+{{- if ne (len $names) (len (uniq $names)) -}}
+{{- fail (printf "service.copies.items: suffixes must be unique, got Service names %v" $names) -}}
+{{- end -}}
+{{- range $names -}}
+{{- if gt (len .) 63 -}}
+{{- fail (printf "service.copies.items: Service name %q exceeds the 63 character limit, shorten the suffix or service.name" .) -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
