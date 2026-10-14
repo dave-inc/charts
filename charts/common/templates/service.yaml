@@ -2,36 +2,40 @@
 {{- fail "service.appProtocol is not supported when canary.enabled is true" -}}
 {{- end -}}
 {{- if .Values.service.enabled -}}
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{ .Values.service.name | default (include "common.name" .) }}
-  annotations:
-    argocd.argoproj.io/sync-wave: "1"
-    {{- if .Values.service.annotations }}
-    {{- toYaml .Values.service.annotations | nindent 4 }}
-    {{- end }}
-  labels:
-    {{- include "common.labels" . | nindent 4 }}
-spec:
-  type: {{ .Values.service.type }}
-  ports:
-    - port: {{ .Values.service.port }}
-      targetPort: {{ .Values.deploymentContainer.port }}
-      protocol: TCP
-      name: http
-      {{- with .Values.service.appProtocol }}
-      appProtocol: {{ . }}
-      {{- end }}
-  selector:
-  {{- if .Values.canary.enabled -}}
-    {{- include "common.reverseProxySelectorLabels" . | nindent 4 }}
-  {{- else}}
-    {{- if not .Values.podSelectorLabelsOverride }}
-      {{- include "common.selectorLabels" . | nindent 4 }}
-    {{- end }}
-    {{- if .Values.podSelectorLabelsOverride }}
-      {{- .Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
-    {{- end }}
-  {{- end }}
+{{- $name := .Values.service.name | default (include "common.name" .) -}}
+{{- $annotations := .Values.service.annotations | default dict -}}
+{{/*
+service.copies renders one extra Service per item, named "<name>-<suffix>" and selecting
+the same Pods. `default dict` is what makes a values file written before the feature safe:
+$copies is then always a map, so reading .enabled off it cannot dereference a missing one.
+That, copies.enabled: false and an empty items list all reduce to an empty range, which
+renders the base Service alone. Each item is validated by values.schema.json; the two
+things a schema cannot see are checked by common.validateServiceCopies.
+*/}}
+{{- $copies := .Values.service.copies | default dict -}}
+{{- $items := list -}}
+{{- if $copies.enabled -}}
+{{- $items = $copies.items | default list -}}
+{{- end -}}
+{{- include "common.validateServiceCopies" (dict "name" $name "items" $items) -}}
+{{- include "common.serviceObject" (dict "root" . "name" $name "type" .Values.service.type "port" .Values.service.port "appProtocol" .Values.service.appProtocol "annotations" $annotations) }}
+{{- range $items }}
+{{- if and $.Values.canary.enabled .appProtocol -}}
+{{- fail "service.copies.items[].appProtocol is not supported when canary.enabled is true" -}}
+{{- end -}}
+{{/*
+An item inherits anything it does not set. mergeOverwrite mutates its first argument, so
+the deepCopy is load-bearing: without it the first item's annotations would be written
+into .Values.service.annotations and every later copy would inherit them.
+*/}}
+{{- $copyAnnotations := mergeOverwrite (deepCopy $annotations) (.annotations | default dict) }}
+---
+{{ include "common.serviceObject" (dict
+     "root" $
+     "name" (printf "%s-%s" $name .suffix)
+     "type" (.type | default $.Values.service.type)
+     "port" (.port | default $.Values.service.port)
+     "appProtocol" (.appProtocol | default $.Values.service.appProtocol)
+     "annotations" $copyAnnotations) }}
+{{- end }}
 {{- end }}

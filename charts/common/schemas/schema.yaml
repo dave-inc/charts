@@ -6,16 +6,6 @@ properties:
     minimum: 0
     description: Number of replicas for the application.
 
-  service:
-    type: object
-    properties:
-      appProtocol:
-        type: string
-        description: >-
-          Application protocol for the Service port (spec.ports[].appProtocol),
-          e.g. kubernetes.io/h2c, kubernetes.io/ws or HTTP2. Not supported with
-          canary.enabled: true (rendering fails).
-
   # Fields validated through subschemas
   cloudArmor:
     $ref: ./cloudArmor.schema.json#/properties/cloudArmor
@@ -25,3 +15,5 @@ properties:
     $ref: ./deploymentContainer.schema.yaml#/properties/deploymentContainer
   ingress:
     $ref: ./ingress.schema.yaml#/properties/ingress
+  service:
+    $ref: ./service.schema.yaml#/properties/service

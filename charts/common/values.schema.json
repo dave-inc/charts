@@ -7,15 +7,6 @@
       "minimum": 0,
       "description": "Number of replicas for the application."
     },
-    "service": {
-      "type": "object",
-      "properties": {
-        "appProtocol": {
-          "type": "string",
-          "description": "Application protocol for the Service port (spec.ports[].appProtocol), e.g. kubernetes.io/h2c, kubernetes.io/ws or HTTP2. Not supported with canary.enabled: true (rendering fails)."
-        }
-      }
-    },
     "cloudArmor": {
       "type": "object",
       "properties": {
@@ -637,6 +628,82 @@
         }
       },
       "additionalProperties": false
+    },
+    "service": {
+      "type": "object",
+      "properties": {
+        "appProtocol": {
+          "type": "string",
+          "description": "Application protocol for the Service port (spec.ports[].appProtocol), e.g. kubernetes.io/h2c, kubernetes.io/ws or HTTP2. Not supported with canary.enabled: true (rendering fails)."
+        },
+        "copies": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "items": {
+              "type": "array",
+              "default": [],
+              "items": {
+                "type": "object",
+                "properties": {
+                  "suffix": {
+                    "type": "string",
+                    "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$",
+                    "maxLength": 62,
+                    "not": {
+                      "enum": [
+                        "ca",
+                        "canary",
+                        "control"
+                      ]
+                    }
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "ClusterIP",
+                      "NodePort",
+                      "LoadBalancer",
+                      "ExternalName"
+                    ]
+                  },
+                  "port": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 65535
+                  },
+                  "appProtocol": {
+                    "type": "string"
+                  },
+                  "annotations": {
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "suffix"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false,
+          "if": {
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "items"
+            ]
+          }
+        }
+      }
     }
   }
 }
