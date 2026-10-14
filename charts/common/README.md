@@ -7,6 +7,58 @@ Configuration reference lives in [values.yaml](./values.yaml), which is commente
 place. This file covers only what changes between versions and what you have to do about
 it.
 
+## Additional Services through `service.copies`
+
+`service.copies` renders extra Services alongside the one `service` already describes, each
+named `<service name>-<suffix>` and selecting the same Pods. It is off by default and
+nothing has to be set to adopt it.
+
+```yaml
+service:
+  type: ClusterIP
+  port: 80
+  annotations:
+    shared: from-base
+  copies:
+    enabled: true
+    items:
+      - suffix: internal
+      - suffix: admin
+        type: NodePort
+        annotations:
+          shared: from-item
+```
+
+That renders three Services: `my-app`, `my-app-internal` and `my-app-admin`.
+
+The reason to want one is a second front door that needs its own annotations — a different
+load balancer, its own backend config — without a second Deployment behind it. An item
+inherits `type`, `port` and `annotations` from the Service above it and may override any of
+them; annotations are merged rather than replaced, so an item only names the keys it
+changes and `shared` is the only one that differs between `my-app` and `my-app-admin` above.
+The selector is never overridable, since reaching the same Pods is the point — under canary
+a copy follows the base Service onto the reverse proxy exactly as the base does.
+
+Bad input fails rather than quietly dropping a Service you expect to exist, and it fails in
+one of two places. Everything about a single item is caught by `values.schema.json` before
+rendering starts: the suffix is required, must be a valid DNS-1035 label, must not be a
+reserved one, and no unknown keys are allowed. The two things a schema cannot see — that
+suffixes are unique across the list, and that `<service name>-<suffix>` fits the 63
+characters Kubernetes allows — fail while rendering, from `common.validateServiceCopies`.
+
+Three suffixes are reserved, because this chart already renders a Service under each:
+
+| Suffix | Rendered by | When |
+|---|---|---|
+| `ca` | `service-cloudarmor.yaml` | `cloudArmor.enabled` |
+| `canary` | `service-canary.yaml` | `canary.enabled` |
+| `control` | `service-control.yaml` | `canary.enabled` |
+
+They are refused unconditionally rather than only when Cloud Armor or canary is on, so the
+answer does not change with an unrelated value. The schema reports this as
+`at '/service/copies/items/0/suffix': 'not' failed`, which names the offending item but not
+the reason — it is one of the three above.
+
 ## Upgrading to 1.0.0
 
 `1.0.0` starts the SemVer 2.0.0 contract for this chart. Templates and values are
