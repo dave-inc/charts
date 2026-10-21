@@ -184,6 +184,11 @@ service:
   port: 80
   # The name of the service is optional, If not set, a name is generated using Release.Name
   # name: ""
+  # Optional application protocol for the Service port (spec.ports[].appProtocol).
+  # Used by Gateway API / GKE Gateway to pick the backend protocol, e.g. "kubernetes.io/h2c"
+  # for cleartext HTTP/2 (gRPC), "kubernetes.io/ws" for WebSocket, or "HTTP2".
+  # Not supported with canary.enabled: true (rendering fails).
+  # appProtocol: ""
 
 # Graceful-rollout timing for a release that is actually in a traffic path. These three
 # fields shadow their top-level counterparts, so a service can be timed against the load

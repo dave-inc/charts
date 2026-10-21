@@ -7,6 +7,15 @@
       "minimum": 0,
       "description": "Number of replicas for the application."
     },
+    "service": {
+      "type": "object",
+      "properties": {
+        "appProtocol": {
+          "type": "string",
+          "description": "Application protocol for the Service port (spec.ports[].appProtocol), e.g. kubernetes.io/h2c, kubernetes.io/ws or HTTP2. Not supported with canary.enabled: true (rendering fails)."
+        }
+      }
+    },
     "cloudArmor": {
       "type": "object",
       "properties": {
