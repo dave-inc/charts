@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/dave-inc/charts/compare/common-1.1.0...common-1.2.0) (2026-10-22)
+
+
+### Features
+
+* **common:** add optional service.appProtocol [SRE-7620] ([#351](https://github.com/dave-inc/charts/issues/351)) ([e5626b2](https://github.com/dave-inc/charts/commit/e5626b295fb0aee9c9eb68faf669de496d8582cf))
+
 ## [1.1.0](https://github.com/dave-inc/charts/compare/common-1.0.0...common-1.1.0) (2026-09-29)
 
 
