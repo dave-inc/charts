@@ -3,7 +3,7 @@
   "charts/common": "1.2.0",
   "charts/dave-npd": "1.0.0",
   "charts/gateway-bundle": "3.0.0",
-  "charts/gatewayapi": "3.0.0",
+  "charts/gatewayapi": "3.1.0",
   "charts/job": "1.0.0",
   "charts/kyverno-policies": "1.0.0",
   "charts/tailscale-operator": "1.0.0",
