@@ -1,3 +1,6 @@
+{{- if and .Values.canary.enabled .Values.service.appProtocol -}}
+{{- fail "service.appProtocol is not supported when canary.enabled is true" -}}
+{{- end -}}
 {{- if .Values.service.enabled -}}
 apiVersion: v1
 kind: Service
@@ -17,6 +20,9 @@ spec:
       targetPort: {{ .Values.deploymentContainer.port }}
       protocol: TCP
       name: http
+      {{- with .Values.service.appProtocol }}
+      appProtocol: {{ . }}
+      {{- end }}
   selector:
   {{- if .Values.canary.enabled -}}
     {{- include "common.reverseProxySelectorLabels" . | nindent 4 }}
