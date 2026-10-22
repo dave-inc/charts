@@ -99,6 +99,55 @@ as the readiness probe of the service unless some other endpoint is more
 appropriate for your use case. Note that `HealthCheckPolicy` is a GKE-specific
 CRD (`networking.gke.io/v1`) and is not part of the standard Gateway API.
 
+### gRPC health checks
+
+A backend that speaks gRPC should be probed over gRPC rather than HTTP. Swap
+`httpHealthCheck` for `grpcHealthCheck`:
+
+```yaml
+healthCheckPolicies:
+  items:
+    - name: grpc-service
+      spec:
+        default:
+          config:
+            grpcHealthCheck:
+              # Container port, not the Service port
+              port: 50051
+              # Optional
+              grpcServiceName: grpc.health.v1.Health
+        targetRef:
+          name: grpc-service
+```
+
+Note what is *not* there: `config.type`. The chart derives `GRPC` from the
+presence of `grpcHealthCheck`, the same way an item with `httpHealthCheck` gets
+`HTTP`. You may still set `type` explicitly, but the schema rejects a `type`
+that contradicts the block, so `type: HTTP` alongside `grpcHealthCheck` fails
+at render time instead of silently probing over the wrong protocol. Exactly one
+of the two blocks may be set per item.
+
+`grpcServiceName` is optional. Omit it to health check every gRPC service on
+the backend; set it to the service name registered with your health server to
+probe just that one. Note the field is `grpcServiceName` — the CRD has no
+`serviceName`.
+
+Two requirements this chart **cannot** validate for you:
+
+- **The target Service port must advertise HTTP/2.** gRPC runs over HTTP/2, and
+  the load balancer picks the backend protocol from the Service, not from the
+  `HealthCheckPolicy`. For a plaintext (non-TLS) gRPC backend that means
+  `appProtocol: kubernetes.io/h2c` on the Service port. Without it the load
+  balancer speaks HTTP/1.1 to the backend and every probe fails, with a
+  correct-looking `HealthCheckPolicy` applied. The Service is created by the
+  `common` chart, not this one.
+- **The application must implement the gRPC health checking protocol**
+  (`grpc.health.v1.Health`). A server that merely serves gRPC has nothing for
+  the probe to call.
+
+A full example lives in
+[examples/grpc-healthcheck.yaml](./examples/grpc-healthcheck.yaml).
+
 The chart can also render `GCPBackendPolicy` resources (another GKE-specific
 CRD, `networking.gke.io/v1`) to attach backend-service configuration such as
 `timeoutSec` to a `Service`. Like health check policies, they reference the

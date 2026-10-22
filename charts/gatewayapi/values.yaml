@@ -61,6 +61,31 @@ healthCheckPolicies:
 #      targetRef:
 #        name: example-service
 
+## gRPC health check example. Exactly one of httpHealthCheck / grpcHealthCheck
+## may be set per item, and `config.type` does not need to be set: the chart
+## derives `GRPC` from the presence of grpcHealthCheck (and `HTTP` otherwise).
+## Setting a `type` that contradicts the block is rejected by the schema.
+##
+## Two requirements the chart cannot validate for you:
+##   - the target Service port must advertise HTTP/2 (for plaintext gRPC, that
+##     is `appProtocol: kubernetes.io/h2c`), otherwise the load balancer speaks
+##     HTTP/1.1 to the backend and every probe fails
+##   - the app must implement the gRPC health checking protocol
+##     (grpc.health.v1.Health)
+#
+#   - name: grpc-service
+#     spec:
+#       default:
+#         config:
+#           grpcHealthCheck:
+#             # This needs to be the pod's port, or targetPort in the svc
+#             port: 50051
+#             # Optional. The CRD field is `grpcServiceName`, not `serviceName`.
+#             # Omit it to health check every gRPC service on the backend.
+#             grpcServiceName: grpc.health.v1.Health
+#       targetRef:
+#         name: grpc-service
+
 ## Elaborated health check policy example:
 #
 #  - name: main
@@ -79,6 +104,9 @@ healthCheckPolicies:
 #            # This needs to be the pod's port, or targetPort in the svc
 #            port: 8080
 #            requestPath: /
+#          # Optional when rawSpec is false -- derived from the health check
+#          # block above. Required when rawSpec is true, since nothing is
+#          # merged in for you.
 #          type: HTTP
 #        healthyThreshold: 1
 #        logConfig:

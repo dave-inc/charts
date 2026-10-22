@@ -1,0 +1,54 @@
+# gRPC health check: routes traffic for `grpc-service.trydave.com` to the
+# `grpc-service` Service on port 80, and health checks the backend over gRPC
+# on pod port 50051.
+#
+# Note `config.type` is NOT set below. The chart derives `type: GRPC` from the
+# presence of `grpcHealthCheck`, the same way an item with `httpHealthCheck`
+# gets `type: HTTP`. Set it explicitly only if you want it spelled out; the
+# schema rejects a `type` that contradicts the block.
+#
+# Two requirements this chart cannot validate for you:
+#
+#   1. The target Service port must advertise HTTP/2, otherwise the load
+#      balancer speaks HTTP/1.1 to the backend and every probe fails. For a
+#      plaintext (non-TLS) gRPC backend that means `appProtocol:
+#      kubernetes.io/h2c` on the Service port. The Service is created by the
+#      `common` chart, not this one.
+#   2. The application must implement the standard gRPC health checking
+#      protocol (`grpc.health.v1.Health`).
+enabled: true
+routes:
+  items:
+    - name: grpc-service
+      spec:
+        hostnames:
+          - grpc-service.trydave.com
+        parentRefs:
+          - name: default
+        rules:
+          - backendRefs:
+              - name: grpc-service
+                # This is the port on the Service that the route will target.
+                port: 80
+healthCheckPolicies:
+  items:
+    - name: grpc-service
+      spec:
+        default:
+          config:
+            grpcHealthCheck:
+              # This is the port on the pod/container that the health check
+              # will target, not the port on the Service.
+              port: 50051
+              # Optional. The name of the gRPC service to probe, as registered
+              # with the health server. Omit this field to health check every
+              # service on the backend.
+              grpcServiceName: grpc.health.v1.Health
+        targetRef:
+          name: grpc-service
+gcpBackendPolicies:
+  items:
+    - name: grpc-service
+      spec:
+        targetRef:
+          name: grpc-service

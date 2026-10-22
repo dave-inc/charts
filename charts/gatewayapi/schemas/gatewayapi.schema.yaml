@@ -70,9 +70,48 @@ $defs:
                         type: integer
                         minimum: 1
                         maximum: 65535
+                      grpcServiceName:
+                        type: string
+                        description: >-
+                          Optional name of the gRPC service to health check.
+                          Omit to health check every service on the backend.
+                          Note the CRD field is `grpcServiceName`, not
+                          `serviceName`.
+                        minLength: 1
                     required:
                       - port
                     additionalProperties: false
+                # Exactly one protocol block. `oneOf` over two `required`
+                # clauses gives both "at least one" and mutual exclusivity:
+                # setting both matches both branches and so fails.
+                oneOf:
+                  - required:
+                      - httpHealthCheck
+                  - required:
+                      - grpcHealthCheck
+                # `type` is optional -- the template derives it from whichever
+                # block is present. When it IS given it must agree with that
+                # block, otherwise the rendered policy probes over the wrong
+                # protocol and every health check fails.
+                allOf:
+                  - if:
+                      required:
+                        - type
+                      properties:
+                        type:
+                          const: GRPC
+                    then:
+                      required:
+                        - grpcHealthCheck
+                  - if:
+                      required:
+                        - type
+                      properties:
+                        type:
+                          const: HTTP
+                    then:
+                      required:
+                        - httpHealthCheck
                 additionalProperties: false
             additionalProperties: false
           targetRef:
@@ -114,13 +153,10 @@ $defs:
             default:
               properties:
                 config:
+                  # rawSpec is passed through verbatim, so nothing can be
+                  # derived for the user: the protocol must be spelled out.
                   required:
                     - type
-                  anyOf:
-                    - required:
-                        - httpHealthCheck
-                    - required:
-                        - grpcHealthCheck
     else:
       properties:
         spec:
@@ -128,10 +164,6 @@ $defs:
             default:
               required:
                 - config
-              properties:
-                config:
-                  required:
-                    - httpHealthCheck
     additionalProperties: false
   route:
     type: object

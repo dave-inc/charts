@@ -1,0 +1,200 @@
+suite: HealthCheckPolicy (HTTP and gRPC health checks)
+templates:
+  - healthcheckpolicy.yaml
+set:
+  enabled: true
+tests:
+  - it: renders an HTTP health check and derives type HTTP
+    set:
+      healthCheckPolicies:
+        items:
+          - name: example-service
+            spec:
+              default:
+                config:
+                  httpHealthCheck:
+                    port: 8080
+                    requestPath: /healthz
+              targetRef:
+                name: example-service
+    asserts:
+      - isKind:
+          of: HealthCheckPolicy
+      - equal:
+          path: spec.default.config
+          value:
+            httpHealthCheck:
+              port: 8080
+              requestPath: /healthz
+            type: HTTP
+
+  - it: renders a gRPC health check and derives type GRPC without an explicit type
+    set:
+      healthCheckPolicies:
+        items:
+          - name: grpc-service
+            spec:
+              default:
+                config:
+                  grpcHealthCheck:
+                    port: 50051
+              targetRef:
+                name: grpc-service
+    asserts:
+      - equal:
+          path: spec.default.config.type
+          value: GRPC
+      - equal:
+          path: spec.default.config.grpcHealthCheck.port
+          value: 50051
+      - notExists:
+          path: spec.default.config.httpHealthCheck
+
+  # The GKE HealthCheckPolicy CRD field is `grpcServiceName`. An earlier
+  # revision of this template emitted `serviceName`, which renders fine and is
+  # then rejected by the API server.
+  - it: emits grpcServiceName, not serviceName
+    set:
+      healthCheckPolicies:
+        items:
+          - name: grpc-service
+            spec:
+              default:
+                config:
+                  grpcHealthCheck:
+                    port: 50051
+                    grpcServiceName: grpc.health.v1.Health
+              targetRef:
+                name: grpc-service
+    asserts:
+      - equal:
+          path: spec.default.config.grpcHealthCheck.grpcServiceName
+          value: grpc.health.v1.Health
+      - notExists:
+          path: spec.default.config.grpcHealthCheck.serviceName
+
+  - it: omits grpcServiceName entirely when it is unset, rather than emitting a null
+    set:
+      healthCheckPolicies:
+        items:
+          - name: grpc-service
+            spec:
+              default:
+                config:
+                  grpcHealthCheck:
+                    port: 50051
+              targetRef:
+                name: grpc-service
+    asserts:
+      - equal:
+          path: spec.default.config.grpcHealthCheck
+          value:
+            port: 50051
+      - notExists:
+          path: spec.default.config.grpcHealthCheck.grpcServiceName
+
+  - it: lets an explicit config.type win over the derived one
+    set:
+      healthCheckPolicies:
+        items:
+          - name: grpc-service
+            spec:
+              default:
+                config:
+                  type: GRPC
+                  grpcHealthCheck:
+                    port: 50051
+              targetRef:
+                name: grpc-service
+    asserts:
+      - equal:
+          path: spec.default.config.type
+          value: GRPC
+
+  - it: applies default annotations, logConfig and thresholds on the gRPC path
+    set:
+      healthCheckPolicies:
+        items:
+          - name: grpc-service
+            spec:
+              default:
+                config:
+                  grpcHealthCheck:
+                    port: 50051
+              targetRef:
+                name: grpc-service
+    asserts:
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+          value: "2"
+      - equal:
+          path: spec.default.logConfig.enabled
+          value: true
+      - equal:
+          path: spec.default.checkIntervalSec
+          value: 5
+      - equal:
+          path: spec.default.timeoutSec
+          value: 1
+      - equal:
+          path: spec.default.healthyThreshold
+          value: 2
+      - equal:
+          path: spec.default.unhealthyThreshold
+          value: 2
+      - equal:
+          path: spec.targetRef
+          value:
+            group: ""
+            kind: Service
+            name: grpc-service
+
+  - it: passes a gRPC spec through verbatim when rawSpec is true
+    set:
+      healthCheckPolicies:
+        items:
+          - name: grpc-service
+            rawSpec: true
+            spec:
+              default:
+                config:
+                  type: GRPC
+                  grpcHealthCheck:
+                    port: 50051
+                    grpcServiceName: grpc.health.v1.Health
+                logConfig:
+                  enabled: false
+                checkIntervalSec: 10
+              targetRef:
+                group: ""
+                kind: Service
+                name: grpc-service
+    asserts:
+      - equal:
+          path: spec.default
+          value:
+            config:
+              type: GRPC
+              grpcHealthCheck:
+                port: 50051
+                grpcServiceName: grpc.health.v1.Health
+            logConfig:
+              enabled: false
+            checkIntervalSec: 10
+
+  - it: renders nothing when health check policies are disabled
+    set:
+      healthCheckPolicies:
+        enabled: false
+        items:
+          - name: grpc-service
+            spec:
+              default:
+                config:
+                  grpcHealthCheck:
+                    port: 50051
+              targetRef:
+                name: grpc-service
+    asserts:
+      - hasDocuments:
+          count: 0
