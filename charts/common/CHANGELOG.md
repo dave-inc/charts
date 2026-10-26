@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/dave-inc/charts/compare/common-1.2.0...common-1.3.0) (2026-10-26)
+
+
+### Features
+
+* **common:** implement `service.copies` ([#350](https://github.com/dave-inc/charts/issues/350)) ([d12fb07](https://github.com/dave-inc/charts/commit/d12fb079da55b940e8a1a3b55f9493d6ce93e4e0))
+
 ## [1.2.0](https://github.com/dave-inc/charts/compare/common-1.1.0...common-1.2.0) (2026-10-22)
 
 
