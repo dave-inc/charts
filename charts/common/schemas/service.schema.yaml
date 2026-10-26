@@ -1,0 +1,85 @@
+# Only `appProtocol` and `copies` are validated here. The rest of `service` is deliberately
+# left open: this chart is a dependency of other charts, and `additionalProperties: false`
+# on `service` would start failing any consumer that sets a service.* key this chart does
+# not read.
+
+$schema: "http://json-schema.org/draft-07/schema#"
+type: object
+properties:
+  service:
+    type: object
+    properties:
+      appProtocol:
+        type: string
+        description: >-
+          Application protocol for the Service port (spec.ports[].appProtocol),
+          e.g. kubernetes.io/h2c, kubernetes.io/ws or HTTP2. Not supported with
+          canary.enabled: true (rendering fails).
+
+      copies:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: false
+          items:
+            type: array
+            default: []
+            items:
+              type: object
+              properties:
+                # The rendered name is "<service name>-<suffix>", so the suffix has to be
+                # a valid DNS-1035 label on its own. The 63 character ceiling on the
+                # joined name depends on the service name, so it cannot be checked here;
+                # common.validateServiceCopies does it while rendering.
+                #
+                # Three suffixes are reserved because this chart already renders a Service
+                # under each of them: "-ca" from service-cloudarmor.yaml, and the
+                # "-canary"/"-control" pair from their own templates. A copy taking one
+                # would be a second Service with an existing name, which Helm renders
+                # happily and the apply then rejects. They are refused unconditionally
+                # rather than only when Cloud Armor or canary is on, so that the answer
+                # does not change with an unrelated value.
+                suffix:
+                  type: string
+                  pattern: "^[a-z]([-a-z0-9]*[a-z0-9])?$"
+                  maxLength: 62
+                  not:
+                    enum:
+                      - ca
+                      - canary
+                      - control
+
+                # Optional overrides. Anything left unset is inherited from the service
+                # above, and annotations are merged rather than replaced.
+                type:
+                  type: string
+                  enum:
+                    - ClusterIP
+                    - NodePort
+                    - LoadBalancer
+                    - ExternalName
+                port:
+                  type: integer
+                  minimum: 1
+                  maximum: 65535
+                appProtocol:
+                  type: string
+                annotations:
+                  type: object
+
+              required:
+                - suffix
+
+              additionalProperties: false
+
+        additionalProperties: false
+
+        # Validate required fields only if enabled is true
+        if:
+          properties:
+            enabled:
+              const: true
+        then:
+          required:
+            - items

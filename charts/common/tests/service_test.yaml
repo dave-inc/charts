@@ -1,9 +1,381 @@
-suite: Service appProtocol
+suite: Service
 templates:
   - service.yaml
 values:
   - ./fixtures/minimal-values.yaml
+set:
+  deploymentContainer:
+    port: 8080
 tests:
+  # values.yaml ships copies.items with a single `suffix: ca-pub-gw` entry so the shape is
+  # documented, and Helm merges that default in even when a release only sets `enabled`.
+  # Every case below therefore sets `items` explicitly rather than relying on the default.
+  - it: renders only the base Service when copies are off
+    set:
+      service:
+        copies:
+          enabled: false
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Service
+      - equal:
+          path: metadata.name
+          value: test-app
+      - equal:
+          path: metadata.annotations
+          value:
+            argocd.argoproj.io/sync-wave: "1"
+      - equal:
+          path: spec.type
+          value: ClusterIP
+      - equal:
+          path: spec.ports[0]
+          value:
+            port: 80
+            targetPort: 8080
+            protocol: TCP
+            name: http
+      - equal:
+          path: spec.selector
+          value:
+            app.kubernetes.io/name: test-app
+            app.kubernetes.io/instance: RELEASE-NAME
+
+  # A values file that predates the feature has no copies key at all. The template reads it
+  # through `default dict`, so this must render the base Service rather than fail on a
+  # missing map.
+  - it: renders only the base Service when the copies key is absent
+    set:
+      service:
+        enabled: true
+        type: ClusterIP
+        port: 80
+        copies: null
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: test-app
+
+  - it: renders the base Service and one copy suffixed with the item suffix
+    set:
+      service:
+        copies:
+          enabled: true
+          items:
+            - suffix: alt
+    asserts:
+      - hasDocuments:
+          count: 2
+      - documentIndex: 0
+        equal:
+          path: metadata.name
+          value: test-app
+      - documentIndex: 1
+        isKind:
+          of: Service
+      - documentIndex: 1
+        equal:
+          path: metadata.name
+          value: test-app-alt
+
+  - it: gives a copy the same type, port, selector and labels as the Service it copies
+    set:
+      service:
+        copies:
+          enabled: true
+          items:
+            - suffix: alt
+    asserts:
+      - documentIndex: 1
+        equal:
+          path: spec.type
+          value: ClusterIP
+      - documentIndex: 1
+        equal:
+          path: spec.ports[0]
+          value:
+            port: 80
+            targetPort: 8080
+            protocol: TCP
+            name: http
+      - documentIndex: 1
+        equal:
+          path: spec.selector
+          value:
+            app.kubernetes.io/name: test-app
+            app.kubernetes.io/instance: RELEASE-NAME
+      - documentIndex: 1
+        equal:
+          path: metadata.labels["app.kubernetes.io/name"]
+          value: test-app
+      - documentIndex: 1
+        equal:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+          value: "1"
+
+  - it: lets an item override type and port without touching the base Service
+    set:
+      service:
+        copies:
+          enabled: true
+          items:
+            - suffix: alt
+              type: NodePort
+              port: 8081
+    asserts:
+      - documentIndex: 0
+        equal:
+          path: spec.type
+          value: ClusterIP
+      - documentIndex: 0
+        equal:
+          path: spec.ports[0].port
+          value: 80
+      - documentIndex: 1
+        equal:
+          path: spec.type
+          value: NodePort
+      - documentIndex: 1
+        equal:
+          path: spec.ports[0].port
+          value: 8081
+      - documentIndex: 1
+        equal:
+          path: spec.ports[0].targetPort
+          value: 8080
+
+  # The merge runs against a deepCopy of the base annotations. Without it the first item
+  # would write its overrides into .Values.service.annotations, and the second copy below
+  # would inherit "from-item" instead of "from-base".
+  - it: merges item annotations over the base annotations without leaking between copies
+    set:
+      service:
+        annotations:
+          base: keep
+          shared: from-base
+        copies:
+          enabled: true
+          items:
+            - suffix: alt
+              annotations:
+                shared: from-item
+                own: only-here
+            - suffix: internal
+    asserts:
+      - hasDocuments:
+          count: 3
+      - documentIndex: 0
+        equal:
+          path: metadata.annotations
+          value:
+            argocd.argoproj.io/sync-wave: "1"
+            base: keep
+            shared: from-base
+      - documentIndex: 1
+        equal:
+          path: metadata.annotations
+          value:
+            argocd.argoproj.io/sync-wave: "1"
+            base: keep
+            shared: from-item
+            own: only-here
+      - documentIndex: 2
+        equal:
+          path: metadata.annotations
+          value:
+            argocd.argoproj.io/sync-wave: "1"
+            base: keep
+            shared: from-base
+
+  - it: renders one copy per item, in item order
+    set:
+      service:
+        copies:
+          enabled: true
+          items:
+            - suffix: alt
+            - suffix: internal
+            - suffix: external
+    asserts:
+      - hasDocuments:
+          count: 4
+      - documentIndex: 1
+        equal:
+          path: metadata.name
+          value: test-app-alt
+      - documentIndex: 2
+        equal:
+          path: metadata.name
+          value: test-app-internal
+      - documentIndex: 3
+        equal:
+          path: metadata.name
+          value: test-app-external
+
+  - it: treats an empty items list as a no-op rather than an error
+    set:
+      service:
+        copies:
+          enabled: true
+          items: []
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: test-app
+
+  - it: ignores items entirely when copies are disabled
+    set:
+      service:
+        copies:
+          enabled: false
+          items:
+            - suffix: alt
+            - suffix: internal
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: suffixes the configured service name rather than the generated one
+    set:
+      service:
+        name: custom-name
+        copies:
+          enabled: true
+          items:
+            - suffix: alt
+    asserts:
+      - documentIndex: 0
+        equal:
+          path: metadata.name
+          value: custom-name
+      - documentIndex: 1
+        equal:
+          path: metadata.name
+          value: custom-name-alt
+
+  - it: gives a copy the reverse proxy selector when canary is enabled, as the base does
+    set:
+      canary:
+        enabled: true
+      service:
+        copies:
+          enabled: true
+          items:
+            - suffix: alt
+    asserts:
+      - documentIndex: 1
+        equal:
+          path: spec.selector
+          value:
+            app.kubernetes.io/name: test-app-rproxy
+            app.kubernetes.io/instance: RELEASE-NAME-rproxy
+
+  # The cases below are the schema's job, not the template's: values.schema.json rejects
+  # them before rendering starts, which is why the expected text is the schema's own. Only
+  # the two checks a schema cannot express -- uniqueness across the list, and the length of
+  # a name the schema never sees joined -- fail from common.validateServiceCopies.
+  - it: fails when an item has no suffix
+    set:
+      service:
+        copies:
+          enabled: true
+          items:
+            - type: NodePort
+    asserts:
+      - failedTemplate:
+          errorPattern: "missing property 'suffix'"
+
+  - it: fails on a suffix that is not a valid DNS-1035 label
+    set:
+      service:
+        copies:
+          enabled: true
+          items:
+            - suffix: ALT_1
+    asserts:
+      - failedTemplate:
+          errorPattern: "does not match pattern"
+
+  - it: fails on an unknown key in an item
+    set:
+      service:
+        copies:
+          enabled: true
+          items:
+            - suffix: alt
+              selector:
+                app: other
+    asserts:
+      - failedTemplate:
+          errorPattern: "additional properties 'selector' not allowed"
+
+  # "ca", "canary" and "control" each name a Service this chart already renders from
+  # another template, so the schema refuses them outright rather than letting the clash
+  # reach the apply. Refused unconditionally, so the answer does not move with
+  # cloudArmor.enabled or canary.enabled.
+  - it: fails on the suffix reserved by the Cloud Armor Service
+    set:
+      service:
+        copies:
+          enabled: true
+          items:
+            - suffix: ca
+    asserts:
+      - failedTemplate:
+          errorPattern: "at '/service/copies/items/0/suffix': 'not' failed"
+
+  - it: fails on the suffix reserved by the canary Service
+    set:
+      service:
+        copies:
+          enabled: true
+          items:
+            - suffix: canary
+    asserts:
+      - failedTemplate:
+          errorPattern: "at '/service/copies/items/0/suffix': 'not' failed"
+
+  - it: fails on the suffix reserved by the control Service
+    set:
+      service:
+        copies:
+          enabled: true
+          items:
+            - suffix: control
+    asserts:
+      - failedTemplate:
+          errorPattern: "at '/service/copies/items/0/suffix': 'not' failed"
+
+  - it: fails on a duplicate suffix, which the schema cannot see
+    set:
+      service:
+        copies:
+          enabled: true
+          items:
+            - suffix: alt
+            - suffix: alt
+    asserts:
+      - failedTemplate:
+          errorMessage: "service.copies.items: suffixes must be unique, got Service names [test-app-alt test-app-alt]"
+
+  - it: fails when the joined name exceeds the 63 character limit
+    set:
+      service:
+        name: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        copies:
+          enabled: true
+          items:
+            - suffix: alt
+    asserts:
+      - failedTemplate:
+          errorMessage: 'service.copies.items: Service name "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-alt" exceeds the 63 character limit, shorten the suffix or service.name'
+
   - it: omits appProtocol when service.appProtocol is unset
     asserts:
       - notExists:
@@ -30,3 +402,48 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: service.appProtocol is not supported when canary.enabled is true
+
+  - it: gives a copy the base appProtocol when the item does not set one
+    set:
+      service:
+        appProtocol: kubernetes.io/h2c
+        copies:
+          enabled: true
+          items:
+            - suffix: alt
+    asserts:
+      - documentIndex: 1
+        equal:
+          path: spec.ports[0].appProtocol
+          value: kubernetes.io/h2c
+
+  - it: lets an item override appProtocol without touching the base Service
+    set:
+      service:
+        copies:
+          enabled: true
+          items:
+            - suffix: alt
+              appProtocol: kubernetes.io/ws
+    asserts:
+      - documentIndex: 0
+        notExists:
+          path: spec.ports[0].appProtocol
+      - documentIndex: 1
+        equal:
+          path: spec.ports[0].appProtocol
+          value: kubernetes.io/ws
+
+  - it: fails when a copy sets appProtocol with canary enabled
+    set:
+      canary:
+        enabled: true
+      service:
+        copies:
+          enabled: true
+          items:
+            - suffix: alt
+              appProtocol: kubernetes.io/h2c
+    asserts:
+      - failedTemplate:
+          errorMessage: service.copies.items[].appProtocol is not supported when canary.enabled is true
