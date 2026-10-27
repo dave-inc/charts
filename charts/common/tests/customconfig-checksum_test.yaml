@@ -1,0 +1,60 @@
+suite: checksum/customconfig rolls the Deployment when customConfig.data changes
+templates:
+  - deployment.yaml
+values:
+  - ./fixtures/minimal-values.yaml
+tests:
+  - it: renders a stable checksum/customconfig annotation when customConfig is disabled
+    # The chart's default (customConfig.enabled: false, data: {}): same hash as the
+    # equally-empty checksum/config, not absent.
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/customconfig"]
+      - equal:
+          path: spec.template.metadata.annotations["checksum/customconfig"]
+          value: 52133ddfcd583280388a8bbfb67a417b6b660f75bc63ec1b01beec811d4498ef
+
+  - it: changes checksum/customconfig when customConfig.data's content changes, and leaves checksum/config alone
+    set:
+      env:
+        LOG_LEVEL: info
+      customConfig:
+        enabled: true
+        path: /etc/app
+        data:
+          config.json: |
+            {"default": {"url": "https://pypi.org"}}
+    asserts:
+      - notEqual:
+          path: spec.template.metadata.annotations["checksum/customconfig"]
+          value: 52133ddfcd583280388a8bbfb67a417b6b660f75bc63ec1b01beec811d4498ef
+      - equal:
+          path: spec.template.metadata.annotations["checksum/config"]
+          value: 1eaf8ae9a3d4a9e9eec444738e1476a3c2a72396aac06b1f6674127e61114668
+
+  - it: changes checksum/customconfig again when only the mounted content differs, and still leaves checksum/config alone
+    set:
+      env:
+        LOG_LEVEL: info
+      customConfig:
+        enabled: true
+        path: /etc/app
+        data:
+          config.json: |
+            {"default": {"url": "https://us-central1-python.pkg.dev/package-registry-0203/endor-pypi"}}
+    asserts:
+      - notEqual:
+          path: spec.template.metadata.annotations["checksum/customconfig"]
+          value: 52133ddfcd583280388a8bbfb67a417b6b660f75bc63ec1b01beec811d4498ef
+      - notEqual:
+          # The previous test's checksum/customconfig (differently-contented
+          # config.json), to rule out a hash collision or a no-op diff.
+          path: spec.template.metadata.annotations["checksum/customconfig"]
+          value: 721bd5fcf404cc8a0d9f8a32d7098a743c3809f32b36b091ebd22e759f567737
+      # Same env as the previous test, different customConfig.data: checksum/config
+      # (env-backed) must be identical to that test's, proving the two annotations
+      # are independent -- this is the regression the shared `common` chart had,
+      # where customConfig had no checksum of its own at all.
+      - equal:
+          path: spec.template.metadata.annotations["checksum/config"]
+          value: 1eaf8ae9a3d4a9e9eec444738e1476a3c2a72396aac06b1f6674127e61114668
