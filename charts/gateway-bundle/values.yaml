@@ -44,6 +44,18 @@ gateways:
           - parentDomain: trydave.com
           - parentDomain: daveapi.com
           - parentDomain: daveapi.io
+      ## When enabled, renders one GKE `GCPGatewayPolicy` per enabled Gateway
+      ## item, named after the Gateway (`<gatewayName>`) and targeting it via
+      ## `targetRef`. `spec.default` is copied verbatim into the policy.
+      ##
+      ## - `sslPolicy`: name of an existing Compute Engine SSL policy in the
+      ##   cluster's project (e.g. one enforcing a minimum TLS version).
+      ## - `allowGlobalAccess` / `region`: only apply to internal Gateways
+      ##   (e.g. `gke-l7-rilb`).
+      ##
+      ## Per-gateway overrides go in an item's `ext.gcpGatewayPolicy`:
+      ## `enabled` opts that Gateway in or out, and its `spec.default` keys
+      ## are merged over these (item keys win).
       gcpGatewayPolicy:
         enabled: false
         spec:
@@ -68,6 +80,12 @@ gateways:
 ## a template and only override the fields specified in this item.
 #   - name: extra-gw-1
 #     rawSpec: false
+#     ## Optional per-gateway override of gateways.default.ext.gcpGatewayPolicy.
+#     ext:
+#       gcpGatewayPolicy:
+#         spec:
+#           default:
+#             sslPolicy: min-tls-13
 #     spec:
 #       listeners:
 #         # The missing fields will be filled by using gateways.default as a

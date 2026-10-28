@@ -126,9 +126,51 @@ $defs:
               required:
                 - items
             additionalProperties: false
+          gcpGatewayPolicy:
+            type: object
+            properties:
+              enabled:
+                type: boolean
+              spec:
+                $ref: "#/$defs/gcpGatewayPolicySpec"
+            required:
+              - enabled
+            # `spec` is required only when `enabled: true`.
+            if:
+              properties:
+                enabled:
+                  const: true
+              required:
+                - enabled
+            then:
+              required:
+                - spec
+            additionalProperties: false
         additionalProperties: false
     required:
       - spec
+    additionalProperties: false
+
+  # Mirrors GCPGatewayPolicy (networking.gke.io/v1) `spec`, minus
+  # `targetRef`, which is always derived from the Gateway item.
+  gcpGatewayPolicySpec:
+    type: object
+    properties:
+      default:
+        type: object
+        properties:
+          sslPolicy:
+            type: string
+            minLength: 1
+          allowGlobalAccess:
+            type: boolean
+          region:
+            type: string
+            minLength: 1
+        minProperties: 1
+        additionalProperties: false
+    required:
+      - default
     additionalProperties: false
 
   gatewayItem:
@@ -142,6 +184,21 @@ $defs:
         type: boolean
       rawSpec:
         type: boolean
+      # Per-gateway overrides of `gateways.default.ext`. Both fields are
+      # optional; anything unset falls back to the default.
+      ext:
+        type: object
+        properties:
+          gcpGatewayPolicy:
+            type: object
+            properties:
+              enabled:
+                type: boolean
+              spec:
+                $ref: "#/$defs/gcpGatewayPolicySpec"
+            minProperties: 1
+            additionalProperties: false
+        additionalProperties: false
       spec:
         type: object
         properties:

@@ -1,0 +1,42 @@
+{{- if .Values.enabled }}
+{{- $labels := include "gateway-bundle.labels" . }}
+{{- /* Chained access on `ext` is intentional: Helm's nil tolerance lets
+       callers omit the whole `ext` block. */ -}}
+{{- $default := .Values.gateways.default.ext.gcpGatewayPolicy | default dict }}
+{{- range $item := .Values.gateways.items }}
+{{- if ne $item.enabled false }}
+{{- $override := dig "ext" "gcpGatewayPolicy" dict $item }}
+{{- /* An item-level `enabled` (true or false) wins over the default. */ -}}
+{{- $enabled := $default.enabled }}
+{{- if hasKey $override "enabled" }}
+{{- $enabled = $override.enabled }}
+{{- end }}
+{{- if $enabled }}
+{{- /* Shallow, key-by-key merge of `spec.default`: item keys win. Done by
+       hand instead of sprig `merge`/`mergeOverwrite`, which won't let an
+       explicit `false` (e.g. `allowGlobalAccess: false`) override `true`. */ -}}
+{{- $spec := deepCopy (dig "spec" "default" dict $default) }}
+{{- range $k, $v := (dig "spec" "default" dict $override) }}
+{{- $_ := set $spec $k $v }}
+{{- end }}
+{{- if not $spec }}
+{{- fail (printf "GCPGatewayPolicy for Gateway '%s' is enabled but has no spec.default (set it in gateways.default.ext.gcpGatewayPolicy or the item's ext.gcpGatewayPolicy)" $item.name) }}
+{{- end }}
+---
+apiVersion: networking.gke.io/v1
+kind: GCPGatewayPolicy
+metadata:
+  name: {{ $item.name }}
+  labels:
+    {{- $labels | nindent 4 }}
+spec:
+  default:
+    {{- toYaml $spec | nindent 4 }}
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: Gateway
+    name: {{ $item.name }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
