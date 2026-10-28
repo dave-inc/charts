@@ -161,6 +161,68 @@ without `rawSpec: true`, so listener defaults and `tlsSecretGroups` still
 apply. For implementation-specific `<group>/<type>` values, drop into
 `rawSpec: true`.
 
+### GCPGatewayPolicy (SSL policy)
+
+Set `gateways.default.ext.gcpGatewayPolicy.enabled: true` to attach a GKE
+[`GCPGatewayPolicy`](https://cloud.google.com/kubernetes-engine/docs/how-to/configure-gateway-resources#configure_ssl_policies)
+to every rendered Gateway (disabled by default):
+
+```yaml
+gateways:
+  default:
+    ext:
+      gcpGatewayPolicy:
+        enabled: true
+        metadata:
+          annotations:
+            argocd.argoproj.io/sync-wave: "2"
+        spec:
+          default:
+            sslPolicy: min-tls-12
+```
+
+The chart renders one `GCPGatewayPolicy` per enabled item, named after the
+Gateway (`{item.name}`), with `targetRef` pointing at it. This includes
+`rawSpec: true` items. `spec.default` is copied verbatim and accepts
+`sslPolicy`, `allowGlobalAccess`, and `region` (the latter two only apply to
+internal Gateways such as `gke-l7-rilb`). `sslPolicy` must name an existing
+Compute Engine SSL policy in the cluster's project.
+
+`metadata.annotations` is copied onto each policy. It is separate from
+`gateways.default.metadata.annotations`, which only applies to Gateways. The
+chart default sets `argocd.argoproj.io/sync-wave: "2"` on policies (and
+`"1"` on Gateways) so Argo CD applies each policy after the Gateway it
+targets.
+
+Individual Gateways can override this through their own
+`ext.gcpGatewayPolicy`. `enabled` opts that Gateway in or out regardless of
+the default, and its `spec.default` and `metadata.annotations` keys are
+merged over the default's (item keys win):
+
+```yaml
+gateways:
+  items:
+    - name: default
+      ext:
+        gcpGatewayPolicy:
+          spec:
+            default:
+              sslPolicy: min-tls-13   # only this Gateway
+      spec:
+        listeners:
+          - hostname: example-service.trydave.com
+    - name: internal
+      ext:
+        gcpGatewayPolicy:
+          enabled: false             # no policy for this Gateway
+      spec:
+        listeners:
+          - hostname: internal.trydave.com
+```
+
+An item can also opt in while the default is disabled; rendering fails if
+the merged `spec.default` ends up empty.
+
 ### Full spec control
 
 By default, each item's spec is merged with the chart defaults. Set
@@ -195,6 +257,7 @@ The examples cover:
 | [shared-tls-secrets.yaml](./examples/shared-tls-secrets.yaml) | Many listeners sharing TLS Secrets by parent domain (stays under GKE's 15-cert limit) |
 | [wildcard.yaml](./examples/wildcard.yaml) | Wildcard listener (`*.<domain>`) with a dedicated `wildcard-<domain>-<gatewayName>-tls` Secret, alongside concrete subdomains |
 | [custom-addresses.yaml](./examples/custom-addresses.yaml) | Bind a Gateway to a specific IP or named address via `spec.addresses` |
+| [gcp-gateway-policy.yaml](./examples/gcp-gateway-policy.yaml) | Attach a `GCPGatewayPolicy` (e.g. SSL policy) to every Gateway, with per-gateway overrides and opt-out |
 | [raw-spec.yaml](./examples/raw-spec.yaml) | `rawSpec: true` escape hatch for full Gateway-spec control |
 
 You can also apply `additionalLabels` to have extra labels added to all

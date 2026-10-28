@@ -31,6 +31,11 @@ expressive enough.
   more caller-specified addresses (e.g. a pre-reserved GCP static IP or
   an implementation-named address) via `spec.addresses`. Stays in
   templated mode — listener defaults and `tlsSecretGroups` still apply.
+- [gcp-gateway-policy](./gcp-gateway-policy.yaml): Attach a GKE
+  `GCPGatewayPolicy` to every rendered Gateway via
+  `gateways.default.ext.gcpGatewayPolicy` (e.g. to enforce an SSL policy).
+  One policy per enabled Gateway, named after it; individual Gateways can
+  override `spec.default` or opt out via their own `ext.gcpGatewayPolicy`.
 - [raw-spec](./raw-spec.yaml): An escape hatch that sets `rawSpec: true`
   and supplies the entire Gateway spec verbatim. Use this when the chart's
   templated mode can't express what you need; metadata is still inherited
