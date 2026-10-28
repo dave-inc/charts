@@ -173,6 +173,9 @@ gateways:
     ext:
       gcpGatewayPolicy:
         enabled: true
+        metadata:
+          annotations:
+            argocd.argoproj.io/sync-wave: "2"
         spec:
           default:
             sslPolicy: min-tls-12
@@ -185,10 +188,16 @@ Gateway (`{item.name}`), with `targetRef` pointing at it. This includes
 internal Gateways such as `gke-l7-rilb`). `sslPolicy` must name an existing
 Compute Engine SSL policy in the cluster's project.
 
+`metadata.annotations` is copied onto each policy. It is separate from
+`gateways.default.metadata.annotations`, which only applies to Gateways. The
+chart default sets `argocd.argoproj.io/sync-wave: "2"` on policies (and
+`"1"` on Gateways) so Argo CD applies each policy after the Gateway it
+targets.
+
 Individual Gateways can override this through their own
 `ext.gcpGatewayPolicy`. `enabled` opts that Gateway in or out regardless of
-the default, and its `spec.default` keys are merged over the default's
-(item keys win):
+the default, and its `spec.default` and `metadata.annotations` keys are
+merged over the default's (item keys win):
 
 ```yaml
 gateways:

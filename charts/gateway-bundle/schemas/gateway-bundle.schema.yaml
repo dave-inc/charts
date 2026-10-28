@@ -131,6 +131,8 @@ $defs:
             properties:
               enabled:
                 type: boolean
+              metadata:
+                $ref: "#/$defs/annotationsMetadata"
               spec:
                 $ref: "#/$defs/gcpGatewayPolicySpec"
             required:
@@ -149,6 +151,16 @@ $defs:
         additionalProperties: false
     required:
       - spec
+    additionalProperties: false
+
+  # Annotations-only metadata block for chart-managed GKE policy resources.
+  annotationsMetadata:
+    type: object
+    properties:
+      annotations:
+        type: object
+        additionalProperties:
+          type: string
     additionalProperties: false
 
   # Mirrors GCPGatewayPolicy (networking.gke.io/v1) `spec`, minus
@@ -184,7 +196,7 @@ $defs:
         type: boolean
       rawSpec:
         type: boolean
-      # Per-gateway overrides of `gateways.default.ext`. Both fields are
+      # Per-gateway overrides of `gateways.default.ext`. All fields are
       # optional; anything unset falls back to the default.
       ext:
         type: object
@@ -194,6 +206,8 @@ $defs:
             properties:
               enabled:
                 type: boolean
+              metadata:
+                $ref: "#/$defs/annotationsMetadata"
               spec:
                 $ref: "#/$defs/gcpGatewayPolicySpec"
             minProperties: 1

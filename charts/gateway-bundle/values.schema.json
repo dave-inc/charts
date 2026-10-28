@@ -157,6 +157,18 @@
                     "enabled": {
                       "type": "boolean"
                     },
+                    "metadata": {
+                      "type": "object",
+                      "properties": {
+                        "annotations": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "additionalProperties": false
+                    },
                     "spec": {
                       "type": "object",
                       "properties": {
@@ -239,6 +251,18 @@
                     "properties": {
                       "enabled": {
                         "type": "boolean"
+                      },
+                      "metadata": {
+                        "type": "object",
+                        "properties": {
+                          "annotations": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "additionalProperties": false
                       },
                       "spec": {
                         "type": "object",

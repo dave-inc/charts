@@ -22,11 +22,21 @@
 {{- if not $spec }}
 {{- fail (printf "GCPGatewayPolicy for Gateway '%s' is enabled but has no spec.default (set it in gateways.default.ext.gcpGatewayPolicy or the item's ext.gcpGatewayPolicy)" $item.name) }}
 {{- end }}
+{{- /* Annotations merge the same way: item keys win. Gateway annotations
+       (`gateways.default.metadata`) are deliberately not inherited. */ -}}
+{{- $annotations := deepCopy (dig "metadata" "annotations" dict $default) }}
+{{- range $k, $v := (dig "metadata" "annotations" dict $override) }}
+{{- $_ := set $annotations $k $v }}
+{{- end }}
 ---
 apiVersion: networking.gke.io/v1
 kind: GCPGatewayPolicy
 metadata:
   name: {{ $item.name }}
+  {{- with $annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   labels:
     {{- $labels | nindent 4 }}
 spec:

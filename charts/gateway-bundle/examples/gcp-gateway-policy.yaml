@@ -7,14 +7,17 @@
 # get no policy.
 #
 # Each item can override the default via its own `ext.gcpGatewayPolicy`:
-# `enabled` opts that Gateway in or out, and `spec.default` keys are merged
-# over the default's `spec.default` (item keys win).
+# `enabled` opts that Gateway in or out, and `spec.default` and
+# `metadata.annotations` keys are merged over the default's (item keys win).
 enabled: true
 gateways:
   default:
     ext:
       gcpGatewayPolicy:
         enabled: true
+        metadata:
+          annotations:
+            argocd.argoproj.io/sync-wave: "2"
         spec:
           default:
             sslPolicy: min-tls-12
@@ -24,10 +27,14 @@ gateways:
       spec:
         listeners:
           - hostname: example-service.trydave.com
-    # Overrides sslPolicy and adds allowGlobalAccess for this Gateway only.
+    # Overrides sslPolicy, adds allowGlobalAccess and an extra annotation
+    # for this Gateway only (the default sync-wave annotation is kept).
     - name: extra-gw-1
       ext:
         gcpGatewayPolicy:
+          metadata:
+            annotations:
+              example.com/owner: platform
           spec:
             default:
               sslPolicy: min-tls-13
