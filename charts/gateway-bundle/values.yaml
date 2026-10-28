@@ -44,6 +44,11 @@ gateways:
           - parentDomain: trydave.com
           - parentDomain: daveapi.com
           - parentDomain: daveapi.io
+      gcpGatewayPolicy:
+        enabled: false
+        spec:
+          default:
+            sslPolicy: min-tls-12
   # Each item creates a Gateway resource.
   items: []
 ## This is the simplest case where the Gateway will be created using the
