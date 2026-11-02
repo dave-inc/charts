@@ -271,8 +271,7 @@ $defs:
                             type: string
                             enum:
                               - PathPrefix
-                              - PathExact
-                              - PathRegex
+                              - Exact
                           value:
                             type: string
                         additionalProperties: false
@@ -445,8 +444,7 @@ $defs:
                         type: string
                         enum:
                           - PathPrefix
-                          - PathExact
-                          - PathRegex
+                          - Exact
                       value:
                         type: string
                     additionalProperties: false

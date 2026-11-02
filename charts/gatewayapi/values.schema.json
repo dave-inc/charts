@@ -90,8 +90,7 @@
                               "type": "string",
                               "enum": [
                                 "PathPrefix",
-                                "PathExact",
-                                "PathRegex"
+                                "Exact"
                               ]
                             },
                             "value": {
@@ -281,8 +280,7 @@
                                     "type": "string",
                                     "enum": [
                                       "PathPrefix",
-                                      "PathExact",
-                                      "PathRegex"
+                                      "Exact"
                                     ]
                                   },
                                   "value": {
