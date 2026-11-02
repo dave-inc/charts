@@ -6,6 +6,7 @@
 {{- end }}
 {{- $_ := set $seen $routeDefinition.name true }}
 {{- end }}
+{{- include "gatewayapi.validatePublicRoutes" . }}
 {{- $labels := include "gatewayapi.labels" . }}
 {{- $commonName := include "gatewayapi.name" . }}
 {{- range $routeDefinition := .Values.routes.items }}
