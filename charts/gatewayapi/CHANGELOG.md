@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.1](https://github.com/dave-inc/charts/compare/gatewayapi-3.1.0...gatewayapi-3.1.1) (2026-11-02)
+
+
+### Bug Fixes
+
+* **gatewayapi:** use valid Gateway API path match types ([#357](https://github.com/dave-inc/charts/issues/357)) ([872114b](https://github.com/dave-inc/charts/commit/872114bb48d8cee25d8af3544b4956981a07b024))
+
 ## [3.1.0](https://github.com/dave-inc/charts/compare/gatewayapi-3.0.0...gatewayapi-3.1.0) (2026-10-22)
 
 
