@@ -121,6 +121,7 @@ healthCheckPolicies:
 # GCPBackendPolicies list. Each item's `name` becomes the name of the rendered
 # resource (e.g. `<name>`). Names must be unique across items. A GCPBackendPolicy
 # attaches GKE backend-service configuration (e.g. `timeoutSec`) to a Service.
+# Each targetRef may be targeted by only one enabled item; rendering fails otherwise.
 gcpBackendPolicies:
   enabled: true
   # When an items entry rawSpec is false, the spec block will be merged with defaults defined here.
