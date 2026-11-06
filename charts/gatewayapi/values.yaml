@@ -121,6 +121,7 @@ healthCheckPolicies:
 # GCPBackendPolicies list. Each item's `name` becomes the name of the rendered
 # resource (e.g. `<name>`). Names must be unique across items. A GCPBackendPolicy
 # attaches GKE backend-service configuration (e.g. `timeoutSec`) to a Service.
+# Each targetRef may be targeted by only one enabled item; rendering fails otherwise.
 gcpBackendPolicies:
   enabled: true
   # When an items entry rawSpec is false, the spec block will be merged with defaults defined here.
@@ -195,6 +196,12 @@ gcpBackendPolicies:
 # Routes list. Each item's `name` becomes the name of the rendered route resource
 # (e.g. `<name>`). Names must be unique across items. Each entry must
 # declare its `kind` (HTTPRoute or GRPCRoute) and a `spec` block.
+#
+# Public gateways: any HTTPRoute with a parentRef whose name contains "public"
+# must only send traffic to Services whose name ends in `-ca-pub-gw`
+# (optionally followed by `-<number>`), and each such Service needs an enabled
+# gcpBackendPolicies item with a non-empty `spec.default.securityPolicy`.
+# Rendering fails otherwise. This check is always on and cannot be disabled.
 routes:
   enabled: true
   # When an items entry rawSpec is false, the spec block will be merged with defaults defined here.
