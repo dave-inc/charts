@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.2.0](https://github.com/dave-inc/charts/compare/gatewayapi-3.1.1...gatewayapi-3.2.0) (2026-11-06)
+
+
+### Features
+
+* **gatewayapi:** strict validations for public gateway exposed resources ([#359](https://github.com/dave-inc/charts/issues/359)) ([3bb8283](https://github.com/dave-inc/charts/commit/3bb8283fb761170827c39b358dee6013271ccbd2))
+
 ## [3.1.1](https://github.com/dave-inc/charts/compare/gatewayapi-3.1.0...gatewayapi-3.1.1) (2026-11-02)
 
 
