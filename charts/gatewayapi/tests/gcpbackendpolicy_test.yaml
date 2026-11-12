@@ -1,0 +1,69 @@
+suite: GCPBackendPolicy targetRef uniqueness
+templates:
+  - gcpbackendpolicy.yaml
+set:
+  enabled: true
+tests:
+  - it: renders policies with distinct targets
+    set:
+      gcpBackendPolicies.items:
+        - name: svc-a
+          spec:
+            targetRef:
+              name: svc-a
+        - name: svc-b
+          spec:
+            targetRef:
+              name: svc-b
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: fails when two policies target the same Service
+    set:
+      gcpBackendPolicies.items:
+        - name: svc-a
+          spec:
+            targetRef:
+              name: svc
+        - name: svc-b
+          spec:
+            targetRef:
+              name: svc
+    asserts:
+      - failedTemplate:
+          errorPattern: "targetRef must be unique: 'Service/svc' is targeted by both 'svc-a' and 'svc-b'"
+
+  - it: ignores disabled policies when checking for duplicates
+    set:
+      gcpBackendPolicies.items:
+        - name: svc-a
+          spec:
+            targetRef:
+              name: svc
+        - name: svc-b
+          enabled: false
+          spec:
+            targetRef:
+              name: svc
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: detects duplicates between rawSpec and defaulted targetRefs
+    set:
+      gcpBackendPolicies.items:
+        - name: svc-a
+          spec:
+            targetRef:
+              name: svc
+        - name: svc-b
+          rawSpec: true
+          spec:
+            targetRef:
+              group: ""
+              kind: Service
+              name: svc
+    asserts:
+      - failedTemplate:
+          errorPattern: "targetRef must be unique"

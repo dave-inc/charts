@@ -1,10 +1,27 @@
 {{- if (and .Values.enabled .Values.gcpBackendPolicies.enabled) }}
+{{- /* Keep track of GCPBackendPolicy names that have been seen, to ensure uniqueness. */}}
 {{- $seen := dict }}
+{{- /* Keep track of targetRefs that have been claimed by enabled GCPBackendPolicy items. */}}
+{{- $targets := dict }}
+{{- $defaultTargetRef := $.Values.gcpBackendPolicies.default.spec.targetRef }}
 {{- range $gcpBackendPolicyDefinition := .Values.gcpBackendPolicies.items }}
 {{- if hasKey $seen $gcpBackendPolicyDefinition.name }}
 {{- fail (printf "GCPBackendPolicy names must be unique: '%s' is duplicated" $gcpBackendPolicyDefinition.name) }}
 {{- end }}
 {{- $_ := set $seen $gcpBackendPolicyDefinition.name true }}
+{{- /* BEGIN targetRef uniqueness check. */}}
+{{- /* GKE honors only one GCPBackendPolicy per target, so a targetRef may be
+       claimed by a single enabled item. */}}
+{{- if (ne $gcpBackendPolicyDefinition.enabled false) }}
+{{- $targetRef := $gcpBackendPolicyDefinition.spec.targetRef }}
+{{- $targetKind := $targetRef.kind | default $defaultTargetRef.kind }}
+{{- $targetKey := printf "%s/%s/%s" ($targetRef.group | default $defaultTargetRef.group) $targetKind $targetRef.name }}
+{{- if hasKey $targets $targetKey }}
+{{- fail (printf "GCPBackendPolicy targetRef must be unique: '%s/%s' is targeted by both '%s' and '%s'" $targetKind $targetRef.name (get $targets $targetKey) $gcpBackendPolicyDefinition.name) }}
+{{- end }}
+{{- $_ := set $targets $targetKey $gcpBackendPolicyDefinition.name }}
+{{- end }}
+{{- /* END targetRef uniqueness check. */}}
 {{- end }}
 {{- $labels := include "gatewayapi.labels" . }}
 {{- $commonName := include "gatewayapi.name" . }}

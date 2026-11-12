@@ -1,0 +1,247 @@
+suite: HTTPRoute public-gateway Cloud Armor enforcement
+templates:
+  - httproute.yaml
+set:
+  enabled: true
+  routes:
+    items:
+      - name: public-route
+        spec:
+          hostnames:
+            - svc.trydave.com
+          parentRefs:
+            - name: public
+          rules:
+            - backendRefs:
+                - name: svc-ca-pub-gw
+                  port: 80
+  gcpBackendPolicies:
+    items:
+      - name: svc-ca-pub-gw
+        spec:
+          default:
+            securityPolicy: svc-ca
+          targetRef:
+            name: svc-ca-pub-gw
+tests:
+  - it: renders a public route whose backend is named and protected correctly
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.rules[0].backendRefs[0].name
+          value: svc-ca-pub-gw
+
+  - it: accepts a numeric suffix on the backend name
+    set:
+      routes.items:
+        - name: public-route
+          spec:
+            hostnames:
+              - svc.trydave.com
+            parentRefs:
+              - name: public
+            rules:
+              - backendRefs:
+                  - name: svc-ca-pub-gw-2
+                    port: 80
+      gcpBackendPolicies.items:
+        - name: svc-ca-pub-gw-2
+          spec:
+            default:
+              securityPolicy: svc-ca
+            targetRef:
+              name: svc-ca-pub-gw-2
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: ignores routes on non-public gateways
+    set:
+      routes.items:
+        - name: public-route
+          spec:
+            hostnames:
+              - svc.trydave.com
+            parentRefs:
+              - name: default
+            rules:
+              - backendRefs:
+                  - name: plain-service
+                    port: 80
+      gcpBackendPolicies.items: []
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: allows a redirect-only route on a public gateway without backend checks
+    set:
+      routes.items:
+        - name: public-route
+          spec:
+            hostnames:
+              - svc.trydave.com
+            parentRefs:
+              - name: public
+            rules:
+              - filters:
+                  - type: RequestRedirect
+                    requestRedirect:
+                      hostname: example-service.trydave.com
+                      statusCode: 301
+      gcpBackendPolicies.items: []
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.rules[0].filters[0].type
+          value: RequestRedirect
+      - notExists:
+          path: spec.rules[0].backendRefs
+
+  - it: matches "public" anywhere in the parentRef name
+    set:
+      routes.items:
+        - name: public-route
+          spec:
+            hostnames:
+              - svc.trydave.com
+            parentRefs:
+              - name: internal-public-gw
+            rules:
+              - backendRefs:
+                  - name: plain-service
+                    port: 80
+    asserts:
+      - failedTemplate:
+          errorPattern: "backendRef 'plain-service' must end with '-ca-pub-gw'"
+
+  - it: rejects a backend with a non-numeric suffix
+    set:
+      routes.items:
+        - name: public-route
+          spec:
+            hostnames:
+              - svc.trydave.com
+            parentRefs:
+              - name: public
+            rules:
+              - backendRefs:
+                  - name: svc-ca-pub-gw-x
+                    port: 80
+    asserts:
+      - failedTemplate:
+          errorPattern: "backendRef 'svc-ca-pub-gw-x' must end with"
+
+  - it: fails when no GCPBackendPolicy targets the backend
+    set:
+      gcpBackendPolicies.items: []
+    asserts:
+      - failedTemplate:
+          errorPattern: "Service 'svc-ca-pub-gw' needs an enabled gcpBackendPolicies item"
+
+  - it: fails when securityPolicy is omitted
+    set:
+      gcpBackendPolicies.items:
+        - name: svc-ca-pub-gw
+          spec:
+            default:
+              timeoutSec: 30
+            targetRef:
+              name: svc-ca-pub-gw
+    asserts:
+      - failedTemplate:
+          errorPattern: "Service 'svc-ca-pub-gw' needs"
+
+  - it: fails when securityPolicy is empty
+    set:
+      gcpBackendPolicies.items:
+        - name: svc-ca-pub-gw
+          spec:
+            default:
+              securityPolicy: ""
+            targetRef:
+              name: svc-ca-pub-gw
+    asserts:
+      - failedTemplate:
+          errorPattern: "Service 'svc-ca-pub-gw' needs"
+
+  - it: fails when the GCPBackendPolicy item is disabled
+    set:
+      gcpBackendPolicies.items:
+        - name: svc-ca-pub-gw
+          enabled: false
+          spec:
+            default:
+              securityPolicy: svc-ca
+            targetRef:
+              name: svc-ca-pub-gw
+    asserts:
+      - failedTemplate:
+          errorPattern: "Service 'svc-ca-pub-gw' needs"
+
+  - it: fails when GCPBackendPolicies are disabled chart-wide
+    set:
+      gcpBackendPolicies.enabled: false
+    asserts:
+      - failedTemplate:
+          errorPattern: "Service 'svc-ca-pub-gw' needs"
+
+  - it: accepts a rawSpec GCPBackendPolicy with a securityPolicy
+    set:
+      gcpBackendPolicies.items:
+        - name: svc-ca-pub-gw
+          rawSpec: true
+          spec:
+            default:
+              securityPolicy: svc-ca
+            targetRef:
+              group: ""
+              kind: Service
+              name: svc-ca-pub-gw
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: enforces on rawSpec routes too
+    set:
+      routes.items:
+        - name: public-route
+          rawSpec: true
+          spec:
+            hostnames:
+              - svc.trydave.com
+            parentRefs:
+              - group: gateway.networking.k8s.io
+                kind: Gateway
+                name: public
+                namespace: shared-gateways
+            rules:
+              - backendRefs:
+                  - group: ""
+                    kind: Service
+                    name: plain-service
+                    port: 80
+                    weight: 1
+    asserts:
+      - failedTemplate:
+          errorPattern: "backendRef 'plain-service' must end with"
+
+  - it: skips disabled routes
+    set:
+      routes.items:
+        - name: public-route
+          enabled: false
+          spec:
+            hostnames:
+              - svc.trydave.com
+            parentRefs:
+              - name: public
+            rules:
+              - backendRefs:
+                  - name: svc-ca-pub-gw
+                    port: 80
+      gcpBackendPolicies.items: []
+    asserts:
+      - hasDocuments:
+          count: 0

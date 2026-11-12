@@ -1,0 +1,42 @@
+# Attaches a route to a public Gateway. Any parentRef whose name contains
+# "public" triggers Cloud Armor enforcement:
+#   - every backendRef must name a Service ending in `-ca-pub-gw` or
+#     `-ca-pub-gw-<n>`
+#   - each of those Services needs an enabled GCPBackendPolicy with a non-empty
+#     `spec.default.securityPolicy`
+# Rendering fails if either condition is not met. The check is always on and
+# cannot be disabled.
+enabled: true
+routes:
+  items:
+    - name: example-service
+      spec:
+        hostnames:
+          - example-service.trydave.com
+        parentRefs:
+          - name: public
+        rules:
+          - backendRefs:
+              - name: example-service-ca-pub-gw
+                port: 80
+healthCheckPolicies:
+  items:
+    - name: example-service-ca-pub-gw
+      spec:
+        default:
+          config:
+            httpHealthCheck:
+              port: 8080
+              requestPath: /healthz
+        targetRef:
+          name: example-service-ca-pub-gw
+gcpBackendPolicies:
+  items:
+    - name: example-service-ca-pub-gw
+      spec:
+        default:
+          # Pre-existing Cloud Armor policy. Must be non-empty for a backend
+          # behind a public Gateway.
+          securityPolicy: example-service-ca
+        targetRef:
+          name: example-service-ca-pub-gw

@@ -34,12 +34,28 @@ spec:
 {{- if and $healthCheckPolicyDefinition.spec $healthCheckPolicyDefinition.rawSpec }}
   {{- toYaml $healthCheckPolicyDefinition.spec | nindent 2 }}
 {{- else }}
+  {{- $config := $healthCheckPolicyDefinition.spec.default.config }}
+  {{- $chartDefaultType := $.Values.healthCheckPolicies.default.spec.default.config.type }}
+  {{- /* A grpcHealthCheck is only ever a GRPC check, so the protocol is derived
+         rather than demanded. An explicit config.type still wins; the schema
+         rejects a type that contradicts the block. */}}
+  {{- $derivedType := ternary "GRPC" $chartDefaultType (hasKey $config "grpcHealthCheck") }}
   default:
     config:
+      {{- with $config.httpHealthCheck }}
       httpHealthCheck:
-        port: {{ $healthCheckPolicyDefinition.spec.default.config.httpHealthCheck.port }}
-        requestPath: {{ $healthCheckPolicyDefinition.spec.default.config.httpHealthCheck.requestPath }}
-      type: {{ $healthCheckPolicyDefinition.spec.default.config.type | default $.Values.healthCheckPolicies.default.spec.default.config.type }}
+        port: {{ .port }}
+        requestPath: {{ .requestPath }}
+      {{- end }}
+      {{- with $config.grpcHealthCheck }}
+      grpcHealthCheck:
+        port: {{ .port }}
+        {{- /* Optional. Omitted means "health check every gRPC service". */}}
+        {{- with .grpcServiceName }}
+        grpcServiceName: {{ . }}
+        {{- end }}
+      {{- end }}
+      type: {{ $config.type | default $derivedType }}
     logConfig:
       enabled: {{ dig "logConfig" "enabled" $.Values.healthCheckPolicies.default.spec.default.logConfig.enabled $healthCheckPolicyDefinition.spec.default }}
     checkIntervalSec: {{ $healthCheckPolicyDefinition.spec.default.checkIntervalSec | default $.Values.healthCheckPolicies.default.spec.default.checkIntervalSec }}

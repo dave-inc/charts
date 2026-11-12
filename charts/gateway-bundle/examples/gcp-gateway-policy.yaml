@@ -1,0 +1,58 @@
+# Attach a GKE GCPGatewayPolicy to every rendered Gateway. Here it enforces
+# the `min-tls-12` Compute Engine SSL policy (which must already exist in
+# the cluster's project).
+#
+# One GCPGatewayPolicy is rendered per enabled Gateway item, named after the
+# Gateway and targeting it via `targetRef`. Disabled items (`enabled: false`)
+# get no policy.
+#
+# Each item can override the default via its own `ext.gcpGatewayPolicy`:
+# `enabled` opts that Gateway in or out, and `spec.default` and
+# `metadata.annotations` keys are merged over the default's (item keys win).
+enabled: true
+gateways:
+  default:
+    ext:
+      gcpGatewayPolicy:
+        enabled: true
+        metadata:
+          annotations:
+            argocd.argoproj.io/sync-wave: "2"
+        spec:
+          default:
+            sslPolicy: min-tls-12
+  items:
+    # Inherits the default policy as-is.
+    - name: default
+      spec:
+        listeners:
+          - hostname: example-service.trydave.com
+    # Overrides sslPolicy, adds allowGlobalAccess and an extra annotation
+    # for this Gateway only (the default sync-wave annotation is kept).
+    - name: extra-gw-1
+      ext:
+        gcpGatewayPolicy:
+          metadata:
+            annotations:
+              example.com/owner: platform
+          spec:
+            default:
+              sslPolicy: min-tls-13
+              allowGlobalAccess: true
+      spec:
+        listeners:
+          - hostname: example-service-1.trydave.com
+    # Gateway is rendered, but without a GCPGatewayPolicy.
+    - name: no-policy-gw
+      ext:
+        gcpGatewayPolicy:
+          enabled: false
+      spec:
+        listeners:
+          - hostname: example-service-2.trydave.com
+    # Disabled item: neither the Gateway nor its policy is rendered.
+    - name: disabled-gw
+      enabled: false
+      spec:
+        listeners:
+          - hostname: example-service-3.trydave.com

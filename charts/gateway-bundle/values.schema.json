@@ -150,6 +150,72 @@
                     ]
                   },
                   "additionalProperties": false
+                },
+                "gcpGatewayPolicy": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "metadata": {
+                      "type": "object",
+                      "properties": {
+                        "annotations": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "spec": {
+                      "type": "object",
+                      "properties": {
+                        "default": {
+                          "type": "object",
+                          "properties": {
+                            "sslPolicy": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "allowGlobalAccess": {
+                              "type": "boolean"
+                            },
+                            "region": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "minProperties": 1,
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "default"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "if": {
+                    "properties": {
+                      "enabled": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ]
+                  },
+                  "then": {
+                    "required": [
+                      "spec"
+                    ]
+                  },
+                  "additionalProperties": false
                 }
               },
               "additionalProperties": false
@@ -176,6 +242,61 @@
               },
               "rawSpec": {
                 "type": "boolean"
+              },
+              "ext": {
+                "type": "object",
+                "properties": {
+                  "gcpGatewayPolicy": {
+                    "type": "object",
+                    "properties": {
+                      "enabled": {
+                        "type": "boolean"
+                      },
+                      "metadata": {
+                        "type": "object",
+                        "properties": {
+                          "annotations": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "additionalProperties": false
+                      },
+                      "spec": {
+                        "type": "object",
+                        "properties": {
+                          "default": {
+                            "type": "object",
+                            "properties": {
+                              "sslPolicy": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "allowGlobalAccess": {
+                                "type": "boolean"
+                              },
+                              "region": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "minProperties": 1,
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "default"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "minProperties": 1,
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
               },
               "spec": {
                 "type": "object",
