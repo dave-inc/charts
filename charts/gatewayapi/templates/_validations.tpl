@@ -1,7 +1,9 @@
 {{/*
 Public-gateway Cloud Armor enforcement. For every enabled HTTPRoute that has a
 parentRef with "public" in its name, each backendRef must point at a Service
-named `*-ca-pub-gw` or `*-ca-pub-gw-<n>`, and that Service must be the target
+named `*-ca<digit>` (preferred, e.g. `svc-ca0`) or the legacy `*-ca-pub-gw` /
+`*-ca-pub-gw-<n>`, which will eventually be deprecated because it wastes
+characters of the 63 a Service name allows. That Service must be the target
 of an enabled GCPBackendPolicy with a non-empty securityPolicy. An empty string
 would detach Cloud Armor and an omitted key leaves it unmanaged, so neither
 counts. This check is always on and cannot be disabled.
@@ -26,8 +28,8 @@ counts. This check is always on and cannot be disabled.
 {{- if $publicParent }}
 {{- range $route.spec.rules }}
 {{- range .backendRefs }}
-{{- if not (regexMatch "-ca-pub-gw(-[0-9]+)?$" .name) }}
-{{- fail (printf "Route '%s' attaches to public Gateway '%s', so backendRef '%s' must end with '-ca-pub-gw' or '-ca-pub-gw-<n>'" $route.name $publicParent .name) }}
+{{- if not (or (regexMatch "^.+-ca[0-9]$" .name) (regexMatch "-ca-pub-gw(-[0-9]+)?$" .name)) }}
+{{- fail (printf "Route '%s' attaches to public Gateway '%s', so backendRef '%s' must end with '-ca<digit>' (preferred, e.g. 'svc-ca0') or the legacy '-ca-pub-gw' / '-ca-pub-gw-<n>'" $route.name $publicParent .name) }}
 {{- end }}
 {{- if not (hasKey $protected .name) }}
 {{- fail (printf "Route '%s' attaches to public Gateway '%s', so Service '%s' needs an enabled gcpBackendPolicies item targeting it with a non-empty spec.default.securityPolicy" $route.name $publicParent .name) }}

@@ -29,9 +29,11 @@ and backend policies.
   name (attach), and `""` (detach) -- and the regional-vs-global scope rule.
 - [public-gateway](./public-gateway.yaml): A route attached to a public
   Gateway. Shows the Cloud Armor enforcement that applies when a parentRef name
-  contains "public": backend Services must be named `*-ca-pub-gw(-<n>)` and need
-  a GCPBackendPolicy with a non-empty `securityPolicy`. The check is always on
-  and cannot be disabled.
+  contains "public": backend Services must be named `*-ca<digit>` (preferred,
+  e.g. `example-service-ca0`) or the legacy `*-ca-pub-gw(-<n>)`, which will
+  eventually be deprecated to save characters of the 63-character Service name
+  limit. Those Services need a GCPBackendPolicy with a non-empty
+  `securityPolicy`. The check is always on and cannot be disabled.
 - [section-name](./section-name.yaml): An example that pins the route to a
   specific Gateway listener via `parentRefs[].sectionName`, alongside an HTTP
   health check policy and a GCPBackendPolicy.
