@@ -56,6 +56,84 @@ tests:
       - hasDocuments:
           count: 1
 
+  - it: accepts the preferred -ca<digit> suffix on the backend name
+    set:
+      routes.items:
+        - name: public-route
+          spec:
+            hostnames:
+              - svc.trydave.com
+            parentRefs:
+              - name: public
+            rules:
+              - backendRefs:
+                  - name: svc-ca0
+                    port: 80
+      gcpBackendPolicies.items:
+        - name: svc-ca0
+          spec:
+            default:
+              securityPolicy: svc-ca
+            targetRef:
+              name: svc-ca0
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.rules[0].backendRefs[0].name
+          value: svc-ca0
+
+  - it: rejects a -ca suffix without a digit
+    set:
+      routes.items:
+        - name: public-route
+          spec:
+            hostnames:
+              - svc.trydave.com
+            parentRefs:
+              - name: public
+            rules:
+              - backendRefs:
+                  - name: svc-ca
+                    port: 80
+    asserts:
+      - failedTemplate:
+          errorPattern: "backendRef 'svc-ca' must end with"
+
+  - it: rejects a -ca suffix with more than one digit
+    set:
+      routes.items:
+        - name: public-route
+          spec:
+            hostnames:
+              - svc.trydave.com
+            parentRefs:
+              - name: public
+            rules:
+              - backendRefs:
+                  - name: svc-ca01
+                    port: 80
+    asserts:
+      - failedTemplate:
+          errorPattern: "backendRef 'svc-ca01' must end with"
+
+  - it: rejects trailing characters after the -ca<digit> suffix
+    set:
+      routes.items:
+        - name: public-route
+          spec:
+            hostnames:
+              - svc.trydave.com
+            parentRefs:
+              - name: public
+            rules:
+              - backendRefs:
+                  - name: svc-ca0x
+                    port: 80
+    asserts:
+      - failedTemplate:
+          errorPattern: "backendRef 'svc-ca0x' must end with"
+
   - it: ignores routes on non-public gateways
     set:
       routes.items:
@@ -114,7 +192,7 @@ tests:
                     port: 80
     asserts:
       - failedTemplate:
-          errorPattern: "backendRef 'plain-service' must end with '-ca-pub-gw'"
+          errorPattern: "backendRef 'plain-service' must end with '-ca<digit>'"
 
   - it: rejects a backend with a non-numeric suffix
     set:
