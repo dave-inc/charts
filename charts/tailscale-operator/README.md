@@ -11,7 +11,7 @@ New versions publish only to
 `1.0.0`.
 
 This chart is a wrapper around the upstream [Tailscale Kubernetes
-operator](https://pkgs.tailscale.com/helmcharts) (`1.104.7`), pulled in as a
+operator](https://pkgs.tailscale.com/helmcharts), pulled in as a
 real versioned dependency rather than forked. It exists to layer on the
 pieces upstream doesn't provide, without patching Tailscale's own templates:
 
@@ -133,7 +133,7 @@ for the full set.
   `oidc-discovery-rbac.yaml`. `ClusterRoleBinding` is cluster-scoped, and
   Helm doesn't enforce release-name uniqueness across namespaces, so its
   name includes both the release name and namespace
-  (`{{ include "tailscale-operator.fullname" . }}-{{ .Release.Namespace }}-oidc-discovery`)
+  (`{{ include "tailscale-operator-wrapper.fullname" . }}-{{ .Release.Namespace }}-oidc-discovery`)
   to avoid colliding with another install of this chart in the same
   cluster.
 - `customResourceState: {}` renders a ConfigMap, ServiceAccount, ClusterRole,
