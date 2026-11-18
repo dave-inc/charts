@@ -82,7 +82,7 @@ tests:
           exitNode: true
     asserts:
       - failedTemplate:
-          errorMessage: "connectors[gha-runners-1-exit-node]: replicas must be greater than 0 (the operator silently ignores 0 at v1.102.3 and runs 1 replica anyway)"
+          errorMessage: "connectors[gha-runners-1-exit-node]: replicas must be greater than 0 (the operator silently ignores 0 and runs 1 replica anyway)"
 
   - it: fails when replicas is negative
     set:
@@ -94,7 +94,7 @@ tests:
           exitNode: true
     asserts:
       - failedTemplate:
-          errorMessage: "connectors[gha-runners-1-exit-node]: replicas must be greater than 0 (the operator silently ignores 0 at v1.102.3 and runs 1 replica anyway)"
+          errorMessage: "connectors[gha-runners-1-exit-node]: replicas must be greater than 0 (the operator silently ignores 0 and runs 1 replica anyway)"
 
   - it: replicas greater than one renders hostnamePrefix and replicas, defaulting hostnamePrefix to name
     set:

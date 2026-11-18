@@ -107,8 +107,8 @@ proxyClasses: {}
 #   podDisruptionBudget:
 #     minAvailable: 1
 #   resources:
-#     requests: # no cpu limit: GOMAXPROCS=1 below caps it to a single core anyway
-#       cpu: 500m
+#     requests: # no cpu limit: GOMAXPROCS=1 below caps it to a single core, which the request reserves
+#       cpu: 1000m
 #       memory: 512Mi
 #     limits:
 #       memory: 512Mi

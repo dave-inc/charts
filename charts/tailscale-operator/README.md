@@ -11,7 +11,7 @@ New versions publish only to
 `1.0.0`.
 
 This chart is a wrapper around the upstream [Tailscale Kubernetes
-operator](https://pkgs.tailscale.com/helmcharts) (`1.102.3`), pulled in as a
+operator](https://pkgs.tailscale.com/helmcharts) (`1.104.7`), pulled in as a
 real versioned dependency rather than forked. It exists to layer on the
 pieces upstream doesn't provide, without patching Tailscale's own templates:
 
