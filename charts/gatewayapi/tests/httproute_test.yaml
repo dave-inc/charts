@@ -13,16 +13,16 @@ set:
             - name: public
           rules:
             - backendRefs:
-                - name: svc-ca-pub-gw
+                - name: svc-ca0
                   port: 80
   gcpBackendPolicies:
     items:
-      - name: svc-ca-pub-gw
+      - name: svc-ca0
         spec:
           default:
             securityPolicy: svc-ca
           targetRef:
-            name: svc-ca-pub-gw
+            name: svc-ca0
 tests:
   - it: renders a public route whose backend is named and protected correctly
     asserts:
@@ -30,9 +30,26 @@ tests:
           count: 1
       - equal:
           path: spec.rules[0].backendRefs[0].name
-          value: svc-ca-pub-gw
+          value: svc-ca0
 
-  - it: accepts a numeric suffix on the backend name
+  - it: rejects the legacy -ca-pub-gw suffix
+    set:
+      routes.items:
+        - name: public-route
+          spec:
+            hostnames:
+              - svc.trydave.com
+            parentRefs:
+              - name: public
+            rules:
+              - backendRefs:
+                  - name: svc-ca-pub-gw
+                    port: 80
+    asserts:
+      - failedTemplate:
+          errorPattern: "backendRef 'svc-ca-pub-gw' must end with"
+
+  - it: rejects the legacy -ca-pub-gw-<n> suffix
     set:
       routes.items:
         - name: public-route
@@ -45,43 +62,9 @@ tests:
               - backendRefs:
                   - name: svc-ca-pub-gw-2
                     port: 80
-      gcpBackendPolicies.items:
-        - name: svc-ca-pub-gw-2
-          spec:
-            default:
-              securityPolicy: svc-ca
-            targetRef:
-              name: svc-ca-pub-gw-2
     asserts:
-      - hasDocuments:
-          count: 1
-
-  - it: accepts the preferred -ca<digit> suffix on the backend name
-    set:
-      routes.items:
-        - name: public-route
-          spec:
-            hostnames:
-              - svc.trydave.com
-            parentRefs:
-              - name: public
-            rules:
-              - backendRefs:
-                  - name: svc-ca0
-                    port: 80
-      gcpBackendPolicies.items:
-        - name: svc-ca0
-          spec:
-            default:
-              securityPolicy: svc-ca
-            targetRef:
-              name: svc-ca0
-    asserts:
-      - hasDocuments:
-          count: 1
-      - equal:
-          path: spec.rules[0].backendRefs[0].name
-          value: svc-ca0
+      - failedTemplate:
+          errorPattern: "backendRef 'svc-ca-pub-gw-2' must end with"
 
   - it: rejects a -ca suffix without a digit
     set:
@@ -194,81 +177,64 @@ tests:
       - failedTemplate:
           errorPattern: "backendRef 'plain-service' must end with '-ca<digit>'"
 
-  - it: rejects a backend with a non-numeric suffix
-    set:
-      routes.items:
-        - name: public-route
-          spec:
-            hostnames:
-              - svc.trydave.com
-            parentRefs:
-              - name: public
-            rules:
-              - backendRefs:
-                  - name: svc-ca-pub-gw-x
-                    port: 80
-    asserts:
-      - failedTemplate:
-          errorPattern: "backendRef 'svc-ca-pub-gw-x' must end with"
-
   - it: fails when no GCPBackendPolicy targets the backend
     set:
       gcpBackendPolicies.items: []
     asserts:
       - failedTemplate:
-          errorPattern: "Service 'svc-ca-pub-gw' needs an enabled gcpBackendPolicies item"
+          errorPattern: "Service 'svc-ca0' needs an enabled gcpBackendPolicies item"
 
   - it: fails when securityPolicy is omitted
     set:
       gcpBackendPolicies.items:
-        - name: svc-ca-pub-gw
+        - name: svc-ca0
           spec:
             default:
               timeoutSec: 30
             targetRef:
-              name: svc-ca-pub-gw
+              name: svc-ca0
     asserts:
       - failedTemplate:
-          errorPattern: "Service 'svc-ca-pub-gw' needs"
+          errorPattern: "Service 'svc-ca0' needs"
 
   - it: fails when securityPolicy is empty
     set:
       gcpBackendPolicies.items:
-        - name: svc-ca-pub-gw
+        - name: svc-ca0
           spec:
             default:
               securityPolicy: ""
             targetRef:
-              name: svc-ca-pub-gw
+              name: svc-ca0
     asserts:
       - failedTemplate:
-          errorPattern: "Service 'svc-ca-pub-gw' needs"
+          errorPattern: "Service 'svc-ca0' needs"
 
   - it: fails when the GCPBackendPolicy item is disabled
     set:
       gcpBackendPolicies.items:
-        - name: svc-ca-pub-gw
+        - name: svc-ca0
           enabled: false
           spec:
             default:
               securityPolicy: svc-ca
             targetRef:
-              name: svc-ca-pub-gw
+              name: svc-ca0
     asserts:
       - failedTemplate:
-          errorPattern: "Service 'svc-ca-pub-gw' needs"
+          errorPattern: "Service 'svc-ca0' needs"
 
   - it: fails when GCPBackendPolicies are disabled chart-wide
     set:
       gcpBackendPolicies.enabled: false
     asserts:
       - failedTemplate:
-          errorPattern: "Service 'svc-ca-pub-gw' needs"
+          errorPattern: "Service 'svc-ca0' needs"
 
   - it: accepts a rawSpec GCPBackendPolicy with a securityPolicy
     set:
       gcpBackendPolicies.items:
-        - name: svc-ca-pub-gw
+        - name: svc-ca0
           rawSpec: true
           spec:
             default:
@@ -276,7 +242,7 @@ tests:
             targetRef:
               group: ""
               kind: Service
-              name: svc-ca-pub-gw
+              name: svc-ca0
     asserts:
       - hasDocuments:
           count: 1
@@ -317,7 +283,7 @@ tests:
               - name: public
             rules:
               - backendRefs:
-                  - name: svc-ca-pub-gw
+                  - name: svc-ca0
                     port: 80
       gcpBackendPolicies.items: []
     asserts:
