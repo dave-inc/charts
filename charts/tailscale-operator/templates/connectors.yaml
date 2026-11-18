@@ -12,7 +12,7 @@
 {{- fail (printf "connectors[%s]: must set one of exitNode, subnetRouter, or appConnector" .name) }}
 {{- end }}
 {{- if and (hasKey . "replicas") (le (int .replicas) 0) }}
-{{- fail (printf "connectors[%s]: replicas must be greater than 0 (the operator silently ignores 0 at v1.102.3 and runs 1 replica anyway)" .name) }}
+{{- fail (printf "connectors[%s]: replicas must be greater than 0 (the operator silently ignores 0 and runs 1 replica anyway)" .name) }}
 {{- end }}
 {{- if and (hasKey . "hostname") (hasKey . "hostnamePrefix") }}
 {{- fail (printf "connectors[%s]: hostname and hostnamePrefix are mutually exclusive" .name) }}

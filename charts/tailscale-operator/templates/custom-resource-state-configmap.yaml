@@ -6,9 +6,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "tailscale-operator.customResourceState.name" . }}
+  name: {{ include "tailscale-operator-wrapper.customResourceState.name" . }}
   namespace: {{ .Release.Namespace }}
 data:
   config.yaml: |
-    {{- include "tailscale-operator.customResourceState.config" . | nindent 4 }}
+    {{- include "tailscale-operator-wrapper.customResourceState.config" . | nindent 4 }}
 {{- end }}

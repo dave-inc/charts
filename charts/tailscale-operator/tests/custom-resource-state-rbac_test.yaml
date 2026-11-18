@@ -99,7 +99,7 @@ tests:
           value: my-cluster-tailscale-operator-other-namespace-crs
 
   - it: doesn't collide two namespaces once the release name alone already fills the old 63-char cap
-    # "tailscale-operator.fullname" truncates at 63 chars on its own, so once
+    # "tailscale-operator-wrapper.fullname" truncates at 63 chars on its own, so once
     # the release name pushes it there, re-truncating clusterRoleName at 63
     # (the old behavior) drops the namespace and "-crs" suffix entirely --
     # both namespaces below would render the exact same ClusterRole name.

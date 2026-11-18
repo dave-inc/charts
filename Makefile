@@ -46,5 +46,8 @@ test:
 	@for d in charts/*/tests; do \
 		chart=$$(dirname "$$d"); \
 		echo "==> $$chart"; \
+		if grep -q '^dependencies:' "$$chart/Chart.yaml"; then \
+			helm dependency update "$$chart" >/dev/null || exit 1; \
+		fi; \
 		helm unittest "$$chart" || exit 1; \
 	done
