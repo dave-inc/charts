@@ -1,5 +1,16 @@
 # Changelog
 
+## [4.0.0](https://github.com/dave-inc/charts/compare/gatewayapi-3.3.0...gatewayapi-4.0.0) (2026-11-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* **gatewayapi:** only accept -ca<digit> backend names on public gateways ([#364](https://github.com/dave-inc/charts/issues/364))
+
+### Features
+
+* **gatewayapi:** only accept -ca&lt;digit&gt; backend names on public gateways ([#364](https://github.com/dave-inc/charts/issues/364)) ([741ded1](https://github.com/dave-inc/charts/commit/741ded1bad1503676db48e8a42ca1858fb21900c))
+
 ## [3.3.0](https://github.com/dave-inc/charts/compare/gatewayapi-3.2.0...gatewayapi-3.3.0) (2026-11-17)
 
 

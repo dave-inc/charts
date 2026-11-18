@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/dave-inc/charts/compare/common-1.3.0...common-1.4.0) (2026-11-18)
+
+
+### Features
+
+* **common:** default service copy suffix to ca0 ([#363](https://github.com/dave-inc/charts/issues/363)) ([bb6a1c1](https://github.com/dave-inc/charts/commit/bb6a1c1c161c4e75d8bb19444c75d67d10e4ee7f))
+
 ## [1.3.0](https://github.com/dave-inc/charts/compare/common-1.2.0...common-1.3.0) (2026-10-26)
 
 
