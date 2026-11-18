@@ -211,9 +211,9 @@ service:
     enabled: false
     items:
       # Given that the most common use case for a copy is a second front door for a public
-      # gateway with Cloud Armor, the example below is a copy suffixed "-ca-pub-gw" with
+      # gateway with Cloud Armor, the example below is a copy suffixed "-ca0" with
       # where we are free to associate with a different GCPBackendConfig.
-      - suffix: ca-pub-gw
+      - suffix: ca0
         type: ClusterIP
         annotations: {}
 
