@@ -7,7 +7,7 @@ set:
   deploymentContainer:
     port: 8080
 tests:
-  # values.yaml ships copies.items with a single `suffix: ca-pub-gw` entry so the shape is
+  # values.yaml ships copies.items with a single `suffix: ca0` entry so the shape is
   # documented, and Helm merges that default in even when a release only sets `enabled`.
   # Every case below therefore sets `items` explicitly rather than relying on the default.
   - it: renders only the base Service when copies are off
