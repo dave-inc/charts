@@ -1,9 +1,7 @@
 # Attaches a route to a public Gateway. Any parentRef whose name contains
 # "public" triggers Cloud Armor enforcement:
-#   - every backendRef must name a Service ending in `-ca<digit>` (preferred,
-#     e.g. `example-service-ca0`) or the legacy `-ca-pub-gw` /
-#     `-ca-pub-gw-<n>`, which will eventually be deprecated. Service names are
-#     limited to 63 characters, so the shorter suffix is the better choice
+#   - every backendRef must name a Service ending in `-ca<digit>` (e.g.
+#     `example-service-ca0`)
 #   - each of those Services needs an enabled GCPBackendPolicy with a non-empty
 #     `spec.default.securityPolicy`
 # Rendering fails if either condition is not met. The check is always on and

@@ -199,10 +199,7 @@ gcpBackendPolicies:
 #
 # Public gateways: any HTTPRoute with a parentRef whose name contains "public"
 # must only send traffic to Services whose name ends in `-ca<digit>` (e.g.
-# `my-service-ca0`). This is the preferred suffix: Service names are limited to
-# 63 characters, so the shorter the suffix the better. The legacy `-ca-pub-gw`
-# suffix (optionally followed by `-<number>`) is still accepted but will
-# eventually be deprecated. Either way, each such Service needs an enabled
+# `my-service-ca0`). Each such Service needs an enabled
 # gcpBackendPolicies item with a non-empty `spec.default.securityPolicy`.
 # Rendering fails otherwise. This check is always on and cannot be disabled.
 routes:
