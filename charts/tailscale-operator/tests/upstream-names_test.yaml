@@ -1,0 +1,55 @@
+suite: Upstream operator names
+# Renders the vendored upstream templates through this wrapper. Helm's template
+# namespace is global and the parent chart's definitions win, so a wrapper helper
+# named like an upstream one (e.g. tailscale-operator.fullname) silently renames
+# the operator's Deployment, ServiceAccount and state Secret. Pin the historical
+# names so that collision cannot come back.
+templates:
+  - charts/tailscale-operator/templates/deployment.yaml
+  - charts/tailscale-operator/templates/operator-rbac.yaml
+  - charts/tailscale-operator/templates/oauth-secret.yaml
+release:
+  name: gha-runners-1-tailscale
+  namespace: tailscale
+set:
+  tailscale-operator:
+    oauth:
+      clientId: id
+      clientSecret: secret
+tests:
+  - it: keeps the historical operator Deployment and state Secret names
+    template: charts/tailscale-operator/templates/deployment.yaml
+    asserts:
+      - equal:
+          path: metadata.name
+          value: operator
+      - equal:
+          path: spec.selector.matchLabels.app
+          value: operator
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: operator
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OPERATOR_SECRET
+            value: operator
+
+  - it: keeps the historical ServiceAccount and cluster role names
+    template: charts/tailscale-operator/templates/operator-rbac.yaml
+    asserts:
+      - equal:
+          path: metadata.name
+          value: operator
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: tailscale-operator
+        documentIndex: 1
+
+  - it: keeps the historical oauth Secret name
+    template: charts/tailscale-operator/templates/oauth-secret.yaml
+    asserts:
+      - equal:
+          path: metadata.name
+          value: operator-oauth

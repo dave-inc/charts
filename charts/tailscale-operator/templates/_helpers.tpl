@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "tailscale-operator.name" -}}
+{{- define "tailscale-operator-wrapper.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "tailscale-operator.fullname" -}}
+{{- define "tailscale-operator-wrapper.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -27,7 +27,7 @@ If release name contains chart name it will be used as a full name.
 Name of the CRS-only kube-state-metrics workload. Unprefixed: one release
 per cluster, same rationale as Connector/PeerRelay names.
 */}}
-{{- define "tailscale-operator.customResourceState.name" -}}
+{{- define "tailscale-operator-wrapper.customResourceState.name" -}}
 custom-resource-state-exporter
 {{- end }}
 
@@ -35,14 +35,14 @@ custom-resource-state-exporter
 ClusterRole/Binding name. Cluster-scoped, so it includes release and
 namespace (same collision concern as OIDC discovery). ClusterRole/Binding
 names follow the standard Kubernetes object name limit (253 chars), not
-the 63-char DNS label limit that "tailscale-operator.fullname" itself
+the 63-char DNS label limit that "tailscale-operator-wrapper.fullname" itself
 already applies -- truncating here at 63 again could cut into the
 namespace or "-crs" suffix and collide two different releases/namespaces
 onto the same name, so trunc at 253 instead, which no realistic
 release+namespace pair can reach.
 */}}
-{{- define "tailscale-operator.customResourceState.clusterRoleName" -}}
-{{- printf "%s-%s-crs" (include "tailscale-operator.fullname" .) .Release.Namespace | trunc 253 | trimSuffix "-" }}
+{{- define "tailscale-operator-wrapper.customResourceState.clusterRoleName" -}}
+{{- printf "%s-%s-crs" (include "tailscale-operator-wrapper.fullname" .) .Release.Namespace | trunc 253 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
@@ -50,7 +50,7 @@ Kyverno-required labels copied from the operator, with application overridden
 so GMP PodMonitoring can select this workload without colliding with the
 operator's :8080 scrape.
 */}}
-{{- define "tailscale-operator.customResourceState.labels" -}}
+{{- define "tailscale-operator-wrapper.customResourceState.labels" -}}
 application: tailscale-custom-resource-state-exporter
 {{- $sub := index .Values "tailscale-operator" | default dict }}
 {{- range $k, $v := (($sub.operatorConfig | default dict).podLabels | default dict) }}
@@ -64,7 +64,7 @@ application: tailscale-custom-resource-state-exporter
 kube-state-metrics Custom Resource State config. Shared by the ConfigMap
 and the Deployment checksum so a config change rolls the pods.
 */}}
-{{- define "tailscale-operator.customResourceState.config" -}}
+{{- define "tailscale-operator-wrapper.customResourceState.config" -}}
 kind: CustomResourceStateMetrics
 spec:
   resources:

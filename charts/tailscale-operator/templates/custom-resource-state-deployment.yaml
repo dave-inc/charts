@@ -7,7 +7,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "tailscale-operator.customResourceState.name" . }}
+  name: {{ include "tailscale-operator-wrapper.customResourceState.name" . }}
   namespace: {{ .Release.Namespace }}
   annotations:
     # Same rationale as connectors.yaml/peerrelays.yaml/proxyclasses.yaml:
@@ -15,7 +15,7 @@ metadata:
     # install in the default sync-wave, so it must land after them.
     argocd.argoproj.io/sync-wave: "1"
   labels:
-    {{- include "tailscale-operator.customResourceState.labels" . | nindent 4 }}
+    {{- include "tailscale-operator-wrapper.customResourceState.labels" . | nindent 4 }}
 spec:
   replicas: 1
   selector:
@@ -24,11 +24,11 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: {{ include "tailscale-operator.customResourceState.config" . | sha256sum }}
+        checksum/config: {{ include "tailscale-operator-wrapper.customResourceState.config" . | sha256sum }}
       labels:
-        {{- include "tailscale-operator.customResourceState.labels" . | nindent 8 }}
+        {{- include "tailscale-operator-wrapper.customResourceState.labels" . | nindent 8 }}
     spec:
-      serviceAccountName: {{ include "tailscale-operator.customResourceState.name" . }}
+      serviceAccountName: {{ include "tailscale-operator-wrapper.customResourceState.name" . }}
       automountServiceAccountToken: true
       containers:
         - name: kube-state-metrics
@@ -75,5 +75,5 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: {{ include "tailscale-operator.customResourceState.name" . }}
+            name: {{ include "tailscale-operator-wrapper.customResourceState.name" . }}
 {{- end }}

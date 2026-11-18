@@ -11,7 +11,7 @@
 apiVersion: monitoring.googleapis.com/v1
 kind: PodMonitoring
 metadata:
-  name: {{ include "tailscale-operator.customResourceState.name" . }}
+  name: {{ include "tailscale-operator-wrapper.customResourceState.name" . }}
   namespace: {{ .Release.Namespace }}
 spec:
   selector:

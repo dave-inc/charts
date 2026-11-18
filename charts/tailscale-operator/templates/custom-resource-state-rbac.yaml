@@ -3,7 +3,7 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ include "tailscale-operator.customResourceState.name" . }}
+  name: {{ include "tailscale-operator-wrapper.customResourceState.name" . }}
   namespace: {{ .Release.Namespace }}
 ---
 # Cluster-scoped: Connector and PeerRelay are cluster-scoped, and CRS also
@@ -12,7 +12,7 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "tailscale-operator.customResourceState.clusterRoleName" . }}
+  name: {{ include "tailscale-operator-wrapper.customResourceState.clusterRoleName" . }}
 rules:
   - apiGroups:
       - apiextensions.k8s.io
@@ -36,13 +36,13 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ include "tailscale-operator.customResourceState.clusterRoleName" . }}
+  name: {{ include "tailscale-operator-wrapper.customResourceState.clusterRoleName" . }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ include "tailscale-operator.customResourceState.clusterRoleName" . }}
+  name: {{ include "tailscale-operator-wrapper.customResourceState.clusterRoleName" . }}
 subjects:
   - kind: ServiceAccount
-    name: {{ include "tailscale-operator.customResourceState.name" . }}
+    name: {{ include "tailscale-operator-wrapper.customResourceState.name" . }}
     namespace: {{ .Release.Namespace }}
 {{- end }}
