@@ -3,7 +3,7 @@ name: tailscale-operator
 description: Generic wrapper for the Tailscale Kubernetes operator, reusable
   across clusters.
 type: application
-version: 1.0.0
+version: 1.0.1
 appVersion: "1.104.7"
 dependencies:
   - name: tailscale-operator
