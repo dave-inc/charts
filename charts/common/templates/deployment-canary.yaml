@@ -54,6 +54,7 @@ regardless of what KEDA had scaled it to. */}}
         https://helm.sh/docs/howto/charts_tips_and_tricks/#automatically-roll-deployments
         */}}
         checksum/config: {{ .Values.env | toString | sha256sum }}
+        checksum/customconfig: {{ .Values.customConfig.data | toString | sha256sum }}
         {{- if .Values.podAnnotations }}
         {{- toYaml .Values.podAnnotations | nindent 8 }}
         {{- end }}
