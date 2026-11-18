@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.3.0](https://github.com/dave-inc/charts/compare/gatewayapi-3.2.0...gatewayapi-3.3.0) (2026-11-17)
+
+
+### Features
+
+* **gatewayapi:** new service name validation ([#361](https://github.com/dave-inc/charts/issues/361)) ([4535c79](https://github.com/dave-inc/charts/commit/4535c79dfdb0718672d7b1a46d69d849ce56abd1))
+
 ## [3.2.0](https://github.com/dave-inc/charts/compare/gatewayapi-3.1.1...gatewayapi-3.2.0) (2026-11-06)
 
 
