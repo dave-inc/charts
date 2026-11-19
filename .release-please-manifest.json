@@ -6,6 +6,6 @@
   "charts/gatewayapi": "4.0.0",
   "charts/job": "1.0.0",
   "charts/kyverno-policies": "1.0.0",
-  "charts/tailscale-operator": "1.0.0",
+  "charts/tailscale-operator": "1.0.1",
   "charts/workflow": "1.0.0"
 }
