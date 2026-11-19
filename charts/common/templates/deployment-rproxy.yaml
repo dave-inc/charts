@@ -1,4 +1,13 @@
-{{- if .Values.canary.enabled -}}
+{{- if .Values.canary.migrate -}}
+{{- /*
+Gated on canary.migrate, not canary.enabled: this is the pre-Rollout rproxy
+mechanism, kept alive on purpose during a one-time bridge off it (see
+service.yaml's own comment on the migrate selector branch), not the normal
+canary path -- canary.enabled here now drives the Rollout instead. weight
+must stay 0 for the whole migrate window; this isn't re-running the old
+canary experiment, just keeping the existing stable path up while the new
+chart's app pods join it.
+*/}}
 {{- $canaryWeight := .Values.canary.weight }}
 {{- $effectiveCanaryWeight := min (max $canaryWeight 0) 100 }}
 {{- $remainingWeight := sub 100 $effectiveCanaryWeight }}
@@ -33,12 +42,7 @@ metadata:
     run: {{ include "common.reverseProxyName" . }}
     {{- include "common.labels" . | nindent 4 }}
 spec:
-{{- /* Matches deployment.yaml's own gate: once kedaScaling is enabled, the ScaledObject's
-KEDA-managed HPA owns replicas via the scale subresource. Omitting kedaScaling.enabled here
-would leave Helm rendering a static `replicas:` on every sync - with ArgoCD's selfHeal:
-true, that would fight the ScaledObject, snapping rproxy back to this static count on every
-sync regardless of what KEDA had scaled it to. Same bug as deployment-canary.yaml. */}}
-{{- if not (or .Values.canary.reverseProxy.autoscaling.enabled .Values.canary.reverseProxy.kedaScaling.enabled) }}
+{{- if not .Values.canary.reverseProxy.autoscaling.enabled }}
   replicas: {{ $rproxyReplicas }}
 {{- end }}
   selector:
@@ -165,7 +169,7 @@ sync regardless of what KEDA had scaled it to. Same bug as deployment-canary.yam
             - name: NGINX_CONTROL_WEIGHT
               value: {{ $remainingWeight | quote }}
             - name: NGINX_CANARY_HOST
-              value: {{ include "common.canaryName" . }} 
+              value: {{ include "common.canaryServiceName" . }} 
             - name: NGINX_CANARY_WEIGHT
               value: {{ $effectiveCanaryWeight | quote }}
             - name: NGINX_CLIENT_MAX_BODY_SIZE

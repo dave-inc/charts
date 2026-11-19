@@ -119,6 +119,14 @@ tests:
           path: metadata.name
           value: test-app-ca
       - template: service-cloudarmor.yaml
+        # Applied a wave ahead of the default (0) so a selector change reaches the
+        # API server, and the LB begins discovering the new endpoints, before any
+        # same-wave resource this selector used to depend on is pruned in the same
+        # sync - see service.yaml/service-cloudarmor.yaml's own comment.
+        equal:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+          value: "-1"
+      - template: service-cloudarmor.yaml
         equal:
           path: spec.type
           value: NodePort

@@ -1,7 +1,8 @@
 # common
 
-The shared application chart. It renders the Deployment, Service, HPA and, when canary
-is enabled, the canary and reverse proxy tiers that sit alongside them.
+The shared application chart. It renders the Deployment, Service and HPA, and, when
+canary is enabled, a Rollout (Argo Rollouts) that references the Deployment via
+`workloadRef` instead of duplicating it.
 
 Configuration reference lives in [values.yaml](./values.yaml), which is commented in
 place. This file covers only what changes between versions and what you have to do about
@@ -59,6 +60,12 @@ answer does not change with an unrelated value. The schema reports this as
 `at '/service/copies/items/0/suffix': 'not' failed`, which names the offending item but not
 the reason — it is one of the three above.
 
+## Migrating a service onto Argo Rollouts canary
+
+Sync-wave ordering, the `canary.migrate` bridge off an old reverse-proxy/canary-Deployment
+architecture, and the staged `canary.initialReplicas` workflow for an autoscaled service all
+moved to their own doc: [CANARY-ARGO-ROLLOUTS.md](./CANARY-ARGO-ROLLOUTS.md).
+
 ## Upgrading to 1.0.0
 
 `1.0.0` starts the SemVer 2.0.0 contract for this chart. Templates and values are
@@ -83,6 +90,11 @@ This release changes shutdown and rollout timing for services, so a Pod that pre
 terminated in about thirty seconds now takes up to a minute, and rollouts are deliberately
 slower. Nothing needs to be set to adopt it: bumping the dependency version is enough, and
 the sections below exist for the cases where the defaults do not suit a particular service.
+
+If this upgrade is also the one moving a service onto Argo Rollouts canary, see
+[CANARY-ARGO-ROLLOUTS.md](./CANARY-ARGO-ROLLOUTS.md) for the `canary.migrate` bridge off
+an old reverse-proxy/canary-Deployment architecture, the Rollout's own `minReadySeconds`
+gap, and the replica floor canary enforces.
 
 The timing now lives at two levels. `serviceGracefulRollout` holds the values for a release
 that is actually in a traffic path, and the top-level `.Values.*` fields are the fallback for
@@ -126,22 +138,20 @@ balancer in front of it without slowing down everything else.
 
 The precedence, most specific first, is:
 
-1. `canary.reverseProxy.*` — the per-tier override for the proxy only
-2. `serviceGracefulRollout.*` — when `service.enabled` and its own `enabled` are true
-3. top-level `.Values.*` — the default for everything else
+1. `serviceGracefulRollout.*` — when `service.enabled` and its own `enabled` are true
+2. top-level `.Values.*` — the default for everything else
 
-The block feeds the control and canary Deployments, the reverse proxy's base timing, and the
-Cloud SQL proxy's derived wait, so all of them move together. Override a single field to keep
-the rest, or set `serviceGracefulRollout.enabled: false` to put a service back on the
-top-level defaults entirely.
+The block feeds the Deployment and the Cloud SQL proxy's derived wait, so both move together.
+Override a single field to keep the rest, or set `serviceGracefulRollout.enabled: false` to put
+a service back on the top-level defaults entirely.
 
 ### Services now stay in the traffic path before shutting down
 
-`serviceGracefulRollout.preStopSleepSeconds` renders a `preStop` sleep on the control and
-canary application containers. It exists because a Pod keeps receiving requests after
-termination begins: removal from a Google load balancer lags the Pod being killed, measured at
-around twelve seconds in staging. `terminationGracePeriodSeconds` cannot do this on its own,
-since it caps how long shutdown may take rather than holding the Pod open.
+`serviceGracefulRollout.preStopSleepSeconds` renders a `preStop` sleep on the application
+container. It exists because a Pod keeps receiving requests after termination begins: removal
+from a Google load balancer lags the Pod being killed, measured at around twelve seconds in
+staging. `terminationGracePeriodSeconds` cannot do this on its own, since it caps how long
+shutdown may take rather than holding the Pod open.
 
 The two values are related and validated together. A `preStop` sleep that is greater than or
 equal to the grace period fails the render rather than letting a Pod be SIGKILLed part-way
@@ -175,30 +185,6 @@ still worth setting there for a different reason: the delay also gives a bad rev
 fail before it reaches every replica, which applies to a pubsub consumer or task handler just
 as much as to anything serving traffic. That is a deliberate per-service choice rather than a
 default.
-
-### Canary-enabled services get a replica floor of 2
-
-`autoscaling.minReplicas` is now unset rather than `1`, which lets the chart tell a
-deliberate value from an inherited one. With canary enabled it computes 2, because canary
-puts a second Deployment in the traffic path and a tier at one Pod has no headroom while
-that Pod is replaced. Without canary it stays 1, so single-Pod services are unaffected.
-
-Setting `autoscaling.minReplicas` explicitly always wins, including setting it back to
-`1`. The default is capped at `maxReplicas`, so a deliberately pinned single-replica
-service still renders a valid HPA.
-
-The reverse proxy keeps a floor of 2 of its own, since it is the tier fronted by the NEG
-and one replica means one endpoint. Override it with
-`canary.reverseProxy.autoscaling.minReplicas`.
-
-### The reverse proxy can be tuned separately
-
-The proxy inherits `minReadySeconds`, `terminationGracePeriodSeconds` and
-`preStopSleepSeconds` from the effective value described above —
-`serviceGracefulRollout` when it applies, otherwise the top level. Each also has
-a `canary.reverseProxy.*` counterpart that wins outright, for when the proxy needs
-different timing from the application it fronts, which is common: the proxy is the tier the
-load balancer actually detaches from, so it often wants the longer drain.
 
 ### The Cloud SQL proxy now tracks the grace period
 

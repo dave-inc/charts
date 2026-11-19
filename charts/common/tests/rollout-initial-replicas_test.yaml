@@ -1,0 +1,56 @@
+suite: canary.initialReplicas seeds the Rollout's first reconcile with real capacity
+templates:
+  - rollout.yaml
+values:
+  - ./fixtures/minimal-values.yaml
+set:
+  global.canary.enabled: true
+tests:
+  - it: omits replicas (left to the HPA) when autoscaling.enabled and initialReplicas is unset
+    set:
+      autoscaling.enabled: true
+    asserts:
+      - notExists:
+          path: spec.replicas
+
+  - it: omits replicas (left to KEDA) when kedaScaling.enabled and initialReplicas is unset
+    set:
+      kedaScaling.enabled: true
+    asserts:
+      - notExists:
+          path: spec.replicas
+
+  - it: renders the static replicaCount when neither autoscaling nor kedaScaling is enabled, regardless of initialReplicas
+    set:
+      replicaCount: 3
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 3
+
+  - it: overrides autoscaling.enabled's usual omission when initialReplicas is set
+    set:
+      autoscaling.enabled: true
+      canary.initialReplicas: 5
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 5
+
+  - it: overrides kedaScaling.enabled's usual omission when initialReplicas is set
+    set:
+      kedaScaling.enabled: true
+      canary.initialReplicas: 4
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 4
+
+  - it: honors an explicit initialReplicas of 0
+    set:
+      autoscaling.enabled: true
+      canary.initialReplicas: 0
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 0
