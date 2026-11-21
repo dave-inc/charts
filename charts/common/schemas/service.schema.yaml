@@ -68,6 +68,13 @@ properties:
                 annotations:
                   type: object
 
+                # Picks the copy's selector instead of inheriting canary.enabled: false
+                # selects the control Pods even under canary, true selects the reverse
+                # proxy. true without canary.enabled fails while rendering, since there is
+                # no reverse proxy to select; the schema cannot see the top-level value.
+                canary:
+                  type: boolean
+
               required:
                 - suffix
 
