@@ -18,9 +18,23 @@ things a schema cannot see are checked by common.validateServiceCopies.
 {{- $items = $copies.items | default list -}}
 {{- end -}}
 {{- include "common.validateServiceCopies" (dict "name" $name "items" $items) -}}
-{{- include "common.serviceObject" (dict "root" . "name" $name "type" .Values.service.type "port" .Values.service.port "appProtocol" .Values.service.appProtocol "annotations" $annotations) }}
+{{- include "common.serviceObject" (dict "root" . "name" $name "type" .Values.service.type "port" .Values.service.port "appProtocol" .Values.service.appProtocol "annotations" $annotations "canary" .Values.canary.enabled) }}
 {{- range $items }}
-{{- if and $.Values.canary.enabled .appProtocol -}}
+{{/*
+An item's canary picks its selector: unset inherits canary.enabled, false sends the copy
+straight to the control Pods even under canary, true sends it to the reverse proxy. true
+without canary.enabled fails, since there is no reverse proxy for it to select. kindIs
+"bool" is what tells an explicit false apart from unset. appProtocol is checked against
+the resolved value, inherited or not, because only the nginx path cannot carry it.
+*/}}
+{{- $copyCanary := $.Values.canary.enabled -}}
+{{- if kindIs "bool" .canary -}}
+{{- $copyCanary = .canary -}}
+{{- end -}}
+{{- if and $copyCanary (not $.Values.canary.enabled) -}}
+{{- fail (printf "service.copies.items[]: canary: true for suffix %q requires canary.enabled: true, there is no reverse proxy to select" .suffix) -}}
+{{- end -}}
+{{- if and $copyCanary (.appProtocol | default $.Values.service.appProtocol) -}}
 {{- fail "service.copies.items[].appProtocol is not supported when canary.enabled is true" -}}
 {{- end -}}
 {{/*
@@ -36,6 +50,7 @@ into .Values.service.annotations and every later copy would inherit them.
      "type" (.type | default $.Values.service.type)
      "port" (.port | default $.Values.service.port)
      "appProtocol" (.appProtocol | default $.Values.service.appProtocol)
-     "annotations" $copyAnnotations) }}
+     "annotations" $copyAnnotations
+     "canary" $copyCanary) }}
 {{- end }}
 {{- end }}
