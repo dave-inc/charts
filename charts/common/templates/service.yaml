@@ -18,7 +18,7 @@ things a schema cannot see are checked by common.validateServiceCopies.
 {{- $items = $copies.items | default list -}}
 {{- end -}}
 {{- include "common.validateServiceCopies" (dict "name" $name "items" $items) -}}
-{{- include "common.serviceObject" (dict "root" . "name" $name "type" .Values.service.type "port" .Values.service.port "appProtocol" .Values.service.appProtocol "annotations" $annotations "canary" .Values.canary.enabled) }}
+{{- include "common.v2.serviceObject" (dict "root" . "name" $name "type" .Values.service.type "port" .Values.service.port "appProtocol" .Values.service.appProtocol "annotations" $annotations "canary" .Values.canary.enabled) }}
 {{- range $items }}
 {{/*
 An item's canary picks its selector: unset inherits canary.enabled, false sends the copy
@@ -44,7 +44,7 @@ into .Values.service.annotations and every later copy would inherit them.
 */}}
 {{- $copyAnnotations := mergeOverwrite (deepCopy $annotations) (.annotations | default dict) }}
 ---
-{{ include "common.serviceObject" (dict
+{{ include "common.v2.serviceObject" (dict
      "root" $
      "name" (printf "%s-%s" $name .suffix)
      "type" (.type | default $.Values.service.type)
