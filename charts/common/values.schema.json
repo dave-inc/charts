@@ -680,6 +680,9 @@
                   },
                   "annotations": {
                     "type": "object"
+                  },
+                  "canary": {
+                    "type": "boolean"
                   }
                 },
                 "required": [

@@ -276,6 +276,92 @@ tests:
             app.kubernetes.io/name: test-app-rproxy
             app.kubernetes.io/instance: RELEASE-NAME-rproxy
 
+  - it: gives a copy with canary false the control selector while the base keeps the reverse proxy
+    set:
+      canary:
+        enabled: true
+      service:
+        copies:
+          enabled: true
+          items:
+            - suffix: alt
+              canary: false
+    asserts:
+      - documentIndex: 0
+        equal:
+          path: spec.selector
+          value:
+            app.kubernetes.io/name: test-app-rproxy
+            app.kubernetes.io/instance: RELEASE-NAME-rproxy
+      - documentIndex: 1
+        equal:
+          path: spec.selector
+          value:
+            app.kubernetes.io/name: test-app
+            app.kubernetes.io/instance: RELEASE-NAME
+
+  - it: gives a copy with canary false the pod selector override when one is set
+    set:
+      canary:
+        enabled: true
+      podSelectorLabelsOverride:
+        app: custom
+      service:
+        copies:
+          enabled: true
+          items:
+            - suffix: alt
+              canary: false
+    asserts:
+      - documentIndex: 1
+        equal:
+          path: spec.selector
+          value:
+            app: custom
+
+  - it: gives a copy with canary true the reverse proxy selector
+    set:
+      canary:
+        enabled: true
+      service:
+        copies:
+          enabled: true
+          items:
+            - suffix: alt
+              canary: true
+    asserts:
+      - documentIndex: 1
+        equal:
+          path: spec.selector
+          value:
+            app.kubernetes.io/name: test-app-rproxy
+            app.kubernetes.io/instance: RELEASE-NAME-rproxy
+
+  # No reverse proxy is rendered without canary.enabled, so the copy would select nothing.
+  - it: fails when a copy sets canary true without canary enabled
+    set:
+      service:
+        copies:
+          enabled: true
+          items:
+            - suffix: alt
+              canary: true
+    asserts:
+      - failedTemplate:
+          errorMessage: 'service.copies.items[]: canary: true for suffix "alt" requires canary.enabled: true, there is no reverse proxy to select'
+
+  - it: fails on a non-boolean canary
+    set:
+      service:
+        copies:
+          enabled: true
+          items:
+            - suffix: alt
+              canary: "yes"
+    asserts:
+      - failedTemplate:
+          errorPattern: "got string, want boolean"
+
   # The cases below are the schema's job, not the template's: values.schema.json rejects
   # them before rendering starts, which is why the expected text is the schema's own. Only
   # the two checks a schema cannot express -- uniqueness across the list, and the length of
@@ -447,3 +533,21 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: service.copies.items[].appProtocol is not supported when canary.enabled is true
+
+  # A copy pinned to the control Pods never goes through nginx, so appProtocol is fine on it.
+  - it: lets a copy with canary false set appProtocol with canary enabled
+    set:
+      canary:
+        enabled: true
+      service:
+        copies:
+          enabled: true
+          items:
+            - suffix: alt
+              canary: false
+              appProtocol: kubernetes.io/h2c
+    asserts:
+      - documentIndex: 1
+        equal:
+          path: spec.ports[0].appProtocol
+          value: kubernetes.io/h2c

@@ -370,9 +370,10 @@ in; everything else -- the sync-wave annotation, the labels, the target port and
 selector -- is derived from the root context and is therefore identical across the base
 and all of its copies.
 
-The selector is deliberately not overridable. A copy exists to be another front door to
-the same Pods, so under canary it inherits the reverse proxy selector exactly as the base
-Service does.
+The selector labels themselves are not overridable. The caller only picks which of the two
+sets applies through "canary": the reverse proxy when true, the control Pods (or
+podSelectorLabelsOverride) when false. The base Service passes canary.enabled; a copy
+passes its own resolved value, see service.yaml.
 
   root         the root context
   name         metadata.name
@@ -380,6 +381,7 @@ Service does.
   port         spec.ports[0].port
   appProtocol  spec.ports[0].appProtocol, omitted when empty
   annotations  annotation map, already merged, may be empty
+  canary       bool, select the reverse proxy instead of the control Pods
 */}}
 {{- define "common.serviceObject" -}}
 {{- $root := .root -}}
@@ -405,7 +407,7 @@ spec:
       appProtocol: {{ . }}
       {{- end }}
   selector:
-  {{- if $root.Values.canary.enabled -}}
+  {{- if .canary -}}
     {{- include "common.reverseProxySelectorLabels" $root | nindent 4 }}
   {{- else}}
     {{- if not $root.Values.podSelectorLabelsOverride }}
