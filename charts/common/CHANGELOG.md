@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/dave-inc/charts/compare/common-1.4.0...common-1.5.0) (2026-11-23)
+
+
+### Features
+
+* **common:** per-copy canary override for service.copies [SRE-7968] ([#368](https://github.com/dave-inc/charts/issues/368)) ([f04a1ea](https://github.com/dave-inc/charts/commit/f04a1ea1f78ca4541ce195250fa287a367203cd6))
+
 ## [1.4.0](https://github.com/dave-inc/charts/compare/common-1.3.0...common-1.4.0) (2026-11-18)
 
 
