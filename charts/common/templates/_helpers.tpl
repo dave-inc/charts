@@ -364,6 +364,19 @@ spec:
 {{/*
 Render one Service document.
 
+Named templates are global to a render: when a parent chart pulls in this chart under
+several aliases at different versions, each "define" below exists once per version and
+only one of them is used, for every alias. Which one depends on Helm's load order, not
+on the version. A template's arguments are therefore an interface between versions:
+
+  common.serviceObject     the name released up to 1.5.0. Older service.yaml files call
+                           it, 1.4.0 and earlier without "canary", 1.5.0 with it. Kept
+                           so that it answers both whichever version's copy wins.
+  common.v2.serviceObject  what this version calls. No released version defines this
+                           name, so another version's definition can never replace it.
+
+Change the arguments of neither in place. A new contract gets a new name (".v3").
+
 Both the base Service and every service.copies entry go through this, so a copy cannot
 drift from the thing it copies. The four fields a copy is allowed to override are passed
 in; everything else -- the sync-wave annotation, the labels, the target port and the
@@ -381,9 +394,12 @@ passes its own resolved value, see service.yaml.
   port         spec.ports[0].port
   appProtocol  spec.ports[0].appProtocol, omitted when empty
   annotations  annotation map, already merged, may be empty
-  canary       bool, select the reverse proxy instead of the control Pods
+  canary       bool, select the reverse proxy instead of the control Pods; required
 */}}
-{{- define "common.serviceObject" -}}
+{{- define "common.v2.serviceObject" -}}
+{{- if not (hasKey . "canary") -}}
+{{- fail "common.v2.serviceObject: the canary argument is required" -}}
+{{- end -}}
 {{- $root := .root -}}
 apiVersion: v1
 kind: Service
@@ -417,6 +433,20 @@ spec:
       {{- $root.Values.podSelectorLabelsOverride | toYaml | nindent 4 }}
     {{- end }}
   {{- end }}
+{{- end }}
+
+{{/*
+Compatibility entry point for service.yaml from other versions, see
+common.v2.serviceObject. A caller from 1.4.0 or earlier passes no "canary" and selected
+the reverse proxy whenever canary.enabled was set; a caller from 1.5.0 passes it. The
+argument dict is copied, never mutated, because the caller may reuse it.
+*/}}
+{{- define "common.serviceObject" -}}
+{{- $canary := .root.Values.canary.enabled -}}
+{{- if hasKey . "canary" -}}
+{{- $canary = .canary -}}
+{{- end -}}
+{{- include "common.v2.serviceObject" (merge (dict "canary" $canary) (omit . "canary")) -}}
 {{- end }}
 
 {{/*

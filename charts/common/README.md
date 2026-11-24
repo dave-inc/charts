@@ -59,6 +59,27 @@ answer does not change with an unrelated value. The schema reports this as
 `at '/service/copies/items/0/suffix': 'not' failed`, which names the offending item but not
 the reason — it is one of the three above.
 
+## Several versions under one parent chart
+
+A parent chart that pulls this chart in under several aliases should keep them all on the
+same version. Named templates are global to a render, so with two versions present each
+`define` exists twice. Helm keeps one of them for every alias, chosen by load order, not
+by version. An alias can then render with another version's helpers.
+
+**Avoid 1.5.0 next to any other version.** Its `service.yaml` and `common.serviceObject`
+changed together:
+
+- if 1.5.0's helper wins, the base Service of a 1.4.0 alias with `canary.enabled` stops
+  selecting the reverse proxy;
+- if the other version's helper wins, a 1.5.0 copy with `canary: false` selects the reverse
+  proxy anyway.
+
+From 1.5.1, `service.yaml` calls `common.v2.serviceObject`, a name no earlier version
+defines, so its Services render the same next to any other version.
+`common.serviceObject` stays for older callers and accepts both of their contracts. That
+makes 1.5.1 safe next to 1.4.0 or 1.5.0. It does not fix 1.4.0 next to 1.5.0: bump one of
+them.
+
 ## Upgrading to 1.0.0
 
 `1.0.0` starts the SemVer 2.0.0 contract for this chart. Templates and values are
