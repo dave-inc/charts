@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/dave-inc/charts/compare/common-1.5.1...common-2.0.0) (2026-11-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* **common:** replace base annotations on service.copies items instead of merging ([#372](https://github.com/dave-inc/charts/issues/372))
+
+### Bug Fixes
+
+* **common:** replace base annotations on service.copies items instead of merging ([#372](https://github.com/dave-inc/charts/issues/372)) ([83bce88](https://github.com/dave-inc/charts/commit/83bce88b41425586189769a4f46f86752abf804c))
+
 ## [1.5.1](https://github.com/dave-inc/charts/compare/common-1.5.0...common-1.5.1) (2026-11-24)
 
 
