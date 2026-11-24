@@ -34,8 +34,13 @@ That renders three Services: `my-app`, `my-app-internal` and `my-app-admin`.
 The reason to want one is a second front door that needs its own annotations — a different
 load balancer, its own backend config — without a second Deployment behind it. An item
 inherits `type`, `port`, `appProtocol` and `annotations` from the Service above it and may
-override any of them; annotations are merged rather than replaced, so an item only names the keys it
-changes and `shared` is the only one that differs between `my-app` and `my-app-admin` above.
+override any of them. Annotations are replaced rather than merged: an item that sets them
+gets exactly its own map, so `my-app-admin` above carries `shared: from-item` and nothing from
+the base, while `my-app-internal`, which sets none, inherits `shared: from-base`. Set
+`annotations: {}` to render a copy with none of the base's annotations.
+
+Up to 1.5.1 an item's annotations were merged over the base's. An item that relied on that
+must now repeat every base key it still wants; an item that sets no annotations is unaffected.
 The selector is never overridable, since reaching the same Pods is the point — under canary
 a copy follows the base Service onto the reverse proxy exactly as the base does.
 

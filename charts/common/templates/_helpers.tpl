@@ -393,7 +393,7 @@ passes its own resolved value, see service.yaml.
   type         spec.type
   port         spec.ports[0].port
   appProtocol  spec.ports[0].appProtocol, omitted when empty
-  annotations  annotation map, already merged, may be empty
+  annotations  annotation map, already resolved, may be empty
   canary       bool, select the reverse proxy instead of the control Pods; required
 */}}
 {{- define "common.v2.serviceObject" -}}
