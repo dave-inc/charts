@@ -148,10 +148,9 @@ tests:
           path: spec.ports[0].targetPort
           value: 8080
 
-  # The merge runs against a deepCopy of the base annotations. Without it the first item
-  # would write its overrides into .Values.service.annotations, and the second copy below
-  # would inherit "from-item" instead of "from-base".
-  - it: merges item annotations over the base annotations without leaking between copies
+  # An item's annotations replace the base's outright: the first copy below gets none of the
+  # base keys, while the second, which sets no annotations, inherits them unchanged.
+  - it: replaces the base annotations when an item sets them, inherits them when it does not
     set:
       service:
         annotations:
@@ -180,7 +179,6 @@ tests:
           path: metadata.annotations
           value:
             argocd.argoproj.io/sync-wave: "1"
-            base: keep
             shared: from-item
             own: only-here
       - documentIndex: 2
@@ -190,6 +188,26 @@ tests:
             argocd.argoproj.io/sync-wave: "1"
             base: keep
             shared: from-base
+
+  # hasKey, not `default`, decides inheritance, so an explicit {} is not mistaken for unset.
+  - it: renders only the sync-wave annotation when an item sets empty annotations
+    set:
+      service:
+        annotations:
+          base: keep
+        copies:
+          enabled: true
+          items:
+            - suffix: alt
+              annotations: {}
+    asserts:
+      - hasDocuments:
+          count: 2
+      - documentIndex: 1
+        equal:
+          path: metadata.annotations
+          value:
+            argocd.argoproj.io/sync-wave: "1"
 
   - it: renders one copy per item, in item order
     set:

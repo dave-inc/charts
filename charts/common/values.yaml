@@ -196,8 +196,9 @@ service:
   # second Deployment behind it. Left off, nothing but the Service above is rendered.
   #
   # Each item inherits type, port, appProtocol and annotations from the service above and
-  # may override any of them. Annotations are merged rather than replaced, so an item only has to name
-  # the keys it changes, and the base keys it does not mention still come through. The
+  # may override any of them. Annotations are replaced rather than merged: an item that sets
+  # them gets only its own map, none of the base keys, and `annotations: {}` drops them all.
+  # An item that leaves annotations out inherits the base's unchanged. The
   # selector labels are never overridable, but an item's `canary` picks which set applies:
   # left unset, a copy follows the base Service onto the reverse proxy under canary just
   # as it does everywhere else; false pins it to the control Pods even under canary.
@@ -215,6 +216,7 @@ service:
       # where we are free to associate with a different GCPBackendConfig.
       - suffix: ca0
         type: ClusterIP
+        # {} renders none of service.annotations; remove the key to inherit them.
         annotations: {}
         # If not set, inherit the canary enabled value from the top level.
         # If set and true, use the reverse proxy selector. Requires canary.enabled: true,

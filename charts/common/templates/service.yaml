@@ -38,11 +38,15 @@ the resolved value, inherited or not, because only the nginx path cannot carry i
 {{- fail "service.copies.items[].appProtocol is not supported when canary.enabled is true" -}}
 {{- end -}}
 {{/*
-An item inherits anything it does not set. mergeOverwrite mutates its first argument, so
-the deepCopy is load-bearing: without it the first item's annotations would be written
-into .Values.service.annotations and every later copy would inherit them.
+An item inherits anything it does not set. Annotations are replaced, not merged: an item
+that sets them gets exactly its own map, so a base annotation such as a BackendConfig
+cannot follow a copy that exists to point somewhere else. hasKey is what tells an explicit
+{} (no annotations at all) apart from unset (inherit the base's).
 */}}
-{{- $copyAnnotations := mergeOverwrite (deepCopy $annotations) (.annotations | default dict) }}
+{{- $copyAnnotations := $annotations -}}
+{{- if hasKey . "annotations" -}}
+{{- $copyAnnotations = .annotations | default dict -}}
+{{- end }}
 ---
 {{ include "common.v2.serviceObject" (dict
      "root" $

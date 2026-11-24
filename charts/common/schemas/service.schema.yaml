@@ -51,7 +51,7 @@ properties:
                       - control
 
                 # Optional overrides. Anything left unset is inherited from the service
-                # above, and annotations are merged rather than replaced.
+                # above. Annotations, when set, replace the base's rather than merge.
                 type:
                   type: string
                   enum:
