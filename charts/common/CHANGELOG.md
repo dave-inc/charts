@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.1](https://github.com/dave-inc/charts/compare/common-1.5.0...common-1.5.1) (2026-11-24)
+
+
+### Bug Fixes
+
+* **common:** keep Services correct when mixed with other common versions [SRE-7970] ([#370](https://github.com/dave-inc/charts/issues/370)) ([e96bc9b](https://github.com/dave-inc/charts/commit/e96bc9bdf6e53790b455839c24db6cd86105b248))
+
 ## [1.5.0](https://github.com/dave-inc/charts/compare/common-1.4.0...common-1.5.0) (2026-11-23)
 
 
